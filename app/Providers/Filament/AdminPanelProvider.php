@@ -110,6 +110,8 @@ class AdminPanelProvider extends PanelProvider
                     if (request()->routeIs('filament.*.auth.login')) {
                         $html .= '<script src="https://cdn.tailwindcss.com"></script><script>tailwind.config = { darkMode: "class" };</script>';
                         $html .= Blade::render('@vite([\'resources/css/app.css\'])');
+                    } elseif (is_file(public_path('build/manifest.json')) || is_file(public_path('hot'))) {
+                        $html .= Blade::render('@vite([\'resources/js/word-preview.js\'])');
                     }
 
                     return $html;
