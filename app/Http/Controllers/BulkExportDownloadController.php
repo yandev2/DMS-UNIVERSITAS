@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Models\BulkExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class BulkExportDownloadController extends Controller
@@ -20,6 +21,10 @@ class BulkExportDownloadController extends Controller
 
         if (! $user) {
             abort(403, 'Silakan masuk terlebih dahulu untuk mengunduh berkas ekspor.');
+        }
+
+        if (! Str::isUuid($uuid)) {
+            abort(404);
         }
 
         /** @var BulkExport $export */

@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class BorangPublicViewerController extends Controller
@@ -24,6 +25,10 @@ class BorangPublicViewerController extends Controller
      */
     public function show(Request $request, string $uuid): Response|RedirectResponse
     {
+        if (! Str::isUuid($uuid)) {
+            abort(404);
+        }
+
         $document = Document::query()
             ->where('uuid', $uuid)
             ->where('is_borang', true)
@@ -198,7 +203,7 @@ class BorangPublicViewerController extends Controller
 
         // 5. Fetch the single active document separately with its primaryFile
         $activeDocument = null;
-        if ($activeDocUuid !== '') {
+        if ($activeDocUuid !== '' && Str::isUuid($activeDocUuid)) {
             $activeDocument = (clone $baseUnitBorangQuery)
                 ->where('documents.uuid', $activeDocUuid)
                 ->with(['accreditationCriteria:id,code,name', 'academicYear:id,name', 'primaryFile'])
@@ -238,6 +243,10 @@ class BorangPublicViewerController extends Controller
      */
     public function trackUnitView(Request $request, string $unitCode, string $uuid): JsonResponse
     {
+        if (! Str::isUuid($uuid)) {
+            abort(404);
+        }
+
         $unit = Unit::query()
             ->where('code', $unitCode)
             ->firstOrFail();
@@ -265,6 +274,10 @@ class BorangPublicViewerController extends Controller
      */
     public function streamFile(Request $request, string $uuid): BinaryFileResponse|Response
     {
+        if (! Str::isUuid($uuid)) {
+            abort(404);
+        }
+
         $document = Document::query()
             ->where('uuid', $uuid)
             ->where('is_borang', true)
@@ -309,6 +322,10 @@ class BorangPublicViewerController extends Controller
      */
     public function downloadFile(Request $request, string $uuid): BinaryFileResponse|Response
     {
+        if (! Str::isUuid($uuid)) {
+            abort(404);
+        }
+
         $document = Document::query()
             ->where('uuid', $uuid)
             ->where('is_borang', true)

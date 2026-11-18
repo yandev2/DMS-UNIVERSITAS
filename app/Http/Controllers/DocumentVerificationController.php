@@ -10,6 +10,7 @@ use App\Models\Document;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class DocumentVerificationController extends Controller
@@ -19,6 +20,12 @@ class DocumentVerificationController extends Controller
      */
     public function show(Request $request, string $uuid): Response
     {
+        if (! Str::isUuid($uuid)) {
+            return response()->view('public.verify-invalid', [
+                'uuid' => $uuid,
+            ], 404);
+        }
+
         $document = Document::query()
             ->where('uuid', $uuid)
             ->with(['unit', 'category', 'academicYear', 'primaryFile', 'finalApprover'])
@@ -84,6 +91,10 @@ class DocumentVerificationController extends Controller
      */
     public function streamFile(Request $request, string $uuid): Response|BinaryFileResponse
     {
+        if (! Str::isUuid($uuid)) {
+            abort(404);
+        }
+
         $document = Document::query()
             ->where('uuid', $uuid)
             ->with(['primaryFile'])
@@ -125,6 +136,10 @@ class DocumentVerificationController extends Controller
      */
     public function downloadFile(Request $request, string $uuid): BinaryFileResponse|Response
     {
+        if (! Str::isUuid($uuid)) {
+            abort(404);
+        }
+
         $document = Document::query()
             ->where('uuid', $uuid)
             ->with(['primaryFile'])
