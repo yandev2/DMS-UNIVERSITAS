@@ -62,7 +62,22 @@ class DocumentPolicy
 
     public function update(AuthUser $authUser, Document $document): bool
     {
+        // Super Admin tetap dapat menyunting dokumen pada seluruh status untuk kebutuhan pemeliharaan/koreksi arsip
+        if ($authUser->hasRole('super_admin')) {
+            return true;
+        }
+
         if (! $authUser->can('update:document')) {
+            return false;
+        }
+
+        // Dokumen Ditolak, Diarsipkan, Kedaluwarsa, atau sedang Menunggu Persetujuan tidak boleh disunting staf biasa
+        if (in_array($document->status, [
+            DocumentStatus::Pending,
+            DocumentStatus::Rejected,
+            DocumentStatus::Archived,
+            DocumentStatus::Expired,
+        ], true)) {
             return false;
         }
 
@@ -75,11 +90,15 @@ class DocumentPolicy
             return true;
         }
 
-        if ($document->unit_id === $authUser->unit_id || $document->uploaded_by === $authUser->id) {
+        if ($document->uploaded_by === $authUser->id) {
             return true;
         }
 
-        if ($authUser->hasRole('dekan') && $document->unit?->parent_id === $authUser->unit_id) {
+        if (filled($authUser->unit_id) && $document->unit_id === $authUser->unit_id) {
+            return true;
+        }
+
+        if ($authUser->hasRole('dekan') && filled($authUser->unit_id) && $document->unit?->parent_id === $authUser->unit_id) {
             return true;
         }
 
@@ -185,12 +204,20 @@ class DocumentPolicy
 
     public function approve(AuthUser $authUser, Document $document): bool
     {
+        if ($authUser->hasRole('super_admin')) {
+            return true;
+        }
+
         if (! $authUser->can('document.approve')) {
             return false;
         }
 
         if ($authUser->can('document.bypass_unit_scope')) {
             return true;
+        }
+
+        if (! filled($authUser->unit_id)) {
+            return false;
         }
 
         if ($authUser->hasRole('dekan') && $document->unit?->parent_id === $authUser->unit_id) {

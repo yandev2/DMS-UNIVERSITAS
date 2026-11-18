@@ -9,7 +9,6 @@ use App\Filament\Resources\Documents\DocumentResource;
 use App\Filament\Resources\Documents\Schemas\DocumentForm;
 use App\Filament\Support\DeletionGuard;
 use App\Models\DocumentFile;
-use App\Services\DocumentApprovalService;
 use App\Services\DocumentNamingService;
 use App\Services\DocumentStampingService;
 use Filament\Actions\DeleteAction;
@@ -36,7 +35,20 @@ class EditDocument extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        return DocumentForm::enforceCategoryExpiryPolicy($data);
+        $data = DocumentForm::enforceCategoryExpiryPolicy($data);
+
+        // Lindungi field klasifikasi & penomoran kritis agar tidak berubah pada dokumen yang sudah berjalan/disahkan (kecuali Super Admin)
+        $isSuperAdmin = auth()->user()?->hasRole('super_admin') ?? false;
+        $isEditableWorkflowState = in_array($this->record->status, [DocumentStatus::Draft, DocumentStatus::Revision], true);
+
+        if (! $isSuperAdmin && ! $isEditableWorkflowState) {
+            $data['unit_id'] = $this->record->unit_id;
+            $data['document_category_id'] = $this->record->document_category_id;
+            $data['is_manual_number'] = $this->record->is_manual_number;
+            $data['document_number'] = $this->record->document_number;
+        }
+
+        return $data;
     }
 
     protected function afterSave(): void
@@ -92,8 +104,6 @@ class EditDocument extends EditRecord
 
                 if ($this->record->status === DocumentStatus::Approved) {
                     app(DocumentStampingService::class)->stamp($this->record, $newFile);
-                } elseif ($this->record->status === DocumentStatus::Revision) {
-                    app(DocumentApprovalService::class)->resubmit($this->record);
                 }
             }
         }

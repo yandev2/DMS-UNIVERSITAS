@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Documents\Schemas;
 
+use App\Enums\DocumentStatus;
 use App\Enums\ReminderInterval;
 use App\Enums\VisibilityLevel;
 use App\Models\AcademicYear;
@@ -62,7 +63,7 @@ class DocumentForm
                                 ->native(false)
                                 ->live()
                                 ->default(fn () => auth()->user()?->unit_id)
-                                ->disabled(fn () => ! (auth()->user()?->can('document.bypass_unit_scope') ?? false))
+                                ->disabled(fn (?Document $record): bool => ! (auth()->user()?->can('document.bypass_unit_scope') ?? false) || self::isWorkflowClassificationLocked($record))
                                 ->dehydrated(),
 
                             Select::make('document_category_id')
@@ -74,6 +75,8 @@ class DocumentForm
                                 ->columnSpanFull()
                                 ->required()
                                 ->live()
+                                ->disabled(fn (?Document $record): bool => self::isWorkflowClassificationLocked($record))
+                                ->dehydrated()
                                 ->hintAction(
                                     Action::make('download_category_template')
                                         ->label('Unduh Template Word')
@@ -309,7 +312,7 @@ class DocumentForm
                                 ->helperText(fn (): string => (auth()->user()?->can('document.manual_numbering') ?? false)
                                     ? 'Aktifkan jika naskah dinas sudah memiliki nomor surat fisik terdahulu.'
                                     : 'Input nomor manual memerlukan izin document.manual_numbering.')
-                                ->disabled(fn (): bool => ! (auth()->user()?->can('document.manual_numbering') ?? false))
+                                ->disabled(fn (?Document $record): bool => ! (auth()->user()?->can('document.manual_numbering') ?? false) || self::isWorkflowClassificationLocked($record))
                                 ->dehydrated()
                                 ->live()
                                 ->default(false),
@@ -317,7 +320,7 @@ class DocumentForm
                             TextInput::make('document_number')
                                 ->label('Nomor Surat Resmi')
                                 ->placeholder('Contoh: 001/UNIVBI.REKTORAT/SE/XI/2026')
-                                ->disabled(fn (): bool => ! (auth()->user()?->can('document.manual_numbering') ?? false))
+                                ->disabled(fn (?Document $record): bool => ! (auth()->user()?->can('document.manual_numbering') ?? false) || self::isWorkflowClassificationLocked($record))
                                 ->dehydrated()
                                 ->visible(fn (Get $get): bool => (bool) $get('is_manual_number'))
                                 ->required(fn (Get $get): bool => (bool) $get('is_manual_number'))
@@ -394,5 +397,18 @@ class DocumentForm
     private static function resolvesCategoryHasExpiry(Get $get): bool
     {
         return (bool) self::resolveSelectedCategory($get)?->has_expiry;
+    }
+
+    private static function isWorkflowClassificationLocked(?Document $record): bool
+    {
+        if (! $record || ! $record->exists) {
+            return false;
+        }
+
+        if (auth()->user()?->hasRole('super_admin') ?? false) {
+            return false;
+        }
+
+        return ! in_array($record->status, [DocumentStatus::Draft, DocumentStatus::Revision], true);
     }
 }
