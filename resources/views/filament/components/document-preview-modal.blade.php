@@ -1,7 +1,15 @@
 @php
     $primaryFile = $document->primaryFile ?? $document->files()->where('is_active', true)->first();
-    $isPdf = $primaryFile && ($primaryFile->file_extension === 'pdf' || $primaryFile->mime_type === 'application/pdf');
-    $isWord = $primaryFile && in_array(strtolower((string) $primaryFile->file_extension), ['doc', 'docx']);
+    $effectivePath = $primaryFile?->getEffectiveFilePath();
+    $effectiveExt = $effectivePath
+        ? strtolower((string) pathinfo($effectivePath, PATHINFO_EXTENSION))
+        : strtolower((string) ($primaryFile?->file_extension ?? ''));
+    $originalExt = strtolower((string) ($primaryFile?->file_extension ?? $effectiveExt));
+
+    $isWordSource = in_array($originalExt, ['doc', 'docx'], true);
+    $isPdf = ($effectiveExt === 'pdf') || ($primaryFile && $primaryFile->mime_type === 'application/pdf' && ! in_array($effectiveExt, ['doc', 'docx'], true));
+    $pdfPreviewUrl = $isPdf ? $streamUrl : null;
+    $isWord = ! $isPdf && in_array($effectiveExt, ['doc', 'docx'], true);
     $canDownload = auth()->user()?->can('downloadPrivate', $document);
 @endphp
 
@@ -35,7 +43,11 @@
                 {{-- Technical Metadata Chips --}}
                 <div class="doc-modal-meta-row">
                     <span class="doc-modal-tag {{ $isPdf ? 'doc-modal-tag-pdf' : ($isWord ? 'doc-modal-tag-doc' : 'doc-badge-gray') }}">
-                        {{ strtoupper($primaryFile?->file_extension ?? 'BERKAS') }}
+                        @if ($isWordSource && $isPdf)
+                            {{ strtoupper($originalExt) }} &rarr; PDF
+                        @else
+                            {{ strtoupper($effectiveExt ?: ($primaryFile?->file_extension ?? 'BERKAS')) }}
+                        @endif
                     </span>
 
                     <span style="font-family: ui-monospace, SFMono-Regular, monospace; font-weight: 500;">
@@ -68,9 +80,9 @@
 
         {{-- High-Precision Action Buttons --}}
         <div class="doc-modal-actions">
-            @if ($isPdf)
+            @if ($isPdf && filled($pdfPreviewUrl))
                 <a
-                    href="{{ $streamUrl }}"
+                    href="{{ $pdfPreviewUrl }}"
                     target="_blank"
                     rel="noopener noreferrer"
                     class="doc-modal-btn doc-modal-btn-secondary"
@@ -95,15 +107,22 @@
     </div>
 
     {{-- Main Preview Workstation Canvas --}}
-    @if ($isPdf)
+    @if ($isPdf && filled($pdfPreviewUrl))
         <div class="doc-modal-frame-wrap">
             <iframe
-                src="{{ $streamUrl }}#toolbar=1&navpanes=0"
+                src="{{ $pdfPreviewUrl }}#toolbar=1&navpanes=0"
                 class="doc-modal-iframe"
                 title="Pratinjau Dokumen PDF"
                 loading="lazy"
             ></iframe>
         </div>
+    @elseif ($primaryFile && $isWord)
+        @include('filament.components.word-preview-stage', [
+            'streamUrl' => $streamUrl,
+            'downloadUrl' => $downloadUrl,
+            'extension' => $effectiveExt ?: ($primaryFile->file_extension ?? 'docx'),
+            'canDownload' => $canDownload,
+        ])
     @elseif ($primaryFile)
         <div class="doc-modal-empty-box">
             <div class="doc-modal-file-icon doc-modal-file-icon-word" style="width: 3.5rem; height: 3.5rem; margin-bottom: 1rem; border-radius: 0.5rem;">

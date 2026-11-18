@@ -347,4 +347,64 @@ class DocumentStreamControllerTest extends TestCase
             ->assertActionExists('preview')
             ->assertActionExists('download');
     }
+
+    public function test_document_preview_modal_renders_pdf_iframe_when_docx_has_stamped_pdf(): void
+    {
+        [$document, $file] = $this->createDocumentWithFile([], 'docx');
+
+        $stampedPdfPath = 'documents/2026/11/TI/stamped-test.pdf';
+        Storage::disk('private')->put($stampedPdfPath, '%PDF-1.4 dummy stamped pdf');
+        $file->update(['stamped_file_path' => $stampedPdfPath]);
+
+        $userStaffUnitA = User::factory()->create([
+            'unit_id' => $this->unitA->id,
+            'is_active' => true,
+        ]);
+        $userStaffUnitA->assignRole($this->roleStaff);
+        $this->actingAs($userStaffUnitA);
+
+        $html = view('filament.components.document-preview-modal', [
+            'document' => $document->fresh('primaryFile'),
+            'streamUrl' => route('admin.documents.stream', $document),
+            'downloadUrl' => route('admin.documents.download', $document),
+        ])->render();
+
+        $this->assertStringContainsString('<iframe', $html);
+        $this->assertStringContainsString('DOCX &rarr; PDF', $html);
+        $this->assertStringNotContainsString('data-word-preview-root', $html);
+    }
+
+    public function test_document_preview_modal_renders_docx_preview_stage_directly_without_pdf_conversion(): void
+    {
+        [$document] = $this->createDocumentWithFile([], 'docx');
+
+        $userStaffUnitA = User::factory()->create([
+            'unit_id' => $this->unitA->id,
+            'is_active' => true,
+        ]);
+        $userStaffUnitA->assignRole($this->roleStaff);
+        $this->actingAs($userStaffUnitA);
+
+        $html = view('filament.components.document-preview-modal', [
+            'document' => $document->fresh('primaryFile'),
+            'streamUrl' => route('admin.documents.stream', $document),
+            'downloadUrl' => route('admin.documents.download', $document),
+        ])->render();
+
+        $this->assertStringContainsString('data-word-preview-root', $html);
+        $this->assertStringNotContainsString('<iframe', $html);
+    }
+
+    public function test_letter_preview_modal_renders_docx_preview_stage_directly(): void
+    {
+        $html = view('filament.components.letter-preview-modal', [
+            'filePath' => 'outgoing-letters/draft-surat.docx',
+            'fileName' => 'draft-surat.docx',
+            'streamUrl' => '/admin/outgoing-letters-file/uuid/stream',
+            'downloadUrl' => '/admin/outgoing-letters-file/uuid/download',
+        ])->render();
+
+        $this->assertStringContainsString('data-word-preview-root', $html);
+        $this->assertStringNotContainsString('<iframe', $html);
+    }
 }

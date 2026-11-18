@@ -2,7 +2,9 @@
     $activePath = $filePath ?? null;
     $ext = $activePath ? strtolower(pathinfo($activePath, PATHINFO_EXTENSION)) : '';
     $isPdf = ($ext === 'pdf');
-    $isWord = in_array($ext, ['doc', 'docx'], true);
+    $isWordSource = in_array($ext, ['doc', 'docx'], true);
+    $pdfPreviewUrl = ($isPdf && ! empty($streamUrl)) ? $streamUrl : null;
+    $isWord = ! $isPdf && $isWordSource;
 @endphp
 
 @include('filament.components.document-timeline-styles')
@@ -31,7 +33,11 @@
 
                 <div class="doc-modal-meta-row">
                     <span class="doc-modal-tag {{ $isPdf ? 'doc-modal-tag-pdf' : ($isWord ? 'doc-modal-tag-doc' : 'doc-badge-gray') }}">
-                        {{ strtoupper($ext ?: 'BERKAS') }}
+                        @if ($isWordSource && $isPdf)
+                            {{ strtoupper($ext) }} &rarr; PDF
+                        @else
+                            {{ strtoupper($ext ?: 'BERKAS') }}
+                        @endif
                     </span>
 
                     @if (!empty($letterNumber))
@@ -54,9 +60,9 @@
         </div>
 
         <div class="doc-modal-actions">
-            @if ($isPdf && !empty($streamUrl))
+            @if ($isPdf && !empty($pdfPreviewUrl))
                 <a
-                    href="{{ $streamUrl }}"
+                    href="{{ $pdfPreviewUrl }}"
                     target="_blank"
                     rel="noopener noreferrer"
                     class="doc-modal-btn doc-modal-btn-secondary"
@@ -78,15 +84,22 @@
         </div>
     </div>
 
-    @if ($isPdf && !empty($streamUrl))
+    @if ($isPdf && !empty($pdfPreviewUrl))
         <div class="doc-modal-frame-wrap">
             <iframe
-                src="{{ $streamUrl }}#toolbar=1&navpanes=0"
+                src="{{ $pdfPreviewUrl }}#toolbar=1&navpanes=0"
                 class="doc-modal-iframe"
                 title="Pratinjau Surat PDF"
                 loading="lazy"
             ></iframe>
         </div>
+    @elseif ($activePath && $isWord && !empty($streamUrl))
+        @include('filament.components.word-preview-stage', [
+            'streamUrl' => $streamUrl,
+            'downloadUrl' => $downloadUrl ?? null,
+            'extension' => $ext ?: 'docx',
+            'canDownload' => ! empty($downloadUrl),
+        ])
     @elseif ($activePath)
         <div class="doc-modal-empty-box">
             <div class="doc-modal-file-icon doc-modal-file-icon-word" style="width: 3.5rem; height: 3.5rem; margin-bottom: 1rem; border-radius: 0.5rem;">
