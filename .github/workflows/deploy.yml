@@ -1,0 +1,205 @@
+name: Deploy Development
+
+on:
+  push:
+    branches: [ "dev" ]
+
+concurrency:
+  group: deploy-development
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: PHPUnit
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: dms_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: mbstring, intl, pdo, pdo_pgsql, bcmath, zip, xml, dom, gd, fileinfo, exif
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Build Frontend Assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Prepare application
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          php -r "file_put_contents('.env', PHP_EOL.'DB_CONNECTION=pgsql'.PHP_EOL.'DB_HOST=127.0.0.1'.PHP_EOL.'DB_PORT=5432'.PHP_EOL.'DB_DATABASE=dms_test'.PHP_EOL.'DB_USERNAME=postgres'.PHP_EOL.'DB_PASSWORD=postgres'.PHP_EOL, FILE_APPEND);"
+          php artisan migrate --force
+
+      - name: Run tests
+        run: php artisan test
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: dms_test
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
+
+  build:
+    name: Build Artifact
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.5
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: mbstring, intl, pdo, pdo_pgsql, gd, bcmath, zip, xml, dom, fileinfo, exif
+          coverage: none
+
+      - name: Install Composer dependencies (Build)
+        run: composer install --no-interaction --prefer-dist --no-progress --no-dev --optimize-autoloader --no-scripts
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Build Assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Package artifact
+        run: |
+          rm -rf .git .github .agents graphify-out tests node_modules vendor storage bootstrap/cache
+          tar -czf ../app.tar.gz ./
+          mv ../app.tar.gz .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app
+          path: app.tar.gz
+          retention-days: 1
+
+  deploy:
+    name: Deploy to Development
+    needs: build
+    runs-on: ubuntu-latest
+    environment: development
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app
+          path: .
+
+      - name: Install SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add host to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -T 10 -t ed25519,rsa -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts || true
+
+      - name: Deploy Process
+        run: |
+          REL=$(date +%Y%m%d%H%M%S)-${GITHUB_SHA::7}
+
+          scp -O -o StrictHostKeyChecking=no -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedKeyTypes=+ssh-rsa -P "${{ secrets.SSH_PORT }}" app.tar.gz ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.APP_DIR }}/releases/tmp-$REL.tar.gz
+
+          ssh -tt -o StrictHostKeyChecking=no -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedKeyTypes=+ssh-rsa -p "${{ secrets.SSH_PORT }}" ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            set -e
+            cd ${{ secrets.APP_DIR }}/releases
+
+            mkdir -p $REL
+            tar -xzf tmp-$REL.tar.gz -C $REL
+            rm tmp-$REL.tar.gz
+            cd $REL
+
+            # --- LINKING & PREPARATION ---
+            rm -rf storage graphify-out .agents doc public/storage
+            ln -sfn ${{ secrets.APP_DIR }}/shared/storage storage
+            ln -sfn ${{ secrets.APP_DIR }}/shared/.env .env
+            mkdir -p bootstrap/cache
+
+            # --- STORAGE (shared) ---
+            mkdir -p ${{ secrets.APP_DIR }}/shared/storage/app/public
+            mkdir -p ${{ secrets.APP_DIR }}/shared/storage/app/private/livewire-tmp
+            mkdir -p ${{ secrets.APP_DIR }}/shared/storage/framework/cache/data
+            mkdir -p ${{ secrets.APP_DIR }}/shared/storage/framework/sessions
+            mkdir -p ${{ secrets.APP_DIR }}/shared/storage/framework/views
+            mkdir -p ${{ secrets.APP_DIR }}/shared/storage/logs
+
+            # --- INSTALL COMPOSER (PHP 8.5) ---
+            if ! command -v php8.5 >/dev/null 2>&1; then
+              echo 'ERROR: php8.5 is not installed. Install php8.5-cli + php8.5-fpm before deploying.'
+              exit 1
+            fi
+            php8.5 -v
+            export COMPOSER_ALLOW_SUPERUSER=1
+            php8.5 \$(command -v composer) install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+
+            # --- FIX PERMISSIONS (setelah composer install agar vendor/ & bootstrap/cache/ dimiliki www-data) ---
+            sudo chown -R www-data:www-data ${{ secrets.APP_DIR }}/shared/storage
+            sudo chown -R www-data:www-data .
+            sudo chmod -R 775 ${{ secrets.APP_DIR }}/shared/storage bootstrap/cache
+            sudo -u www-data touch ${{ secrets.APP_DIR }}/shared/storage/app/private/livewire-tmp/.deploy-write-check
+
+            # --- ARTISAN MIGRATION & CACHE ---
+            sudo -u www-data php8.5 artisan migrate --force
+            sudo -u www-data php8.5 artisan storage:link || true
+            sudo -u www-data php8.5 artisan optimize:clear
+            sudo -u www-data php8.5 artisan config:cache
+            sudo -u www-data php8.5 artisan route:cache
+            sudo -u www-data php8.5 artisan view:cache
+            sudo -u www-data php8.5 artisan filament:optimize
+
+            # --- AKTIVASI & CLEANUP RELEASE LAMA (simpan 5 terbaru) ---
+            ln -sfn ${{ secrets.APP_DIR }}/releases/$REL ${{ secrets.APP_DIR }}/current
+            cd ${{ secrets.APP_DIR }}/releases && ls -1dt */ | tail -n +6 | xargs -r rm -rf
+          "
+
+      - name: Post-Deploy (Reload Services)
+        run: |
+          ssh -o StrictHostKeyChecking=no -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedKeyTypes=+ssh-rsa -p "${{ secrets.SSH_PORT }}" ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            set -e
+            cd ${{ secrets.APP_DIR }}/current
+            sudo -u www-data php8.5 artisan queue:restart || true
+            echo 'Reloading services...'
+            sudo systemctl reload php8.5-fpm || sudo systemctl restart php8.5-fpm || true
+            sudo systemctl reload nginx || true
+            echo 'Done!'
+          "
