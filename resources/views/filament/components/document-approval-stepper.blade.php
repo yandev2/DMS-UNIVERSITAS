@@ -24,12 +24,16 @@
         || $document->approved_at !== null
         || filled($document->document_number);
 
-    // Catatan revisi atau penolakan terakhir jika ada
-    $latestActionWithNote = $document->approvals()
-        ->whereNotNull('note')
-        ->whereIn('status', [ApprovalStatus::Revision, ApprovalStatus::Rejected, ApprovalStatus::Approved])
-        ->latest('updated_at')
-        ->first();
+    // Catatan revisi atau penolakan pada putaran aktif terakhir jika ada
+    $latestActionWithNote = match ($docStatus) {
+        DocumentStatus::Revision => $activeApprovals
+            ->where('status', ApprovalStatus::Revision)
+            ->first(fn ($approval): bool => filled($approval->note)),
+        DocumentStatus::Rejected => $activeApprovals
+            ->where('status', ApprovalStatus::Rejected)
+            ->first(fn ($approval): bool => filled($approval->note)),
+        default => null,
+    };
 @endphp
 
 @include('filament.components.document-timeline-styles')

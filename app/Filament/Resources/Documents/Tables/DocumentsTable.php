@@ -6,13 +6,12 @@ namespace App\Filament\Resources\Documents\Tables;
 
 use App\Enums\DocumentStatus;
 use App\Enums\VisibilityLevel;
+use App\Filament\Resources\Documents\Actions\DocumentWorkflowActions;
 use App\Filament\Resources\Documents\DocumentResource;
 use App\Filament\Support\DeletionGuard;
 use App\Jobs\GenerateBulkZipArchiveJob;
 use App\Models\BulkExport;
 use App\Models\Document;
-use App\Services\DocumentApprovalService;
-use App\Services\DocumentStampingService;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkAction;
@@ -20,7 +19,6 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
-use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Support\Enums\Width;
 use Filament\Tables\Columns\IconColumn;
@@ -247,114 +245,12 @@ class DocumentsTable
                     EditAction::make()
                         ->url(fn (Document $record): string => DocumentResource::getUrl('edit', ['record' => $record])),
 
-                    Action::make('approve')
-                        ->label('Setujui Dokumen')
-                        ->icon('heroicon-o-check-circle')
-                        ->color('success')
-                        ->form([
-                            Textarea::make('note')
-                                ->label('Catatan Persetujuan (Opsional)')
-                                ->placeholder('Contoh: Disetujui tanpa catatan...')
-                                ->rows(3),
-                        ])
-                        ->action(function (Document $record, array $data): void {
-                            app(DocumentApprovalService::class)->approve($record, auth()->user(), $data['note'] ?? null);
-                            $record->refresh();
-                            Notification::make()
-                                ->success()
-                                ->title('Dokumen Berhasil Disetujui')
-                                ->body($record->status === DocumentStatus::Approved
-                                    ? "Dokumen resmi disahkan! Nomor resmi {$record->document_number} telah terbit."
-                                    : 'Persetujuan Anda telah dicatat dan diteruskan ke tahapan berikutnya.')
-                                ->send();
-                        })
-                        ->visible(fn (Document $record): bool => app(DocumentApprovalService::class)->canUserApprove(auth()->user(), $record, useLoadedRelations: true)),
-
-                    Action::make('requestRevision')
-                        ->label('Minta Revisi')
-                        ->icon('heroicon-o-arrow-path')
-                        ->color('warning')
-                        ->form([
-                            Textarea::make('note')
-                                ->label('Catatan Revisi / Perbaikan Wajib')
-                                ->placeholder('Jelaskan bagian yang perlu diperbaiki...')
-                                ->required()
-                                ->rows(3),
-                        ])
-                        ->action(function (Document $record, array $data): void {
-                            app(DocumentApprovalService::class)->requestRevision($record, auth()->user(), $data['note']);
-                            Notification::make()
-                                ->warning()
-                                ->title('Permintaan Revisi Dikirim')
-                                ->body('Catatan perbaikan telah dicatat dan status dokumen berubah menjadi Revisi.')
-                                ->send();
-                        })
-                        ->visible(fn (Document $record): bool => app(DocumentApprovalService::class)->canUserApprove(auth()->user(), $record, useLoadedRelations: true)),
-
-                    Action::make('reject')
-                        ->label('Tolak Dokumen')
-                        ->icon('heroicon-o-x-circle')
-                        ->color('danger')
-                        ->form([
-                            Textarea::make('note')
-                                ->label('Alasan Penolakan Wajib')
-                                ->placeholder('Jelaskan alasan penolakan naskah dinas...')
-                                ->required()
-                                ->rows(3),
-                        ])
-                        ->action(function (Document $record, array $data): void {
-                            app(DocumentApprovalService::class)->reject($record, auth()->user(), $data['note']);
-                            Notification::make()
-                                ->danger()
-                                ->title('Dokumen Ditolak')
-                                ->body('Keputusan penolakan telah dicatat secara resmi.')
-                                ->send();
-                        })
-                        ->visible(fn (Document $record): bool => app(DocumentApprovalService::class)->canUserApprove(auth()->user(), $record, useLoadedRelations: true)),
-
-                    Action::make('resubmit')
-                        ->label('Ajukan Kembali')
-                        ->icon('heroicon-o-paper-airplane')
-                        ->color('info')
-                        ->requiresConfirmation()
-                        ->modalHeading('Ajukan Kembali Dokumen?')
-                        ->modalDescription('Dokumen yang telah direvisi akan diajukan kembali ke alur persetujuan tingkat 1.')
-                        ->modalSubmitActionLabel('Ya, Ajukan Kembali')
-                        ->action(function (Document $record): void {
-                            app(DocumentApprovalService::class)->resubmit($record);
-                            Notification::make()
-                                ->success()
-                                ->title('Dokumen Berhasil Diajukan Kembali')
-                                ->body('Dokumen telah masuk kembali ke antrean persetujuan tingkat 1.')
-                                ->send();
-                        })
-                        ->visible(fn (Document $record): bool => $record->status === DocumentStatus::Revision && auth()->user()?->can('update', $record)),
-
-                    Action::make('stamp')
-                        ->label(fn (Document $record): string => $record->primaryFile?->stamped_file_path ? 'Perbarui Stempel' : 'Bubuhi Stempel')
-                        ->icon('heroicon-o-check-badge')
-                        ->color('success')
-                        ->requiresConfirmation()
-                        ->modalHeading('Bubuhi Stempel Resmi & QR Code?')
-                        ->modalDescription('Sistem akan membubuhi kotak penomoran naskah dinas, tanggal pengesahan, pejabat penandatangan, dan stempel QR-Code verifikasi ke berkas dokumen.')
-                        ->modalSubmitActionLabel('Ya, Bubuhi Stempel')
-                        ->action(function (Document $record): void {
-                            $stampedFile = app(DocumentStampingService::class)->stamp($record);
-                            if ($stampedFile && $stampedFile->stamped_file_path) {
-                                Notification::make()
-                                    ->success()
-                                    ->title('Stempel Berhasil Dibubuhkan')
-                                    ->body('Berkas fisik dokumen kini telah resmi berstempel dan memiliki QR Code keabsahan.')
-                                    ->send();
-                            } else {
-                                Notification::make()
-                                    ->warning()
-                                    ->title('Stempel Dilewati')
-                                    ->body('Dokumen tidak memiliki berkas fisik atau diatur tanpa stempel visual.')
-                                    ->send();
-                            }
-                        })
-                        ->visible(fn (Document $record): bool => $record->status === DocumentStatus::Approved && auth()->user()?->can('update', $record) && ($record->primaryFile !== null || (bool) ($record->files_exists ?? $record->files()->exists()))),
+                    DocumentWorkflowActions::makeSubmitAction(),
+                    DocumentWorkflowActions::makeApproveAction(useLoadedRelations: true),
+                    DocumentWorkflowActions::makeRequestRevisionAction(useLoadedRelations: true),
+                    DocumentWorkflowActions::makeRejectAction(useLoadedRelations: true),
+                    DocumentWorkflowActions::makeResubmitAction(),
+                    DocumentWorkflowActions::makeStampAction(),
 
                     DeletionGuard::preventIfRestricted(DeleteAction::make()),
                 ])
