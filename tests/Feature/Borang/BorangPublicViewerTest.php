@@ -9,8 +9,10 @@ use App\Enums\StorageDisk;
 use App\Models\AcademicYear;
 use App\Models\AccreditationCriterion;
 use App\Models\Document;
+use App\Models\DocumentCategory;
 use App\Models\DocumentFile;
 use App\Models\Unit;
+use App\Models\User;
 use Database\Seeders\MasterDataSeeder;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -23,17 +25,20 @@ class BorangPublicViewerTest extends TestCase
     private function createBorangDocument(Unit $unit): Document
     {
         $criterionK6 = AccreditationCriterion::where('code', 'K6')->firstOrFail();
+        $category = DocumentCategory::firstOrFail();
+        $academicYear = AcademicYear::firstOrFail();
+        $uploader = User::firstOrFail();
 
         $document = Document::create([
             'title' => 'SK Kurikulum Informatika 2026',
             'document_number' => '001/UNIVBI.TI/SK/XI/2026',
             'unit_id' => $unit->id,
-            'document_category_id' => 1,
-            'academic_year_id' => 1,
+            'document_category_id' => $category->id,
+            'academic_year_id' => $academicYear->id,
             'is_borang' => true,
             'status' => DocumentStatus::Approved,
             'issued_date' => now()->toDateString(),
-            'uploaded_by' => 1,
+            'uploaded_by' => $uploader->id,
         ]);
 
         $document->accreditationCriteria()->attach($criterionK6->id, [
@@ -55,7 +60,7 @@ class BorangPublicViewerTest extends TestCase
             'file_size' => 1024,
             'mime_type' => 'application/pdf',
             'is_primary' => true,
-            'uploaded_by' => 1,
+            'uploaded_by' => $uploader->id,
         ]);
 
         return $document;
@@ -215,16 +220,19 @@ class BorangPublicViewerTest extends TestCase
 
         // Create second document in the same unit
         $criterionK2 = AccreditationCriterion::where('code', 'K2')->firstOrFail();
+        $category = DocumentCategory::firstOrFail();
+        $academicYear = AcademicYear::firstOrFail();
+        $uploader = User::firstOrFail();
         $docB = Document::create([
             'title' => 'MoU Kerja Sama TI 2026',
             'document_number' => '002/UNIVBI.TI/MOU/XI/2026',
             'unit_id' => $unitTi->id,
-            'document_category_id' => 1,
-            'academic_year_id' => 1,
+            'document_category_id' => $category->id,
+            'academic_year_id' => $academicYear->id,
             'is_borang' => true,
             'status' => DocumentStatus::Approved,
             'issued_date' => now()->toDateString(),
-            'uploaded_by' => 1,
+            'uploaded_by' => $uploader->id,
         ]);
         $docB->accreditationCriteria()->attach($criterionK2->id, ['order_index' => 1]);
 
@@ -249,17 +257,20 @@ class BorangPublicViewerTest extends TestCase
         ]);
 
         $docA = $this->createBorangDocument($unitTi);
+        $category = DocumentCategory::firstOrFail();
+        $academicYear = AcademicYear::firstOrFail();
+        $uploader = User::firstOrFail();
 
         $docB = Document::create([
             'title' => 'SK Laboratorium TI 2026',
             'document_number' => '003/UNIVBI.TI/SK/XI/2026',
             'unit_id' => $unitTi->id,
-            'document_category_id' => 1,
-            'academic_year_id' => 1,
+            'document_category_id' => $category->id,
+            'academic_year_id' => $academicYear->id,
             'is_borang' => true,
             'status' => DocumentStatus::Approved,
             'issued_date' => now()->toDateString(),
-            'uploaded_by' => 1,
+            'uploaded_by' => $uploader->id,
         ]);
 
         $response = $this->get("/bukti-borang/unit/{$unitTi->code}?doc={$docB->uuid}");
@@ -325,6 +336,9 @@ class BorangPublicViewerTest extends TestCase
             'is_active' => false,
         ]);
 
+        $category = DocumentCategory::firstOrFail();
+        $uploader = User::firstOrFail();
+
         $createdDocs = [];
         for ($i = 1; $i <= 30; $i++) {
             $padded = str_pad((string) $i, 3, '0', STR_PAD_LEFT);
@@ -332,12 +346,12 @@ class BorangPublicViewerTest extends TestCase
                 'title' => "Dokumen Uji Skala Borang {$padded}",
                 'document_number' => "{$padded}/UNIVBI.TI/SK/XI/2026",
                 'unit_id' => $unitTi->id,
-                'document_category_id' => 1,
+                'document_category_id' => $category->id,
                 'academic_year_id' => ($i === 30 ? $yearB->id : $yearA->id),
                 'is_borang' => true,
                 'status' => DocumentStatus::Approved,
                 'issued_date' => now()->toDateString(),
-                'uploaded_by' => 1,
+                'uploaded_by' => $uploader->id,
             ]);
 
             $doc->accreditationCriteria()->attach(

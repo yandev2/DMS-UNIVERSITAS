@@ -8,9 +8,11 @@ use App\Enums\DocumentStatus;
 use App\Enums\StorageDisk;
 use App\Filament\Pages\AccreditationDataBank;
 use App\Jobs\GenerateBorangExportJob;
+use App\Models\AcademicYear;
 use App\Models\AccreditationCriterion;
 use App\Models\BulkExport;
 use App\Models\Document;
+use App\Models\DocumentCategory;
 use App\Models\DocumentFile;
 use App\Models\Unit;
 use App\Models\User;
@@ -34,17 +36,20 @@ class AccreditationDataBankTest extends TestCase
     {
         $criterionK6 = $unit->getApplicableCriteria()->firstWhere('code', 'K6')
             ?? AccreditationCriterion::where('code', 'K6')->firstOrFail();
+        $category = DocumentCategory::firstOrFail();
+        $academicYear = AcademicYear::firstOrFail();
+        $uploader = User::firstOrFail();
 
         $document = Document::create([
             'title' => 'SK Kurikulum Informatika 2026',
             'document_number' => '001/UNIVBI.TI/SK/XI/2026',
             'unit_id' => $unit->id,
-            'document_category_id' => 1,
-            'academic_year_id' => 1,
+            'document_category_id' => $category->id,
+            'academic_year_id' => $academicYear->id,
             'is_borang' => true,
             'status' => DocumentStatus::Approved,
             'issued_date' => now()->toDateString(),
-            'uploaded_by' => 1,
+            'uploaded_by' => $uploader->id,
         ]);
 
         $document->accreditationCriteria()->attach($criterionK6->id, [
@@ -66,7 +71,7 @@ class AccreditationDataBankTest extends TestCase
             'file_size' => 1024,
             'mime_type' => 'application/pdf',
             'is_primary' => true,
-            'uploaded_by' => 1,
+            'uploaded_by' => $uploader->id,
         ]);
 
         return $document;
@@ -258,16 +263,18 @@ class AccreditationDataBankTest extends TestCase
         // Document 2 in SI under K1
         $criterionK1 = $unitSi->getApplicableCriteria()->firstWhere('code', 'K1')
             ?? AccreditationCriterion::where('code', 'K1')->firstOrFail();
+        $category = DocumentCategory::firstOrFail();
+        $academicYear = AcademicYear::firstOrFail();
         $docK1 = Document::create([
             'title' => 'Renstra Sistem Informasi 2026',
             'document_number' => '002/UNIVBI.SI/SK/XI/2026',
             'unit_id' => $unitSi->id,
-            'document_category_id' => 1,
-            'academic_year_id' => 1,
+            'document_category_id' => $category->id,
+            'academic_year_id' => $academicYear->id,
             'is_borang' => true,
             'status' => DocumentStatus::Approved,
             'issued_date' => now()->toDateString(),
-            'uploaded_by' => 1,
+            'uploaded_by' => $superAdmin->id,
         ]);
         $docK1->accreditationCriteria()->attach($criterionK1->id, ['order_index' => 1]);
 
@@ -368,14 +375,16 @@ class AccreditationDataBankTest extends TestCase
 
         $lpmUser = User::where('email', 'lpm@univbi.ac.id')->firstOrFail();
         $unitTi = Unit::where('code', 'TI')->firstOrFail();
+        $category = DocumentCategory::firstOrFail();
+        $academicYear = AcademicYear::firstOrFail();
 
         for ($i = 1; $i <= AccreditationDataBank::HEAVY_ZIP_THRESHOLD + 1; $i++) {
             Document::create([
                 'title' => "Dokumen Antrean Dispatch {$i}",
                 'document_number' => str_pad((string) $i, 3, '0', STR_PAD_LEFT).'/UNIVBI.TI/SK/XI/2026',
                 'unit_id' => $unitTi->id,
-                'document_category_id' => 1,
-                'academic_year_id' => 1,
+                'document_category_id' => $category->id,
+                'academic_year_id' => $academicYear->id,
                 'is_borang' => true,
                 'status' => DocumentStatus::Approved,
                 'issued_date' => now()->toDateString(),
@@ -410,12 +419,15 @@ class AccreditationDataBankTest extends TestCase
         $dummyPdfPath = 'documents/2026/11/TI/heavy-export-sample.pdf';
         Storage::disk(StorageDisk::Private->value)->put($dummyPdfPath, '%PDF-1.4 sample content');
 
+        $category = DocumentCategory::firstOrFail();
+        $academicYear = AcademicYear::firstOrFail();
+
         $doc = Document::create([
             'title' => 'Dokumen Antrean Berat Pemrosesan',
             'document_number' => '901/UNIVBI.TI/SK/XI/2026',
             'unit_id' => $unitTi->id,
-            'document_category_id' => 1,
-            'academic_year_id' => 1,
+            'document_category_id' => $category->id,
+            'academic_year_id' => $academicYear->id,
             'is_borang' => true,
             'status' => DocumentStatus::Approved,
             'issued_date' => now()->toDateString(),

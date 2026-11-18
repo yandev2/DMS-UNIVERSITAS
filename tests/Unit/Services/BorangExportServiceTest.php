@@ -42,6 +42,7 @@ class BorangExportServiceTest extends TestCase
 
         $academicYear = AcademicYear::firstOrFail();
         $category = DocumentCategory::firstOrFail();
+        $uploader = User::firstOrFail();
         $criterionK6 = $unitTi->getApplicableCriteria()->firstWhere('code', 'K6')
             ?? AccreditationCriterion::where('code', 'K6')->firstOrFail();
 
@@ -59,7 +60,7 @@ class BorangExportServiceTest extends TestCase
             'expired_date' => '2030-11-10',
             'signer_name_snapshot' => 'Dr. Ahmad Fauzi, M.Kom.',
             'signer_position_snapshot' => 'Dekan Fakultas Teknik',
-            'uploaded_by' => 1,
+            'uploaded_by' => $uploader->id,
         ]);
 
         $document->accreditationCriteria()->attach($criterionK6->id, [
@@ -70,7 +71,7 @@ class BorangExportServiceTest extends TestCase
 
         DocumentFile::create([
             'document_id' => $document->id,
-            'uploaded_by' => 1,
+            'uploaded_by' => $uploader->id,
             'is_primary' => true,
             'order_index' => 1,
             'version' => 1,
@@ -178,6 +179,7 @@ class BorangExportServiceTest extends TestCase
         $unitTi = Unit::where('code', 'TI')->firstOrFail();
         $academicYear = AcademicYear::firstOrFail();
         $category = DocumentCategory::firstOrFail();
+        $uploader = User::firstOrFail();
 
         $criterionK1 = $unitTi->getApplicableCriteria()->firstWhere('code', 'K1')
             ?? AccreditationCriterion::where('code', 'K1')->firstOrFail();
@@ -193,7 +195,7 @@ class BorangExportServiceTest extends TestCase
             'is_borang' => true,
             'status' => DocumentStatus::Approved,
             'issued_date' => now()->toDateString(),
-            'uploaded_by' => 1,
+            'uploaded_by' => $uploader->id,
         ]);
 
         $document->accreditationCriteria()->attach([
@@ -232,6 +234,7 @@ class BorangExportServiceTest extends TestCase
         $unitTi = Unit::where('code', 'TI')->firstOrFail();
         $academicYear = AcademicYear::firstOrFail();
         $category = DocumentCategory::firstOrFail();
+        $uploader = User::firstOrFail();
         $criterionK6 = $unitTi->getApplicableCriteria()->firstWhere('code', 'K6')
             ?? AccreditationCriterion::where('code', 'K6')->firstOrFail();
 
@@ -246,7 +249,7 @@ class BorangExportServiceTest extends TestCase
             'status' => DocumentStatus::Approved,
             'issued_date' => now()->toDateString(),
             'signer_name_snapshot' => '-2+3',
-            'uploaded_by' => 1,
+            'uploaded_by' => $uploader->id,
         ]);
 
         $maliciousDoc->accreditationCriteria()->attach($criterionK6->id, [
