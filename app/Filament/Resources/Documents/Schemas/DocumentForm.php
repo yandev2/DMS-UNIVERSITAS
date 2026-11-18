@@ -255,6 +255,11 @@ class DocumentForm
                             CheckboxList::make('reminder_intervals')
                                 ->label('Jadwal Notifikasi Pengingat Kedaluwarsa')
                                 ->options(ReminderInterval::class)
+                                ->default([
+                                    ReminderInterval::H60->value,
+                                    ReminderInterval::H30->value,
+                                    ReminderInterval::H7->value,
+                                ])
                                 ->visible(fn (Get $get): bool => self::resolvesCategoryHasExpiry($get))
                                 ->columns(3)
                                 ->columnSpanFull(),

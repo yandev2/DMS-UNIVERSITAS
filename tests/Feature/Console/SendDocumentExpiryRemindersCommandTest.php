@@ -158,6 +158,14 @@ class SendDocumentExpiryRemindersCommandTest extends TestCase
         $this->artisan('documents:send-expiry-reminders --date=bukan-tanggal')
             ->expectsOutputToContain('Format parameter --date tidak valid')
             ->assertFailed();
+
+        $this->artisan('documents:send-expiry-reminders --date=2026-02-31')
+            ->expectsOutputToContain('Format parameter --date tidak valid')
+            ->assertFailed();
+
+        $this->artisan('documents:send-expiry-reminders --date=2026-13-01')
+            ->expectsOutputToContain('Format parameter --date tidak valid')
+            ->assertFailed();
     }
 
     public function test_command_is_registered_in_console_schedule(): void

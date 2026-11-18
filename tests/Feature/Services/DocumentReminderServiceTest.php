@@ -13,11 +13,15 @@ use App\Models\DocumentCategory;
 use App\Models\ReminderLog;
 use App\Models\Unit;
 use App\Models\User;
+use App\Notifications\DocumentExpiredNotification;
 use App\Notifications\DocumentExpiryReminderNotification;
 use App\Services\DocumentReminderService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
+use Illuminate\Notifications\Events\NotificationSending;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
+use Spatie\Activitylog\Models\Activity;
 use Tests\TestCase;
 
 class DocumentReminderServiceTest extends TestCase
@@ -364,5 +368,121 @@ class DocumentReminderServiceTest extends TestCase
 
         Notification::assertNothingSent();
         $this->assertSame(0, ReminderLog::count());
+    }
+
+    public function test_service_retries_failed_delivery_without_unique_constraint_crash_and_isolates_errors(): void
+    {
+        $failRecipient1 = true;
+
+        Event::listen(NotificationSending::class, function (NotificationSending $event) use (&$failRecipient1): void {
+            if ($failRecipient1 && $event->notifiable->email === 'dekan@univbi.ac.id' && $event->channel === 'mail') {
+                throw new \RuntimeException('SMTP Connection Timed Out');
+            }
+        });
+
+        $document = $this->createExpiringDocument(['expired_date' => '2026-12-12']);
+
+        // Hari ke-1 (H-30): recipient1 gagal SMTP, recipient2 tetap berhasil terkirim
+        $day1Result = $this->service->run(Carbon::parse('2026-11-12'));
+
+        $this->assertSame(1, $day1Result->sentCount);
+        $this->assertSame(1, $day1Result->failedCount);
+        $this->assertCount(1, $day1Result->errors);
+        $this->assertSame(2, ReminderLog::count());
+
+        $failedLog = ReminderLog::where('document_id', $document->id)
+            ->where('recipient_email', 'dekan@univbi.ac.id')
+            ->first();
+        $this->assertNotNull($failedLog);
+        $this->assertFalse($failedLog->is_success);
+        $this->assertStringContainsString('SMTP Connection Timed Out', (string) $failedLog->error_message);
+
+        // Hari ke-2 (H-29): SMTP pulih. recipient1 di-retry dan sukses; recipient2 di-skip.
+        $failRecipient1 = false;
+        $day2Result = $this->service->run(Carbon::parse('2026-11-13'));
+
+        $this->assertSame(1, $day2Result->sentCount);
+        $this->assertSame(1, $day2Result->skippedCount);
+        $this->assertSame(0, $day2Result->failedCount);
+        $this->assertSame(3, ReminderLog::count());
+
+        $retrySuccessLog = ReminderLog::where('document_id', $document->id)
+            ->where('recipient_email', 'dekan@univbi.ac.id')
+            ->where('is_success', true)
+            ->first();
+        $this->assertNotNull($retrySuccessLog);
+        $this->assertSame('h30', $retrySuccessLog->interval_type->value);
+
+        // Hari ke-3 (H-28): keduanya sudah sukses terkirim -> di-skip semua
+        $day3Result = $this->service->run(Carbon::parse('2026-11-14'));
+        $this->assertSame(0, $day3Result->sentCount);
+        $this->assertSame(2, $day3Result->skippedCount);
+        $this->assertSame(0, $day3Result->failedCount);
+    }
+
+    public function test_service_sends_expired_notification_and_records_single_expired_audit_log(): void
+    {
+        Notification::fake();
+
+        $document = $this->createExpiringDocument([
+            'status' => DocumentStatus::Approved,
+            'expired_date' => '2026-12-12',
+        ]);
+
+        // Bersihkan log creation agar hanya menguji log transisi Expired
+        Activity::query()->where('subject_id', $document->id)->delete();
+
+        $result = $this->service->run(Carbon::parse('2026-12-13'));
+
+        $this->assertSame(1, $result->expiredMarkedCount);
+        $this->assertSame(2, $result->expiredNotifiedCount);
+        $this->assertSame(DocumentStatus::Expired, $document->fresh()->status);
+
+        Notification::assertSentTo(
+            [$this->recipient1, $this->recipient2],
+            DocumentExpiredNotification::class,
+            fn (DocumentExpiredNotification $notification): bool => $notification->document->id === $document->id
+        );
+
+        // Harus ada tepat 1 log event 'expired' (bukan double update + manual log)
+        $expiredEventLogs = Activity::query()
+            ->where('subject_type', Document::class)
+            ->where('subject_id', $document->id)
+            ->where('event', 'expired')
+            ->get();
+
+        $this->assertCount(1, $expiredEventLogs);
+    }
+
+    public function test_service_matches_case_insensitive_legacy_email_recipients(): void
+    {
+        Notification::fake();
+
+        $document = $this->createExpiringDocument([
+            'expired_date' => '2026-12-12',
+            'reminder_recipients' => ['DEKAN@UNIVBI.AC.ID'],
+        ]);
+
+        $result = $this->service->run(Carbon::parse('2026-11-12'));
+
+        $this->assertSame(1, $result->sentCount);
+        Notification::assertSentTo($this->recipient1, DocumentExpiryReminderNotification::class);
+        Notification::assertNotSentTo($this->uploader, DocumentExpiryReminderNotification::class);
+    }
+
+    public function test_notifications_handle_missing_document_number_cleanly(): void
+    {
+        $document = $this->createExpiringDocument([
+            'document_number' => null,
+            'expired_date' => '2026-12-12',
+        ]);
+
+        $reminderData = (new DocumentExpiryReminderNotification($document, ReminderInterval::H30, 30))
+            ->toDatabase($this->recipient1);
+        $expiredData = (new DocumentExpiredNotification($document, Carbon::parse('2026-12-13')))
+            ->toDatabase($this->recipient1);
+
+        $this->assertStringContainsString('Tanpa Nomor', $reminderData['title']);
+        $this->assertStringContainsString('Tanpa Nomor', $expiredData['title']);
     }
 }
