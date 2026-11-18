@@ -398,11 +398,16 @@ class Document extends Model
                     if (! empty($userIds)) {
                         $query->whereIn('id', $userIds);
                     }
+
                     if (! empty($emails)) {
-                        $query->orWhereIn('email', $emails);
+                        $placeholders = implode(', ', array_fill(0, count($emails), '?'));
+                        $method = ! empty($userIds) ? 'orWhereRaw' : 'whereRaw';
+                        $query->{$method}("LOWER(email) IN ({$placeholders})", $emails);
                     }
                 })
-                ->get();
+                ->get()
+                ->unique('id')
+                ->values();
         }
 
         // Fallback jika tidak ada penerima aktif yang terdaftar: kirimkan ke pengunggah dokumen

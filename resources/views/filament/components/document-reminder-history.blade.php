@@ -8,7 +8,7 @@
         ->latest('sent_at')
         ->get();
 
-    $today = now()->startOfDay();
+    $today = now((string) config('app.timezone', 'Asia/Jakarta'))->startOfDay();
     $daysRemaining = $document->expired_date ? (int) $today->diffInDays($document->expired_date->copy()->startOfDay(), false) : null;
     $isPast = $daysRemaining !== null && $daysRemaining < 0;
 
@@ -42,6 +42,10 @@
             @elseif($isPast || $document->status === \App\Enums\DocumentStatus::Expired)
                 <span class="doc-badge doc-badge-danger" style="background-color: var(--doc-badge-danger-bg); color: var(--doc-badge-danger-solid); border: 1px solid var(--doc-badge-danger-border); font-weight: 700;">
                     Masa Berlaku Berakhir (Kedaluwarsa)
+                </span>
+            @elseif($daysRemaining === null)
+                <span class="doc-badge doc-badge-gray" style="background-color: var(--doc-surface-muted); color: var(--doc-text-primary); border: 1px solid var(--doc-border); font-weight: 700;">
+                    Tanggal Kedaluwarsa Belum Diatur
                 </span>
             @elseif($daysRemaining <= 7)
                 <span class="doc-badge doc-badge-danger" style="background-color: var(--doc-badge-danger-bg); color: var(--doc-badge-danger-solid); border: 1px solid var(--doc-badge-danger-border); font-weight: 700;">

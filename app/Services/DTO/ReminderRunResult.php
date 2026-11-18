@@ -17,6 +17,7 @@ class ReminderRunResult
         public int $failedCount = 0,
         public int $expiredMarkedCount = 0,
         public array $errors = [],
-        public array $details = []
+        public array $details = [],
+        public int $expiredNotifiedCount = 0
     ) {}
 }

@@ -23,11 +23,13 @@ class DocumentExpiryReminderNotification extends Notification
     ) {}
 
     /**
+     * Mengutamakan penyimpanan notifikasi panel sebelum pengiriman email eksternal.
+     *
      * @return list<string>
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        return ['database', 'mail'];
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -62,6 +64,7 @@ class DocumentExpiryReminderNotification extends Notification
 
     public function toDatabase(object $notifiable): array
     {
+        $docNumber = $this->document->document_number ?: 'Tanpa Nomor';
         $statusColor = match ($this->interval) {
             ReminderInterval::H7 => 'danger',
             ReminderInterval::H30 => 'warning',
@@ -69,7 +72,7 @@ class DocumentExpiryReminderNotification extends Notification
         };
 
         return FilamentNotification::make()
-            ->title("Pengingat [{$this->interval->getLabel()}]: {$this->document->document_number}")
+            ->title("Pengingat [{$this->interval->getLabel()}]: {$docNumber}")
             ->body("Naskah '{$this->document->title}' berakhir dalam {$this->daysRemaining} hari (Tenggat: {$this->document->expired_date?->format('d/m/Y')}).")
             ->status($statusColor)
             ->actions([

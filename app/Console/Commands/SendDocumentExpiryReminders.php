@@ -33,17 +33,26 @@ class SendDocumentExpiryReminders extends Command
     {
         $dateOption = $this->option('date');
         $dryRun = (bool) $this->option('dry-run');
+        $timezone = (string) config('app.timezone', 'Asia/Jakarta');
 
-        $evaluationDate = now();
+        $evaluationDate = now($timezone)->startOfDay();
 
         if (filled($dateOption)) {
+            $rawDate = trim((string) $dateOption);
+
             try {
-                $evaluationDate = Carbon::createFromFormat('Y-m-d', (string) $dateOption)->startOfDay();
+                $parsed = Carbon::createFromFormat('!Y-m-d', $rawDate, $timezone);
             } catch (\Throwable) {
-                $this->error("Format parameter --date tidak valid: '{$dateOption}'. Gunakan format YYYY-MM-DD.");
+                $parsed = false;
+            }
+
+            if (! $parsed instanceof Carbon || $parsed->format('Y-m-d') !== $rawDate) {
+                $this->error("Format parameter --date tidak valid: '{$dateOption}'. Gunakan tanggal kalender valid berformat YYYY-MM-DD.");
 
                 return self::FAILURE;
             }
+
+            $evaluationDate = $parsed->startOfDay();
         }
 
         $modeLabel = $dryRun ? '<fg=yellow>[DRY-RUN / SIMULASI]</>' : '<fg=green>[LIVE / EKSEKUSI]</>';
@@ -61,6 +70,7 @@ class SendDocumentExpiryReminders extends Command
                 ['Penerima Dilewati (Belum Jatuh Tempo / Sudah Terkirim)', $result->skippedCount],
                 ['Pengiriman Gagal', $result->failedCount],
                 ['Dokumen Kedaluwarsa Baru Dialihkan (Expired)', $result->expiredMarkedCount],
+                ['Notifikasi Status Kedaluwarsa Dikirim'.($dryRun ? ' (Simulasi)' : ''), $result->expiredNotifiedCount],
             ]
         );
 
