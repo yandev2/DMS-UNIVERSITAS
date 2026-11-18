@@ -2783,3 +2783,46 @@ html.dark .fi-panel-footer-sep,
         grid-template-columns: 1fr;
     }
 }
+
+/* =========================================================
+   FILAMENT NOTIFICATIONS TABS LAYOUT SUPPORT
+   (Filament menggunakan app.css precompiled, sehingga kelas utilitas
+   dari package zvizvi/filament-notifications-tabs dijamin di sini)
+   ========================================================= */
+.fi-no-database .flex-1 {
+    flex: 1 1 0%;
+    min-width: 0;
+}
+
+.fi-no-database .-mx-3 {
+    margin-inline: -0.75rem;
+}
+
+.fi-no-database .fi-no-database-tabs.border-b-0 {
+    border-bottom-width: 0 !important;
+}
+
+.fi-no-database .fi-no-database-tabs.mb-0 {
+    margin-bottom: 0 !important;
+}
+
+.fi-no-database .fi-no-database-tabs.pb-0 {
+    padding-bottom: 0 !important;
+}
+
+.fi-no-database .fi-no-database-tabs .flex {
+    display: flex;
+}
+
+.fi-no-database .fi-no-database-tabs .justify-center {
+    justify-content: center;
+}
+
+.fi-no-database .fi-no-database-tabs .ms-auto {
+    margin-inline-start: auto;
+    padding-inline-end: 0.75rem;
+}
+
+.fi-no-database .fi-no-database-tabs .leading-9 {
+    line-height: 2.25rem;
+}
