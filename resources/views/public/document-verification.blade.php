@@ -25,7 +25,8 @@
         }
     </script>
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/word-preview.js'])
+    <link rel="stylesheet" href="/css/document-timeline.css?v={{ @filemtime(public_path('css/document-timeline.css')) ?: time() }}">
     <style>
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
@@ -405,6 +406,17 @@
 
         <!-- AREA PRATINJAU LEMBAR NASKAH DINAS -->
         @if($canStreamOrDownload)
+            @php
+                $verifyStreamUrl = route('document.verify.stream', $document->uuid);
+                $verifyDownloadUrl = route('document.verify.download', $document->uuid);
+                $verifyEffectivePath = $primaryFile->getEffectiveFilePath();
+                $verifyEffectiveExt = $verifyEffectivePath
+                    ? strtolower((string) pathinfo($verifyEffectivePath, PATHINFO_EXTENSION))
+                    : strtolower((string) ($primaryFile->file_extension ?? 'pdf'));
+                $verifyIsPdf = ($verifyEffectiveExt === 'pdf');
+                $verifyPdfUrl = $verifyIsPdf ? $verifyStreamUrl : null;
+                $verifyIsWord = ! $verifyIsPdf && in_array($verifyEffectiveExt, ['doc', 'docx'], true);
+            @endphp
             <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-8 shadow-xs space-y-4 transition-colors">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
                     <div>
@@ -417,32 +429,43 @@
                     </div>
 
                     <div class="flex items-center gap-2 shrink-0">
-                        <a href="{{ route('document.verify.stream', $document->uuid) }}" 
-                           target="_blank" 
-                           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                            </svg>
-                            <span>Tab Baru</span>
-                        </a>
+                        @if($verifyIsPdf && filled($verifyPdfUrl))
+                            <a href="{{ $verifyPdfUrl }}"
+                               target="_blank"
+                               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                </svg>
+                                <span>Tab Baru</span>
+                            </a>
+                        @endif
 
-                        <a href="{{ route('document.verify.download', $document->uuid) }}" 
+                        <a href="{{ $verifyDownloadUrl }}"
                            class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-navy-900 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 text-white transition shadow-sm">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                             </svg>
-                            <span>Unduh Salinan (.PDF)</span>
+                            <span>Unduh Salinan (.{{ strtoupper($verifyEffectiveExt ?: 'PDF') }})</span>
                         </a>
                     </div>
                 </div>
 
-                <!-- Iframe Viewer Berkas -->
-                <div class="w-full h-[550px] sm:h-[700px] rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 relative">
-                    <iframe src="{{ route('document.verify.stream', $document->uuid) }}#view=FitH" 
-                            class="w-full h-full border-0" 
-                            title="Pratinjau Naskah Dinas Resmi">
-                    </iframe>
-                </div>
+                @if($verifyIsPdf && filled($verifyPdfUrl))
+                    <!-- Iframe Viewer Berkas -->
+                    <div class="w-full h-[550px] sm:h-[700px] rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 relative">
+                        <iframe src="{{ $verifyPdfUrl }}#view=FitH"
+                                class="w-full h-full border-0"
+                                title="Pratinjau Naskah Dinas Resmi">
+                        </iframe>
+                    </div>
+                @elseif($verifyIsWord)
+                    @include('filament.components.word-preview-stage', [
+                        'streamUrl' => $verifyStreamUrl,
+                        'downloadUrl' => $verifyDownloadUrl,
+                        'extension' => $verifyEffectiveExt,
+                        'canDownload' => true,
+                    ])
+                @endif
             </div>
         @elseif($isApproved && $document->visibility !== \App\Enums\VisibilityLevel::Public)
             <!-- Proteksi Privasi Institusi untuk Dokumen Non-Publik -->
