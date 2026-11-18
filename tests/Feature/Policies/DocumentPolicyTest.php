@@ -293,4 +293,46 @@ class DocumentPolicyTest extends TestCase
 
         $this->assertFalse($userStaff->can('downloadPrivate', $docOther));
     }
+
+    public function test_staff_cannot_update_pending_rejected_archived_or_expired_documents(): void
+    {
+        $userStaff = User::factory()->create(['unit_id' => $this->unitA->id, 'is_active' => true]);
+        $userStaff->assignRole($this->roleStaff);
+
+        foreach ([DocumentStatus::Draft, DocumentStatus::Revision] as $editableStatus) {
+            $doc = $this->createDocument([
+                'unit_id' => $this->unitA->id,
+                'uploaded_by' => $userStaff->id,
+                'status' => $editableStatus,
+            ]);
+
+            $this->assertTrue($userStaff->can('update', $doc), "Staff should be able to update {$editableStatus->value} document.");
+        }
+
+        foreach ([DocumentStatus::Pending, DocumentStatus::Approved, DocumentStatus::Rejected, DocumentStatus::Archived, DocumentStatus::Expired] as $lockedStatus) {
+            $doc = $this->createDocument([
+                'unit_id' => $this->unitA->id,
+                'uploaded_by' => $userStaff->id,
+                'status' => $lockedStatus,
+            ]);
+
+            $this->assertFalse($userStaff->can('update', $doc), "Staff must NOT update {$lockedStatus->value} document.");
+        }
+    }
+
+    public function test_super_admin_can_update_documents_across_all_statuses(): void
+    {
+        $roleSuperAdmin = Role::findOrCreate('super_admin', 'web');
+        $superAdmin = User::factory()->create(['unit_id' => $this->unitA->id, 'is_active' => true]);
+        $superAdmin->assignRole($roleSuperAdmin);
+
+        foreach (DocumentStatus::cases() as $status) {
+            $doc = $this->createDocument([
+                'unit_id' => $this->unitB->id,
+                'status' => $status,
+            ]);
+
+            $this->assertTrue($superAdmin->can('update', $doc), "Super Admin should be able to update {$status->value} document.");
+        }
+    }
 }

@@ -13,6 +13,7 @@ use App\Enums\UnitType;
 use App\Models\AcademicYear;
 use App\Models\CategoryApprovalFlow;
 use App\Models\Document;
+use App\Models\DocumentApproval;
 use App\Models\DocumentCategory;
 use App\Models\DocumentFile;
 use App\Models\Unit;
@@ -22,8 +23,10 @@ use App\Services\DocumentNamingService;
 use App\Services\DocumentNumberingService;
 use App\Services\DocumentStampingService;
 use FPDF;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
+use InvalidArgumentException;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -446,5 +449,108 @@ class DocumentApprovalServiceTest extends TestCase
         // Dekan memiliki 0 pending saat ini (karena masih di step 1 kaprodi)
         $countDekan = $this->service->countPendingApprovalsForUser($this->userDekan);
         $this->assertSame(0, $countDekan);
+    }
+
+    public function test_resubmit_rejects_non_revision_document_and_syncs_updated_flow_steps(): void
+    {
+        $doc = Document::create([
+            'title' => 'SK Uji Guard Resubmit',
+            'unit_id' => $this->prodiTi->id,
+            'document_category_id' => $this->categorySk->id,
+            'academic_year_id' => $this->academicYear->id,
+            'uploaded_by' => $this->userStaff->id,
+            'issued_date' => '2026-11-10',
+            'status' => DocumentStatus::Draft,
+        ]);
+        $this->service->initializeApprovalFlow($doc);
+
+        // Tidak boleh resubmit ketika masih Pending
+        $thrown = false;
+        try {
+            $this->service->resubmit($doc);
+        } catch (InvalidArgumentException) {
+            $thrown = true;
+        }
+        $this->assertTrue($thrown, 'resubmit() harus menolak dokumen yang bukan berstatus Revision.');
+
+        // Minta revisi lalu ubah jumlah flow kategori sebelum resubmit
+        $this->service->requestRevision($doc, $this->userKaprodiTi, 'Lengkapi lampiran.');
+
+        $roleRektor = Role::findOrCreate('rektor', 'web');
+        $roleRektor->givePermissionTo(['document.approve', 'document.bypass_unit_scope']);
+
+        CategoryApprovalFlow::create([
+            'document_category_id' => $this->categorySk->id,
+            'step_order' => 3,
+            'approver_role' => 'rektor',
+            'step_label' => 'Pengesahan Rektor',
+            'is_mandatory' => true,
+        ]);
+
+        $this->service->resubmit($doc);
+
+        $doc->refresh();
+        $this->assertSame(DocumentStatus::Pending, $doc->status);
+        $this->assertSame(1, $doc->current_step);
+        $this->assertSame(3, $doc->total_steps);
+        $this->assertSame(3, $doc->approvals()->where('revision_round', 2)->count());
+    }
+
+    public function test_concurrent_approve_on_stale_document_instance_throws_authorization_exception(): void
+    {
+        $docForTabA = Document::create([
+            'title' => 'SK Uji Concurrency',
+            'unit_id' => $this->prodiTi->id,
+            'document_category_id' => $this->categorySk->id,
+            'academic_year_id' => $this->academicYear->id,
+            'uploaded_by' => $this->userStaff->id,
+            'issued_date' => '2026-11-10',
+            'status' => DocumentStatus::Draft,
+        ]);
+        $this->service->initializeApprovalFlow($docForTabA);
+
+        // Simulasikan dua tab membuka dokumen yang sama (tab B belum refresh)
+        $staleDocForTabB = Document::findOrFail($docForTabA->id);
+
+        $this->assertTrue($this->service->approve($docForTabA, $this->userKaprodiTi, 'Approved Tab A'));
+
+        // Tab B mencoba approve langkah yang sama dengan state lama -> wajib ditolak!
+        $this->expectException(AuthorizationException::class);
+        $this->service->approve($staleDocForTabB, $this->userKaprodiTi, 'Duplicate Tab B');
+    }
+
+    public function test_pending_approvals_query_ignores_stale_old_round_pending_rows_and_sends_notifications(): void
+    {
+        $doc = Document::create([
+            'title' => 'SK Uji Putaran Revisi & Notifikasi',
+            'unit_id' => $this->prodiTi->id,
+            'document_category_id' => $this->categorySk->id,
+            'academic_year_id' => $this->academicYear->id,
+            'uploaded_by' => $this->userStaff->id,
+            'issued_date' => '2026-11-10',
+            'status' => DocumentStatus::Draft,
+        ]);
+        $this->service->initializeApprovalFlow($doc);
+
+        // Kaprodi menerima notifikasi antrean baru
+        $this->assertGreaterThan(0, $this->userKaprodiTi->notifications()->count());
+
+        $this->service->requestRevision($doc, $this->userKaprodiTi, 'Perbaiki format.');
+        // Staff menerima notifikasi permintaan revisi
+        $this->assertGreaterThan(0, $this->userStaff->notifications()->count());
+
+        // Simulasikan ada baris Pending yatim di putaran lama (round 1 step 2)
+        DocumentApproval::query()
+            ->where('document_id', $doc->id)
+            ->where('revision_round', 1)
+            ->where('step_order', 2)
+            ->update(['status' => ApprovalStatus::Pending]);
+
+        $this->service->resubmit($doc);
+
+        // Saat Round 2 masih di Step 1 (kaprodi), Dekan tidak boleh melihat dokumen di antreannya walaupun Round 1 Step 2 bernilai Pending
+        // (Dan setelah Step 1 round 2 di-approve, Dekan baru melihatnya; selama di step 1 count Dekan harus 0)
+        $this->assertSame(0, $this->service->countPendingApprovalsForUser($this->userDekan));
+        $this->assertSame(1, $this->service->countPendingApprovalsForUser($this->userKaprodiTi));
     }
 }

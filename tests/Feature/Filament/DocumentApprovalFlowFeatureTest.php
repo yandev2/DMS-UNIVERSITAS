@@ -318,4 +318,45 @@ class DocumentApprovalFlowFeatureTest extends TestCase
         $doc->refresh();
         $this->assertSame(DocumentStatus::Rejected, $doc->status);
     }
+
+    public function test_draft_document_with_file_can_be_submitted_from_view_document(): void
+    {
+        Storage::fake('private');
+
+        $doc = Document::create([
+            'title' => 'Draf Siap Ajukan',
+            'unit_id' => $this->prodiTi->id,
+            'document_category_id' => $this->categorySk->id,
+            'academic_year_id' => $this->academicYear->id,
+            'uploaded_by' => $this->userStaffTi->id,
+            'issued_date' => '2026-11-10',
+            'visibility' => VisibilityLevel::Internal,
+            'status' => DocumentStatus::Draft,
+        ]);
+
+        DocumentFile::create([
+            'document_id' => $doc->id,
+            'uploaded_by' => $this->userStaffTi->id,
+            'is_primary' => true,
+            'original_file_name' => 'draft.pdf',
+            'standardized_file_name' => '2026-TI-SK-draft.pdf',
+            'original_file_path' => 'documents/2026/11/TI/draft.pdf',
+            'disk' => StorageDisk::Private,
+            'mime_type' => 'application/pdf',
+            'file_extension' => 'pdf',
+            'file_size' => 120,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($this->userStaffTi);
+
+        Livewire::test(ViewDocument::class, ['record' => $doc->getKey()])
+            ->assertActionExists('submitApproval')
+            ->callAction('submitApproval')
+            ->assertNotified('Dokumen Berhasil Diajukan');
+
+        $doc->refresh();
+        $this->assertSame(DocumentStatus::Pending, $doc->status);
+        $this->assertSame(1, $doc->current_step);
+    }
 }
