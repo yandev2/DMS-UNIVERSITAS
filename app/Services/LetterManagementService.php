@@ -12,6 +12,7 @@ use App\Models\IncomingLetterRecipient;
 use App\Models\OutgoingLetter;
 use App\Models\Unit;
 use App\Models\User;
+use App\Rules\PdfDocumentFileRule;
 use Carbon\CarbonInterface;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification as FilamentNotification;
@@ -371,7 +372,12 @@ class LetterManagementService
     public function processNewOutgoingLetter(OutgoingLetter $letter, User $actor): void
     {
         if ($actor->can('letter.manage_humas')) {
-            $this->approveOutgoingLetter($letter, $actor, 'Diterbitkan dan dinomori langsung oleh Bagian Humas.');
+            $this->approveOutgoingLetter(
+                letter: $letter,
+                humasUser: $actor,
+                note: 'Diterbitkan dan dinomori langsung oleh Bagian Humas.',
+                requiresWetSignature: (bool) $letter->requires_wet_signature,
+            );
 
             return;
         }
@@ -388,13 +394,17 @@ class LetterManagementService
      *
      * @throws AuthorizationException
      */
-    public function approveOutgoingLetter(OutgoingLetter $letter, User $humasUser, ?string $note = null): void
-    {
+    public function approveOutgoingLetter(
+        OutgoingLetter $letter,
+        User $humasUser,
+        ?string $note = null,
+        bool $requiresWetSignature = false
+    ): void {
         if (! $humasUser->can('letter.manage_humas')) {
             throw new AuthorizationException('Hanya Bagian Humas yang berwenang menerbitkan nomor dan mengesahkan surat keluar.');
         }
 
-        DB::transaction(function () use ($letter, $humasUser, $note): void {
+        DB::transaction(function () use ($letter, $humasUser, $note, $requiresWetSignature): void {
             if (empty($letter->letter_number)) {
                 $this->generateOutgoingLetterNumber($letter);
             }
@@ -408,26 +418,140 @@ class LetterManagementService
                 }
             }
 
+            $targetStatus = $requiresWetSignature
+                ? OutgoingLetterStatus::WaitingSignature
+                : OutgoingLetterStatus::Published;
+
             $letter->update([
-                'status' => OutgoingLetterStatus::Published,
+                'status' => $targetStatus,
+                'requires_wet_signature' => $requiresWetSignature,
                 'reviewed_by' => $humasUser->id,
                 'reviewed_at' => now(),
-                'review_note' => filled($note) ? trim($note) : 'Nomor surat resmi telah diterbitkan oleh Humas.',
+                'review_note' => filled($note)
+                    ? trim($note)
+                    : ($requiresWetSignature
+                        ? 'Nomor surat resmi diterbitkan oleh Humas — menunggu TTD basah, cap & unggahan scan final.'
+                        : 'Nomor surat resmi telah diterbitkan oleh Humas.'),
             ]);
 
             if ($letter->creator && (int) $letter->created_by !== (int) $humasUser->id) {
+                $notifTitle = $requiresWetSignature
+                    ? "Nomor Surat Keluar Terbit ({$letter->letter_number}) — Siap TTD Basah"
+                    : "Nomor Surat Keluar Terbit: {$letter->letter_number}";
+                $notifBody = $requiresWetSignature
+                    ? "Surat keluar '{$letter->subject}' sudah bernomor resmi. Silakan unduh, cetak untuk TTD basah & cap Humas, lalu unggah scan PDF final."
+                    : "Surat keluar '{$letter->subject}' tujuan {$letter->destination_organization} telah dinomori oleh Humas dan siap diunduh.";
+
                 FilamentNotification::make()
-                    ->title("Nomor Surat Keluar Terbit: {$letter->letter_number}")
-                    ->body("Surat keluar '{$letter->subject}' tujuan {$letter->destination_organization} telah dinomori oleh Humas dan siap diunduh.")
-                    ->status('success')
+                    ->title($notifTitle)
+                    ->body($notifBody)
+                    ->status($requiresWetSignature ? 'info' : 'success')
                     ->actions([
                         Action::make('view')
-                            ->label('Unduh Berkas')
+                            ->label($requiresWetSignature ? 'Unduh & Unggah Scan' : 'Unduh Berkas')
                             ->url(url('/admin/outgoing-letters/'.$letter->id)),
                     ])
                     ->sendToDatabase($letter->creator);
             }
         });
+    }
+
+    /**
+     * Mengunggah hasil scan PDF final (ber-TTD basah & cap) untuk surat keluar status WaitingSignature.
+     *
+     * @throws AuthorizationException
+     * @throws InvalidArgumentException
+     */
+    public function uploadOutgoingFinalScan(
+        OutgoingLetter $letter,
+        User $actor,
+        string $storedFilePath,
+        ?string $originalFileName = null,
+        ?string $note = null
+    ): OutgoingLetter {
+        PdfDocumentFileRule::assertValidStoredPdf('private', $storedFilePath);
+
+        $storage = Storage::disk('private');
+
+        try {
+            $finalized = DB::transaction(function () use ($letter, $actor, $storedFilePath, $originalFileName, $note): OutgoingLetter {
+                $locked = OutgoingLetter::query()
+                    ->with(['unit', 'creator'])
+                    ->lockForUpdate()
+                    ->find($letter->id);
+
+                if (! $locked) {
+                    throw new InvalidArgumentException('Data surat keluar tidak ditemukan.');
+                }
+
+                if ($locked->status !== OutgoingLetterStatus::WaitingSignature) {
+                    throw new InvalidArgumentException('Surat keluar ini tidak berstatus Menunggu TTD Basah & Cap (kemungkinan sudah diproses).');
+                }
+
+                if (! $locked->canUploadFinalScan($actor)) {
+                    throw new AuthorizationException('Anda tidak memiliki wewenang untuk mengunggah berkas scan final surat keluar ini.');
+                }
+
+                $locked->update([
+                    'original_file_path' => $storedFilePath,
+                    'stamped_file_path' => null,
+                    'file_name' => $originalFileName ?: basename($storedFilePath),
+                    'status' => OutgoingLetterStatus::Published,
+                    'final_scan_uploaded_by' => $actor->id,
+                    'final_scan_uploaded_at' => now(),
+                    'review_note' => filled($note) ? trim($note) : $locked->review_note,
+                ]);
+
+                return $locked;
+            });
+        } catch (Throwable $e) {
+            if ($storage->exists($storedFilePath)) {
+                $referenced = OutgoingLetter::query()
+                    ->where('original_file_path', $storedFilePath)
+                    ->exists();
+
+                if (! $referenced) {
+                    $storage->delete($storedFilePath);
+                }
+            }
+
+            throw $e;
+        }
+
+        if ($finalized->creator && (int) $actor->id !== (int) $finalized->created_by) {
+            FilamentNotification::make()
+                ->title("Arsip Scan Surat Keluar Selesai: {$finalized->letter_number}")
+                ->body("Scan PDF final untuk surat '{$finalized->subject}' telah diunggah oleh {$actor->name}. Status resmi Terbit.")
+                ->status('success')
+                ->actions([
+                    Action::make('view')
+                        ->label('Lihat Surat')
+                        ->url(url('/admin/outgoing-letters/'.$finalized->id)),
+                ])
+                ->sendToDatabase($finalized->creator);
+        } else {
+            $humasUsers = User::permission('letter.manage_humas')
+                ->where('is_active', true)
+                ->get()
+                ->filter(fn (User $u): bool => (int) $u->id !== (int) $actor->id);
+
+            foreach ($humasUsers as $humasUser) {
+                FilamentNotification::make()
+                    ->title("Scan Final Surat Keluar Diunggah Unit: {$finalized->letter_number}")
+                    ->body("{$actor->name} telah mengunggah hasil scan PDF final ber-TTD basah & cap untuk '{$finalized->subject}'.")
+                    ->status('success')
+                    ->actions([
+                        Action::make('view')
+                            ->label('Lihat Arsip')
+                            ->url(url('/admin/outgoing-letters/'.$finalized->id)),
+                    ])
+                    ->sendToDatabase($humasUser);
+            }
+        }
+
+        $letter->refresh();
+
+        return $finalized->fresh();
     }
 
     /**

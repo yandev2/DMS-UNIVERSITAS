@@ -52,7 +52,7 @@ return [
     'super_admin' => [
         'enabled' => true,
         'name' => 'super_admin',
-        'define_via_gate' => false,
+        'define_via_gate' => true,
         'intercept_gate' => 'before',
     ],
 
@@ -199,17 +199,6 @@ return [
         'cms.manage_landing_page' => 'Portal Web: Kelola Pengaturan Beranda & Konten CMS',
         'system.backup_manage' => 'Sistem Backup: Kelola & Buat Paket Backup (Database & Storage)',
         'system.backup_restore' => 'Sistem Backup: Pulihkan (Restore) Database & Berkas Storage',
-        'asset.access_panel' => 'Manajemen Aset: Akses Panel Inventaris Aset Tetap (/assets)',
-        'asset.bypass_unit_scope' => 'Manajemen Aset: Pantau Aset Lintas Seluruh Unit Kampus',
-        'asset.create' => 'Manajemen Aset: Registrasi Aset Tetap Baru',
-        'asset.print_qr' => 'Manajemen Aset: Cetak Stiker QR Code Aset',
-        'asset.transfer_unit' => 'Manajemen Aset: Mutasi Aset Antar Unit/Prodi',
-        'asset.relocate_room' => 'Manajemen Aset: Pindah Ruangan Internal Unit',
-        'asset.report_issue' => 'Manajemen Aset: Lapor Kerusakan / Ajukan Servis',
-        'asset.process_maintenance' => 'Manajemen Aset: Proses & Selesaikan Perbaikan Teknis',
-        'asset.stock_opname' => 'Manajemen Aset: Verifikasi Cek Fisik (Stock Opname)',
-        'asset.dispose' => 'Manajemen Aset: Penghapusan / Afkir Aset (SK Rektor)',
-        'asset.export_borang_k5' => 'Manajemen Aset: Ekspor Tabel 5.b Sarana Prasarana Borang K5',
     ],
 
     /*

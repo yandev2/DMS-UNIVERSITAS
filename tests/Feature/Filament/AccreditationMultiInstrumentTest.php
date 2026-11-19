@@ -11,10 +11,10 @@ use App\Filament\Resources\Units\Pages\ListUnits;
 use App\Models\AccreditationCriterion;
 use App\Models\Unit;
 use App\Models\User;
-use Database\Seeders\MasterDataSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Livewire\Livewire;
+use Tests\Support\LegacyMasterDataSeeder;
 use Tests\TestCase;
 
 class AccreditationMultiInstrumentTest extends TestCase
@@ -24,7 +24,7 @@ class AccreditationMultiInstrumentTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
     }
 
     public function test_composite_unique_allows_same_code_across_different_instruments(): void

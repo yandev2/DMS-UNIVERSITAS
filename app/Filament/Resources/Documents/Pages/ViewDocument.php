@@ -67,6 +67,8 @@ class ViewDocument extends ViewRecord
 
             DocumentWorkflowActions::makeSubmitAction(fixedRecord: $record),
             DocumentWorkflowActions::makeApproveAction(fixedRecord: $record),
+            DocumentWorkflowActions::makeUploadFinalScanAction(fixedRecord: $record),
+            DocumentWorkflowActions::makeReturnFromWaitingSignatureAction(fixedRecord: $record),
             DocumentWorkflowActions::makeRequestRevisionAction(fixedRecord: $record),
             DocumentWorkflowActions::makeRejectAction(fixedRecord: $record),
             DocumentWorkflowActions::makeResubmitAction(fixedRecord: $record),

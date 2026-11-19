@@ -5,7 +5,9 @@ namespace App\Filament\Widgets;
 use App\Enums\DocumentStatus;
 use App\Models\Document;
 use App\Models\User;
+use App\Support\DashboardPeriodFilter;
 use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -15,10 +17,11 @@ use Illuminate\Support\Facades\DB;
 class AnnualPublishedDocumentChartWidget extends Widget
 {
     use HasWidgetShield;
+    use InteractsWithPageFilters;
 
     protected static bool $isLazy = false;
 
-    protected static ?int $sort = 2;
+    protected static ?int $sort = 3;
 
     protected int|string|array $columnSpan = 'full';
 
@@ -34,20 +37,24 @@ class AnnualPublishedDocumentChartWidget extends Widget
         /** @var User|null $user */
         $user = Auth::user();
 
-        $year = (int) date('Y');
-        $currentMonth = (int) date('n');
+        $period = DashboardPeriodFilter::resolve($this->pageFilters);
+        $year = $period['chart_year'];
+        $selectedEndMonth = $period['end_month'];
 
-        $monthFullNames = [
-            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
-            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
-            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
-        ];
+        $monthFullNames = DashboardPeriodFilter::MONTH_NAMES;
+        $monthShortNames = DashboardPeriodFilter::MONTH_SHORT_NAMES;
 
-        $monthShortNames = [
-            1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr',
-            5 => 'Mei', 6 => 'Jun', 7 => 'Jul', 8 => 'Agu',
-            9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des',
-        ];
+        $periodPillLong = $period['is_default_current_month']
+            ? 'Bulan Ini ('.($monthFullNames[$selectedEndMonth] ?? 'Bulan Ini').')'
+            : ($period['is_single_month']
+                ? 'Bulan Dipilih ('.($monthFullNames[$selectedEndMonth] ?? '').')'
+                : 'Periode Dipilih');
+
+        $periodPillShort = $period['is_default_current_month']
+            ? 'Bulan Ini'
+            : ($period['is_single_month']
+                ? ($monthShortNames[$selectedEndMonth] ?? 'Bulan Ini')
+                : 'Periode');
 
         if (! $user) {
             return [
@@ -55,7 +62,11 @@ class AnnualPublishedDocumentChartWidget extends Widget
                 'months' => [],
                 'totalYearly' => 0,
                 'currentMonthCount' => 0,
-                'currentMonthName' => $monthFullNames[$currentMonth] ?? 'Bulan Ini',
+                'currentMonthName' => $monthFullNames[$selectedEndMonth] ?? 'Bulan Ini',
+                'periodPillLong' => $periodPillLong,
+                'periodPillShort' => $periodPillShort,
+                'periodStartDate' => $period['start_date']->toDateString(),
+                'periodEndDate' => $period['end_date']->toDateString(),
                 'monthlyAverage' => 0,
                 'highestMonthLabel' => '-',
                 'scopeLabel' => 'Tidak Ada Akses',
@@ -68,39 +79,32 @@ class AnnualPublishedDocumentChartWidget extends Widget
 
         $docVersion = Document::getStatsCacheVersion();
         $scopeKey = Document::statsCacheScopeKeyFor($user);
-        $cacheKey = "dashboard_annual_chart:v{$docVersion}:{$year}:{$scopeKey}";
+        $cacheKey = "dashboard_annual_chart:v{$docVersion}:{$year}:{$period['cache_key']}:{$scopeKey}";
 
-        /** @var array<int, int> $rawCounts */
-        $rawCounts = Cache::remember($cacheKey, now()->addSeconds(300), static function () use ($user, $startOfYear, $endOfYear): array {
+        /** @var array{monthly: array<int, int>, period_count: int} $chartData */
+        $chartData = Cache::remember($cacheKey, now()->addSeconds(300), static function () use ($user, $startOfYear, $endOfYear, $period): array {
             $counts = array_fill(1, 12, 0);
             $driver = DB::connection()->getDriverName();
-            $dateExpr = 'COALESCE(documents.issued_date, documents.approved_at, documents.created_at)';
             $monthExpr = match ($driver) {
-                'pgsql' => "EXTRACT(MONTH FROM {$dateExpr})::int",
-                'sqlite' => "CAST(strftime('%m', {$dateExpr}) AS INTEGER)",
-                default => "MONTH({$dateExpr})",
+                'pgsql' => 'EXTRACT(MONTH FROM documents.issued_date)::int',
+                'sqlite' => "CAST(strftime('%m', documents.issued_date) AS INTEGER)",
+                default => 'MONTH(documents.issued_date)',
             };
+
+            $publishedStatuses = [
+                DocumentStatus::Approved->value,
+                DocumentStatus::Archived->value,
+                DocumentStatus::Expired->value,
+            ];
 
             $rows = Document::query()
                 ->accessibleFor($user)
                 ->toBase()
-                ->whereIn('documents.status', [
-                    DocumentStatus::Approved->value,
-                    DocumentStatus::Archived->value,
-                    DocumentStatus::Expired->value,
+                ->whereIn('documents.status', $publishedStatuses)
+                ->whereBetween('documents.issued_date', [
+                    $startOfYear->toDateString(),
+                    $endOfYear->toDateString(),
                 ])
-                ->where(static function ($query) use ($startOfYear, $endOfYear): void {
-                    $query->whereBetween('documents.issued_date', [$startOfYear->toDateString(), $endOfYear->toDateString()])
-                        ->orWhere(static function ($sub) use ($startOfYear, $endOfYear): void {
-                            $sub->whereNull('documents.issued_date')
-                                ->whereBetween('documents.approved_at', [$startOfYear->toDateTimeString(), $endOfYear->toDateTimeString()]);
-                        })
-                        ->orWhere(static function ($sub2) use ($startOfYear, $endOfYear): void {
-                            $sub2->whereNull('documents.issued_date')
-                                ->whereNull('documents.approved_at')
-                                ->whereBetween('documents.created_at', [$startOfYear->toDateTimeString(), $endOfYear->toDateTimeString()]);
-                        });
-                })
                 ->selectRaw("{$monthExpr} as month_num, COUNT(*) as total")
                 ->groupByRaw($monthExpr)
                 ->get();
@@ -112,20 +116,42 @@ class AnnualPublishedDocumentChartWidget extends Widget
                 }
             }
 
-            return $counts;
+            if ($period['start_year'] === $period['chart_year'] && $period['end_year'] === $period['chart_year']) {
+                $periodCount = 0;
+                for ($m = $period['start_month']; $m <= $period['end_month']; $m++) {
+                    $periodCount += (int) ($counts[$m] ?? 0);
+                }
+            } else {
+                $periodQuery = Document::query()
+                    ->accessibleFor($user)
+                    ->whereIn('documents.status', $publishedStatuses);
+                DashboardPeriodFilter::applyToDocumentIssuedDate($periodQuery, $period);
+                $periodCount = (int) $periodQuery->toBase()->count();
+            }
+
+            return [
+                'monthly' => $counts,
+                'period_count' => $periodCount,
+            ];
         });
 
+        $rawCounts = $chartData['monthly'];
         $monthsData = [];
 
         for ($m = 1; $m <= 12; $m++) {
             $count = (int) ($rawCounts[$m] ?? 0);
+            $monthDate = Carbon::createFromDate($year, $m, 1);
+            $isWithinPeriod = $monthDate->betweenIncluded(
+                $period['start_date']->startOfMonth(),
+                $period['end_date']->startOfMonth()
+            );
 
             $monthsData[$m] = [
                 'number' => $m,
                 'short_name' => $monthShortNames[$m],
                 'full_name' => $monthFullNames[$m],
                 'count' => $count,
-                'is_current' => ($m === $currentMonth),
+                'is_current' => $isWithinPeriod,
             ];
         }
 
@@ -166,8 +192,12 @@ class AnnualPublishedDocumentChartWidget extends Widget
             'year' => $year,
             'months' => $monthsData,
             'totalYearly' => $totalYearly,
-            'currentMonthCount' => $rawCounts[$currentMonth] ?? 0,
-            'currentMonthName' => $monthFullNames[$currentMonth] ?? 'Bulan Ini',
+            'currentMonthCount' => (int) ($chartData['period_count'] ?? 0),
+            'currentMonthName' => $monthFullNames[$selectedEndMonth] ?? 'Bulan Ini',
+            'periodPillLong' => $periodPillLong,
+            'periodPillShort' => $periodPillShort,
+            'periodStartDate' => Carbon::createFromDate($year, 1, 1)->toDateString(),
+            'periodEndDate' => Carbon::createFromDate($year, 12, 31)->toDateString(),
             'monthlyAverage' => $totalYearly > 0 ? round($totalYearly / 12, 1) : 0,
             'highestMonthLabel' => $highestMonthLabel,
             'scopeLabel' => $scopeLabel,

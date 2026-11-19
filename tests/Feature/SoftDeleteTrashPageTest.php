@@ -10,12 +10,11 @@ use App\Filament\Resources\Users\Pages\ListUsers;
 use App\Filament\Resources\Users\Tables\UsersTable;
 use App\Models\Unit;
 use App\Models\User;
-use Database\Seeders\DummyTestingSeeder;
-use Database\Seeders\MasterDataSeeder;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Livewire\Livewire;
+use Tests\Support\LegacyMasterDataSeeder;
 use Tests\TestCase;
 
 class SoftDeleteTrashPageTest extends TestCase
@@ -24,7 +23,7 @@ class SoftDeleteTrashPageTest extends TestCase
 
     public function test_trashed_filter_is_not_present_in_units_and_users_tables(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
 
         $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
         $this->actingAs($superAdmin);
@@ -43,7 +42,7 @@ class SoftDeleteTrashPageTest extends TestCase
 
     public function test_super_admin_can_access_trash_pages_for_units_and_users(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
 
         $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
         $this->actingAs($superAdmin);
@@ -59,7 +58,7 @@ class SoftDeleteTrashPageTest extends TestCase
 
     public function test_trash_action_is_configured_on_list_pages_header_actions(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
 
         $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
         $this->actingAs($superAdmin);
@@ -75,7 +74,7 @@ class SoftDeleteTrashPageTest extends TestCase
 
     public function test_trash_page_only_renders_soft_deleted_records(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
 
         $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
         $this->actingAs($superAdmin);
@@ -99,7 +98,7 @@ class SoftDeleteTrashPageTest extends TestCase
 
     public function test_restore_action_on_trash_page_restores_soft_deleted_record(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
 
         $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
         $this->actingAs($superAdmin);
@@ -127,10 +126,7 @@ class SoftDeleteTrashPageTest extends TestCase
 
     public function test_force_delete_action_on_trash_page_is_blocked_by_deletion_guard_when_dependent_records_exist(): void
     {
-        $this->seed([
-            MasterDataSeeder::class,
-            DummyTestingSeeder::class,
-        ]);
+        $this->seed(LegacyMasterDataSeeder::class);
 
         $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
         $this->actingAs($superAdmin);
@@ -156,7 +152,7 @@ class SoftDeleteTrashPageTest extends TestCase
 
     public function test_force_delete_action_on_trash_page_purges_standalone_record(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
 
         $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
         $this->actingAs($superAdmin);
@@ -181,7 +177,7 @@ class SoftDeleteTrashPageTest extends TestCase
 
     public function test_bulk_restore_and_bulk_force_delete_on_trash_page(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
 
         $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
         $this->actingAs($superAdmin);

@@ -11,6 +11,7 @@ enum OutgoingLetterStatus: string implements HasColor, HasLabel
 {
     case PendingHumas = 'pending_humas';
     case Revision = 'revision';
+    case WaitingSignature = 'waiting_signature';
     case Published = 'published';
     case Rejected = 'rejected';
 
@@ -21,6 +22,7 @@ enum OutgoingLetterStatus: string implements HasColor, HasLabel
         return match ($this) {
             self::PendingHumas => 'Menunggu Tinjauan Humas',
             self::Revision => 'Perlu Revisi',
+            self::WaitingSignature => 'Menunggu TTD Basah & Cap',
             self::Published => 'Terbit & Siap Diunduh',
             self::Rejected => 'Ditolak',
         };
@@ -31,6 +33,7 @@ enum OutgoingLetterStatus: string implements HasColor, HasLabel
         return match ($this) {
             self::PendingHumas => 'warning',
             self::Revision => 'danger',
+            self::WaitingSignature => 'info',
             self::Published => 'success',
             self::Rejected => 'danger',
         };

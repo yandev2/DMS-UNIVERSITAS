@@ -47,7 +47,7 @@ class OutgoingLetterPolicy
             return true;
         }
 
-        if ($outgoingLetter->status === OutgoingLetterStatus::Published) {
+        if (in_array($outgoingLetter->status, [OutgoingLetterStatus::WaitingSignature, OutgoingLetterStatus::Published], true)) {
             return false;
         }
 
@@ -65,7 +65,7 @@ class OutgoingLetterPolicy
             return true;
         }
 
-        if ($outgoingLetter->status === OutgoingLetterStatus::Published) {
+        if (in_array($outgoingLetter->status, [OutgoingLetterStatus::WaitingSignature, OutgoingLetterStatus::Published], true)) {
             return false;
         }
 

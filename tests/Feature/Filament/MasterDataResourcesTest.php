@@ -25,12 +25,11 @@ use App\Models\DocumentCategory;
 use App\Models\PostCategory;
 use App\Models\Unit;
 use App\Models\User;
-use Database\Seeders\DummyTestingSeeder;
-use Database\Seeders\MasterDataSeeder;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Livewire\Livewire;
+use Tests\Support\LegacyMasterDataSeeder;
 use Tests\TestCase;
 
 class MasterDataResourcesTest extends TestCase
@@ -39,7 +38,7 @@ class MasterDataResourcesTest extends TestCase
 
     public function test_super_admin_can_render_all_master_data_resource_index_and_create_pages(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
 
         $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
 
@@ -67,7 +66,7 @@ class MasterDataResourcesTest extends TestCase
 
     public function test_forbids_staf_unit_from_creating_master_data_or_accessing_user_management(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
 
         $stafUnit = User::where('email', 'staf.ti@univbi.ac.id')->firstOrFail();
 
@@ -90,7 +89,7 @@ class MasterDataResourcesTest extends TestCase
 
     public function test_creates_unit_record_via_filament_create_page(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
 
         $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
         $this->actingAs($superAdmin);
@@ -115,7 +114,7 @@ class MasterDataResourcesTest extends TestCase
 
     public function test_creates_document_category_with_multi_level_approval_flows_via_filament_create_page(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
 
         $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
         $this->actingAs($superAdmin);
@@ -161,7 +160,7 @@ class MasterDataResourcesTest extends TestCase
 
     public function test_activating_new_academic_year_deactivates_previously_active_academic_year(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
 
         $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
         $this->actingAs($superAdmin);
@@ -189,7 +188,7 @@ class MasterDataResourcesTest extends TestCase
 
     public function test_creates_post_category_with_color_via_filament_create_page(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
 
         $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
         $this->actingAs($superAdmin);
@@ -217,10 +216,7 @@ class MasterDataResourcesTest extends TestCase
 
     public function test_prevents_single_and_bulk_deletion_of_unit_with_dependent_records_and_displays_alert(): void
     {
-        $this->seed([
-            MasterDataSeeder::class,
-            DummyTestingSeeder::class,
-        ]);
+        $this->seed(LegacyMasterDataSeeder::class);
 
         $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
         $this->actingAs($superAdmin);
@@ -250,7 +246,7 @@ class MasterDataResourcesTest extends TestCase
 
     public function test_allows_deletion_of_standalone_unit_without_dependent_records(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
 
         $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
         $this->actingAs($superAdmin);
@@ -272,7 +268,7 @@ class MasterDataResourcesTest extends TestCase
 
     public function test_all_master_tables_use_modal_filters_layout(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
 
         $tables = [
             UnitsTable::configure(Table::make(new ListUnits)),
@@ -290,7 +286,7 @@ class MasterDataResourcesTest extends TestCase
 
     public function test_document_category_approval_flows_step_order_increments_and_updates_on_reorder(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
 
         $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
         $this->actingAs($superAdmin);
@@ -340,5 +336,26 @@ class MasterDataResourcesTest extends TestCase
         $this->assertCount(2, $remainingFlows);
         $this->assertSame(1, (int) $remainingFlows[$remainingKeys[0]]['step_order']);
         $this->assertSame(2, (int) $remainingFlows[$remainingKeys[1]]['step_order']);
+    }
+
+    public function test_units_table_groups_hierarchically_by_parent_unit(): void
+    {
+        $this->seed(LegacyMasterDataSeeder::class);
+
+        $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
+        $this->actingAs($superAdmin);
+
+        $rektorat = Unit::where('code', 'REKTORAT')->firstOrFail();
+        $fik = Unit::where('code', 'FIK')->firstOrFail();
+        $ti = Unit::where('code', 'TI')->firstOrFail();
+
+        Livewire::test(ListUnits::class)
+            ->assertSuccessful()
+            ->assertCanSeeTableRecords([$rektorat, $fik, $ti], inOrder: true)
+            ->assertSeeInOrder([
+                'Tingkat Universitas (Pimpinan / Tanpa Induk)',
+                'Rektorat Universitas Bina Insan (REKTORAT)',
+                'REKTORAT -&gt; Fakultas Ilmu Komputer (FIK)',
+            ], false);
     }
 }

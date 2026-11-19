@@ -6,6 +6,7 @@ namespace App\Filament\Pages;
 
 use App\Enums\AccreditationInstrument;
 use App\Enums\DocumentStatus;
+use App\Enums\VisibilityLevel;
 use App\Filament\Resources\Documents\DocumentResource;
 use App\Jobs\GenerateBorangExportJob;
 use App\Models\AcademicYear;
@@ -13,6 +14,7 @@ use App\Models\AccreditationCriterion;
 use App\Models\BulkExport;
 use App\Models\Document;
 use App\Models\Unit;
+use App\Models\User;
 use App\Services\BorangExportService;
 use App\Services\BorangZipExportService;
 use BackedEnum;
@@ -96,10 +98,7 @@ class AccreditationDataBank extends Page implements HasTable
                     ->where('status', DocumentStatus::Approved)
                     ->with(['unit', 'category', 'academicYear', 'accreditationCriteria', 'primaryFile']);
 
-                // Unit Tenancy Scope
-                if ($user && ! $user->can('document.bypass_unit_scope')) {
-                    $query->where('unit_id', $user->unit_id);
-                }
+                $this->applyBorangTenancy($query, $user);
 
                 return $query;
             })
@@ -159,7 +158,14 @@ class AccreditationDataBank extends Page implements HasTable
             ->filters([
                 SelectFilter::make('unit_id')
                     ->label('Program Studi / Unit')
-                    ->relationship('unit', 'name')
+                    ->relationship('unit', 'name', modifyQueryUsing: function (Builder $query): Builder {
+                        $accessibleUnitIds = auth()->user()?->accessibleUnitIds();
+                        if ($accessibleUnitIds !== null) {
+                            $query->whereIn('units.id', $accessibleUnitIds);
+                        }
+
+                        return $query;
+                    })
                     ->searchable()
                     ->preload()
                     ->native(false),
@@ -293,8 +299,9 @@ class AccreditationDataBank extends Page implements HasTable
                         ->options(function (): array {
                             $user = auth()->user();
                             $query = Unit::query()->orderBy('name');
-                            if ($user && ! $user->can('document.bypass_unit_scope')) {
-                                $query->where('id', $user->unit_id);
+                            $accessibleUnitIds = $user?->accessibleUnitIds();
+                            if ($accessibleUnitIds !== null) {
+                                $query->whereIn('id', $accessibleUnitIds);
                             }
 
                             return $query->pluck('name', 'id')->all();
@@ -346,7 +353,20 @@ class AccreditationDataBank extends Page implements HasTable
                         ->visible(fn (callable $get): bool => (bool) $get('is_assessor_access_active')),
                 ])
                 ->action(function (array $data): void {
-                    $unit = Unit::findOrFail($data['unit_id']);
+                    $user = auth()->user();
+                    $unitId = (int) $data['unit_id'];
+
+                    if ($user && ! $user->canAccessUnit($unitId)) {
+                        Notification::make()
+                            ->danger()
+                            ->title('Akses Ditolak')
+                            ->body('Anda tidak memiliki izin mengatur akses asesor untuk unit di luar wewenang Anda.')
+                            ->send();
+
+                        return;
+                    }
+
+                    $unit = Unit::findOrFail($unitId);
                     $unit->update([
                         'is_assessor_access_active' => (bool) ($data['is_assessor_access_active'] ?? false),
                         'assessor_access_start' => $data['assessor_access_start'] ?? null,
@@ -471,7 +491,7 @@ class AccreditationDataBank extends Page implements HasTable
                 }
 
                 $user = auth()->user();
-                if ($user && ! $user->can('document.bypass_unit_scope') && (int) $user->unit_id !== (int) $unitId) {
+                if ($user && ! $user->canAccessUnit((int) $unitId)) {
                     Notification::make()
                         ->danger()
                         ->title('Akses Ditolak')
@@ -506,8 +526,9 @@ class AccreditationDataBank extends Page implements HasTable
             ->where('is_assessor_access_active', true)
             ->orderBy('name');
 
-        if ($user && ! $user->can('document.bypass_unit_scope')) {
-            $query->where('id', $user->unit_id);
+        $accessibleUnitIds = $user?->accessibleUnitIds();
+        if ($accessibleUnitIds !== null) {
+            $query->whereIn('id', $accessibleUnitIds);
         }
 
         return $query->get();
@@ -604,9 +625,7 @@ class AccreditationDataBank extends Page implements HasTable
                 ->where('documents.is_borang', true)
                 ->where('documents.status', DocumentStatus::Approved);
 
-            if ($user && ! $user->can('document.bypass_unit_scope')) {
-                $docQuery->where('documents.unit_id', $user->unit_id);
-            }
+            $this->applyBorangTenancy($docQuery, $user);
 
             if ($selectedUnitId) {
                 $docQuery->where('documents.unit_id', $selectedUnitId);
@@ -646,8 +665,16 @@ class AccreditationDataBank extends Page implements HasTable
                 ->where('documents.is_borang', true)
                 ->where('documents.status', DocumentStatus::Approved->value);
 
-            if ($user && ! $user->can('document.bypass_unit_scope')) {
-                $countQuery->where('documents.unit_id', $user->unit_id);
+            $accessibleUnitIds = $user?->accessibleUnitIds();
+            if ($accessibleUnitIds !== null) {
+                $countQuery->whereIn('documents.unit_id', $accessibleUnitIds);
+            }
+
+            if ($user && ! $user->can('document.view_confidential')) {
+                $countQuery->where(function ($q) use ($user): void {
+                    $q->where('documents.visibility', '!=', VisibilityLevel::Confidential->value)
+                        ->orWhere('documents.uploaded_by', $user->id);
+                });
             }
 
             if ($selectedUnitId) {
@@ -756,7 +783,10 @@ class AccreditationDataBank extends Page implements HasTable
 
         $payload = [
             'bypass_unit_scope' => $user->can('document.bypass_unit_scope'),
+            'can_view_confidential' => $user->can('document.view_confidential'),
+            'user_id' => $user->id,
             'scope_unit_id' => $user->unit_id,
+            'scope_unit_ids' => $user->accessibleUnitIds(),
             'unit_id' => filled($this->tableFilters['unit_id']['value'] ?? null) ? (int) $this->tableFilters['unit_id']['value'] : null,
             'academic_year_id' => filled($this->tableFilters['academic_year_id']['value'] ?? null) ? (int) $this->tableFilters['academic_year_id']['value'] : null,
             'criterion_id' => filled($this->tableFilters['accreditationCriteria']['value'] ?? null) ? (int) $this->tableFilters['accreditationCriteria']['value'] : null,
@@ -789,5 +819,26 @@ class AccreditationDataBank extends Page implements HasTable
             ->title("Ekspor {$formatLabel} Diproses di Latar Belakang")
             ->body("Permintaan ekspor berisi {$totalDocuments} dokumen sedang diproses di antrean agar tidak membebani browser. Anda akan menerima notifikasi lonceng berisi tautan unduhan (berlaku 24 jam) setelah selesai.")
             ->send();
+    }
+
+    protected function applyBorangTenancy(Builder $query, ?User $user): void
+    {
+        if (! $user) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $accessibleUnitIds = $user->accessibleUnitIds();
+        if ($accessibleUnitIds !== null) {
+            $query->whereIn('documents.unit_id', $accessibleUnitIds);
+        }
+
+        if (! $user->can('document.view_confidential')) {
+            $query->where(function (Builder $q) use ($user): void {
+                $q->where('documents.visibility', '!=', VisibilityLevel::Confidential)
+                    ->orWhere('documents.uploaded_by', $user->id);
+            });
+        }
     }
 }

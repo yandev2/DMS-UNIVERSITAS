@@ -22,6 +22,7 @@ class OutgoingLetter extends Model
         'academic_year_id',
         'created_by',
         'reviewed_by',
+        'final_scan_uploaded_by',
         'destination_organization',
         'subject',
         'description',
@@ -30,8 +31,10 @@ class OutgoingLetter extends Model
         'sequence_year',
         'sequence_number',
         'status',
+        'requires_wet_signature',
         'review_note',
         'reviewed_at',
+        'final_scan_uploaded_at',
         'original_file_path',
         'stamped_file_path',
         'file_name',
@@ -44,7 +47,9 @@ class OutgoingLetter extends Model
             'sequence_year' => 'integer',
             'sequence_number' => 'integer',
             'status' => OutgoingLetterStatus::class,
+            'requires_wet_signature' => 'boolean',
             'reviewed_at' => 'datetime',
+            'final_scan_uploaded_at' => 'datetime',
         ];
     }
 
@@ -123,6 +128,11 @@ class OutgoingLetter extends Model
         return $this->belongsTo(User::class, 'reviewed_by');
     }
 
+    public function finalScanUploader(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'final_scan_uploaded_by');
+    }
+
     public function scopeAccessibleFor(Builder $query, ?User $user): Builder
     {
         if (! $user) {
@@ -133,11 +143,13 @@ class OutgoingLetter extends Model
             return $query;
         }
 
-        return $query->where(function (Builder $q) use ($user): void {
+        $accessibleUnitIds = $user->accessibleUnitIds() ?? [];
+
+        return $query->where(function (Builder $q) use ($user, $accessibleUnitIds): void {
             $q->where('created_by', $user->id);
 
-            if ($user->unit_id) {
-                $q->orWhere('unit_id', $user->unit_id);
+            if ($accessibleUnitIds !== []) {
+                $q->orWhereIn('unit_id', $accessibleUnitIds);
             }
         });
     }
@@ -156,7 +168,7 @@ class OutgoingLetter extends Model
             return true;
         }
 
-        return $user->unit_id && (int) $this->unit_id === (int) $user->unit_id;
+        return $user->canAccessUnit($this->unit_id);
     }
 
     public function canBeReviewedByHumas(?User $user): bool
@@ -177,6 +189,25 @@ class OutgoingLetter extends Model
 
         return (int) $this->created_by === (int) $user->id
             || $user->hasAnyRole(['super_admin', 'humas']);
+    }
+
+    public function canUploadFinalScan(?User $user): bool
+    {
+        if (! $user || $this->status !== OutgoingLetterStatus::WaitingSignature) {
+            return false;
+        }
+
+        if ($user->hasRole('super_admin') || $user->can('letter.manage_humas') || $user->can('document.bypass_unit_scope')) {
+            return true;
+        }
+
+        if ((int) $this->created_by === (int) $user->id) {
+            return true;
+        }
+
+        return $user->unit_id !== null
+            && (int) $this->unit_id === (int) $user->unit_id
+            && ($user->can('create:outgoing_letter') || $user->can('update:outgoing_letter'));
     }
 
     public function getActiveFilePath(): ?string

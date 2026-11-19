@@ -29,6 +29,11 @@ class ListDocuments extends ListRecords
         $user = auth()->user();
         $approvalService = app(DocumentApprovalService::class);
         $pendingCount = $user ? $approvalService->countPendingApprovalsForUser($user) : 0;
+        $waitingSignatureCount = $user
+            ? DocumentResource::getEloquentQuery()
+                ->where('documents.status', DocumentStatus::WaitingSignature)
+                ->count()
+            : 0;
 
         return [
             'all' => Tab::make('Semua Dokumen')
@@ -47,6 +52,12 @@ class ListDocuments extends ListRecords
 
                     return $query->whereIn('documents.id', $pendingSubquery);
                 }),
+
+            'waiting_signature' => Tab::make('Menunggu TTD Basah')
+                ->icon('heroicon-o-pencil')
+                ->badge($waitingSignatureCount > 0 ? (string) $waitingSignatureCount : null)
+                ->badgeColor('info')
+                ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('documents.status', DocumentStatus::WaitingSignature)),
 
             'approved' => Tab::make('Disahkan')
                 ->icon('heroicon-o-check-badge')

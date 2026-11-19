@@ -16,6 +16,7 @@ use App\Filament\Resources\Posts\Pages\ViewPost;
 use App\Filament\Widgets\AnnualPublishedDocumentChartWidget;
 use App\Filament\Widgets\DashboardQuickActionsWidget;
 use App\Filament\Widgets\DashboardWelcomeBannerWidget;
+use App\Filament\Widgets\DocumentLifecycleStatsWidget;
 use App\Filament\Widgets\DocumentOverviewWidget;
 use App\Filament\Widgets\PendingApprovalsWidget;
 use App\Filament\Widgets\PostPeriodOverviewWidget;
@@ -28,10 +29,10 @@ use App\Models\PostPhoto;
 use App\Models\Role;
 use App\Models\Unit;
 use App\Models\User;
-use Database\Seeders\MasterDataSeeder;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Livewire;
+use Tests\Support\LegacyMasterDataSeeder;
 use Tests\TestCase;
 
 class ShieldPermissionAuditTest extends TestCase
@@ -42,7 +43,7 @@ class ShieldPermissionAuditTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
     }
 
     public function test_all_config_custom_permissions_are_seeded_in_database(): void
@@ -89,6 +90,7 @@ class ShieldPermissionAuditTest extends TestCase
             'view:dashboard_welcome_banner_widget',
             'view:dashboard_quick_actions_widget',
             'view:document_overview_widget',
+            'view:document_lifecycle_stats_widget',
             'view:annual_published_document_chart_widget',
             'view:pending_approvals_widget',
             'view:pending_letters_alert_widget',
@@ -114,6 +116,7 @@ class ShieldPermissionAuditTest extends TestCase
         $this->assertTrue(DashboardWelcomeBannerWidget::canView());
         $this->assertTrue(DashboardQuickActionsWidget::canView());
         $this->assertTrue(DocumentOverviewWidget::canView());
+        $this->assertTrue(DocumentLifecycleStatsWidget::canView());
         $this->assertTrue(AnnualPublishedDocumentChartWidget::canView());
         $this->assertTrue(PendingApprovalsWidget::canView());
         $this->assertTrue(PostPeriodOverviewWidget::canView());

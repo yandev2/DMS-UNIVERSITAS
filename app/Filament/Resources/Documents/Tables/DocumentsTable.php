@@ -19,18 +19,22 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Notifications\Notification;
 use Filament\Support\Enums\Width;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Enums\PaginationMode;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\Indicator;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
 class DocumentsTable
@@ -101,6 +105,7 @@ class DocumentsTable
                         DocumentStatus::Draft => 'Draf',
                         DocumentStatus::Pending => 'Menunggu',
                         DocumentStatus::Revision => 'Revisi',
+                        DocumentStatus::WaitingSignature => 'Menunggu TTD',
                         DocumentStatus::Approved => 'Disahkan',
                         DocumentStatus::Rejected => 'Ditolak',
                         DocumentStatus::Expired => 'Kedaluwarsa',
@@ -217,6 +222,45 @@ class DocumentsTable
                     ->trueLabel('Bermasa Berlaku (Ada Kedaluwarsa)')
                     ->falseLabel('Dokumen Tetap / Permanen')
                     ->native(false),
+
+                Filter::make('issued_period')
+                    ->label('Rentang Tanggal Terbit')
+                    ->schema([
+                        DatePicker::make('issued_from')
+                            ->label('Terbit Dari Tanggal')
+                            ->native(false),
+                        DatePicker::make('issued_until')
+                            ->label('Terbit Sampai Tanggal')
+                            ->native(false),
+                    ])
+                    ->columns(2)
+                    ->columnSpan(2)
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                filled($data['issued_from'] ?? null),
+                                fn (Builder $query): Builder => $query->whereDate('documents.issued_date', '>=', (string) $data['issued_from']),
+                            )
+                            ->when(
+                                filled($data['issued_until'] ?? null),
+                                fn (Builder $query): Builder => $query->whereDate('documents.issued_date', '<=', (string) $data['issued_until']),
+                            );
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+
+                        if (filled($data['issued_from'] ?? null)) {
+                            $indicators[] = Indicator::make('Terbit >= '.Carbon::parse((string) $data['issued_from'])->translatedFormat('d M Y'))
+                                ->removeField('issued_from');
+                        }
+
+                        if (filled($data['issued_until'] ?? null)) {
+                            $indicators[] = Indicator::make('Terbit <= '.Carbon::parse((string) $data['issued_until'])->translatedFormat('d M Y'))
+                                ->removeField('issued_until');
+                        }
+
+                        return $indicators;
+                    }),
             ])), layout: FiltersLayout::Modal)
             ->filtersFormColumns([
                 'sm' => 2,
@@ -247,6 +291,8 @@ class DocumentsTable
 
                     DocumentWorkflowActions::makeSubmitAction(),
                     DocumentWorkflowActions::makeApproveAction(useLoadedRelations: true),
+                    DocumentWorkflowActions::makeUploadFinalScanAction(),
+                    DocumentWorkflowActions::makeReturnFromWaitingSignatureAction(),
                     DocumentWorkflowActions::makeRequestRevisionAction(useLoadedRelations: true),
                     DocumentWorkflowActions::makeRejectAction(useLoadedRelations: true),
                     DocumentWorkflowActions::makeResubmitAction(),

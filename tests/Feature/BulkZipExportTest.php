@@ -22,7 +22,6 @@ use App\Models\OutgoingLetter;
 use App\Models\Unit;
 use App\Models\User;
 use App\Services\BulkExportZipService;
-use Database\Seeders\MasterDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -30,6 +29,7 @@ use Illuminate\Support\Str;
 use Livewire\Livewire;
 use setasign\Fpdi\Fpdi;
 use Spatie\Activitylog\Models\Activity;
+use Tests\Support\LegacyMasterDataSeeder;
 use Tests\TestCase;
 
 class BulkZipExportTest extends TestCase
@@ -41,7 +41,7 @@ class BulkZipExportTest extends TestCase
         parent::setUp();
 
         Storage::fake('private');
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
     }
 
     protected function createValidPdf(string $content = 'Arsip Kampus'): string

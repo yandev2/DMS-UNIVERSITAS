@@ -14,10 +14,16 @@ class CreatePost extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $data['author_id'] = auth()->id();
+        $user = auth()->user();
+        $data['author_id'] = $user?->id;
 
-        if (empty($data['unit_id']) && auth()->user()?->unit_id) {
-            $data['unit_id'] = auth()->user()->unit_id;
+        if ($user && $user->unit_id) {
+            $requestedUnitId = filled($data['unit_id'] ?? null) ? (int) $data['unit_id'] : null;
+            $hasGlobalPostScope = $user->can('post.moderate_humas') || $user->can('document.bypass_unit_scope');
+
+            if ($requestedUnitId === null || (! $hasGlobalPostScope && ! $user->canAccessUnit($requestedUnitId))) {
+                $data['unit_id'] = $user->unit_id;
+            }
         }
 
         if (empty($data['status'])) {

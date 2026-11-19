@@ -18,10 +18,10 @@ use App\Models\User;
 use App\Services\BorangExportService;
 use App\Services\PostExportService;
 use App\Support\SpreadsheetSanitizer;
-use Database\Seeders\MasterDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use Tests\Support\LegacyMasterDataSeeder;
 use Tests\TestCase;
 
 class BorangExportServiceTest extends TestCase
@@ -30,7 +30,7 @@ class BorangExportServiceTest extends TestCase
 
     public function test_builds_informative_multi_sheet_spreadsheet_with_borang_documents(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
 
         $unitTi = Unit::where('code', 'TI')->firstOrFail();
         $unitTi->update([
@@ -174,7 +174,7 @@ class BorangExportServiceTest extends TestCase
 
     public function test_scopes_multi_criteria_document_when_criterion_filter_is_given_and_handles_empty_collection(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
 
         $unitTi = Unit::where('code', 'TI')->firstOrFail();
         $academicYear = AcademicYear::firstOrFail();
@@ -229,7 +229,7 @@ class BorangExportServiceTest extends TestCase
 
     public function test_spreadsheet_exports_neutralize_formula_injection_payloads(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
 
         $unitTi = Unit::where('code', 'TI')->firstOrFail();
         $academicYear = AcademicYear::firstOrFail();

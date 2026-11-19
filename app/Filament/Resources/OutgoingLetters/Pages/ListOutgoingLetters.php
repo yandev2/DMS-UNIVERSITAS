@@ -32,6 +32,9 @@ class ListOutgoingLetters extends ListRecords
             'pending_humas' => Tab::make('Menunggu Tinjauan Humas')
                 ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('status', OutgoingLetterStatus::PendingHumas)),
 
+            'waiting_signature' => Tab::make('Menunggu TTD Basah')
+                ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('status', OutgoingLetterStatus::WaitingSignature)),
+
             'published' => Tab::make('Nomor Terbit (Selesai)')
                 ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('status', OutgoingLetterStatus::Published)),
 

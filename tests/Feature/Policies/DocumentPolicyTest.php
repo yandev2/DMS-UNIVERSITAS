@@ -185,7 +185,7 @@ class DocumentPolicyTest extends TestCase
         $this->assertTrue($userA->can('view', $docUnitA));
     }
 
-    public function test_public_and_borang_documents_can_be_viewed_across_units(): void
+    public function test_public_documents_can_be_viewed_across_units_while_internal_borang_stays_isolated(): void
     {
         $userA = User::factory()->create(['unit_id' => $this->unitA->id, 'is_active' => true]);
         $userA->assignRole($this->roleStaff);
@@ -203,7 +203,7 @@ class DocumentPolicyTest extends TestCase
         ]);
 
         $this->assertTrue($userA->can('view', $publicDocUnitB));
-        $this->assertTrue($userA->can('view', $borangDocUnitB));
+        $this->assertFalse($userA->can('view', $borangDocUnitB));
     }
 
     public function test_confidential_document_requires_special_permission_or_ownership(): void

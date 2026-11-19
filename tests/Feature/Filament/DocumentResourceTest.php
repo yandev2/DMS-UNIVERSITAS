@@ -1052,4 +1052,168 @@ class DocumentResourceTest extends TestCase
             ->sortTable('expired_date', 'asc')
             ->assertCanSeeTableRecords([$docAlpha, $docBeta], inOrder: true);
     }
+
+    public function test_selecting_category_in_create_document_displays_copyable_flags_for_uploader(): void
+    {
+        $user = User::factory()->create([
+            'unit_id' => $this->unitA->id,
+            'is_active' => true,
+        ]);
+        $user->assignRole($this->roleStaff);
+
+        $customCategory = DocumentCategory::create([
+            'code' => 'STG',
+            'name' => 'Surat Tugas',
+            'slug' => 'surat-tugas',
+            'number_format' => '{seq}/UNIVBI.{unit}/{cat}/{roman_month}/{year}',
+            'stamping_position' => StampingPosition::TopRight,
+            'requires_approval' => true,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($user);
+
+        Livewire::test(CreateDocument::class)
+            ->assertSuccessful()
+            ->assertDontSee('Daftar Flag Otomatis untuk Naskah Word')
+            ->set('data.document_category_id', $customCategory->id)
+            ->assertSee('Daftar Flag Otomatis untuk Naskah Word')
+            ->assertSee('{seq}/UNIVBI.{unit}/{cat}/{roman_month}/{year}')
+            ->assertSee('${NOMOR_SURAT}')
+            ->assertSee('${TANGGAL_SAH}')
+            ->assertSee('${PEJABAT}')
+            ->assertSee('${VERIFY_URL}')
+            ->assertSee('${UUID}')
+            ->assertSee('command="--copy"', false)
+            ->assertSee("commandfor=\"doc-flag-{$customCategory->id}-pattern-category\"", false);
+    }
+
+    public function test_create_document_filters_categories_by_selected_unit_and_validates_server_side(): void
+    {
+        Storage::fake('private');
+
+        // Kategori eksklusif Unit B (SI) dan eksklusif Unit A (TI)
+        $onlyUnitBCategory = DocumentCategory::create([
+            'code' => 'KHSI',
+            'name' => 'Dokumen Khusus Prodi SI',
+            'slug' => 'dokumen-khusus-prodi-si',
+            'stamping_position' => StampingPosition::TopRight,
+            'requires_approval' => false,
+            'is_active' => true,
+        ]);
+        $onlyUnitBCategory->allowedUnits()->attach($this->unitB->id);
+
+        $onlyUnitACategory = DocumentCategory::create([
+            'code' => 'KHTI',
+            'name' => 'Dokumen Khusus Prodi TI',
+            'slug' => 'dokumen-khusus-prodi-ti',
+            'stamping_position' => StampingPosition::TopRight,
+            'requires_approval' => false,
+            'is_active' => true,
+        ]);
+        $onlyUnitACategory->allowedUnits()->attach($this->unitA->id);
+
+        $staffUnitA = User::factory()->create([
+            'unit_id' => $this->unitA->id,
+            'is_active' => true,
+        ]);
+        $staffUnitA->assignRole($this->roleStaff);
+
+        $this->actingAs($staffUnitA);
+
+        // Dropdown untuk unit A harus menampilkan kategori global ($this->category) & khusus unit A, bukan unit B
+        Livewire::test(CreateDocument::class)
+            ->assertSuccessful()
+            ->assertSee($this->category->name)
+            ->assertSee($onlyUnitACategory->name)
+            ->assertDontSee($onlyUnitBCategory->name);
+
+        // Upaya paksa mengisi ID kategori milik Unit B harus ditolak validasi server-side
+        $fakeFile = UploadedFile::fake()->create('test-unit-mismatch.pdf', 512, 'application/pdf');
+        Livewire::test(CreateDocument::class)
+            ->fillForm([
+                'title' => 'Uji Kategori Lintas Unit Ditolak',
+                'unit_id' => $this->unitA->id,
+                'document_category_id' => $onlyUnitBCategory->id,
+                'academic_year_id' => $this->academicYear->id,
+                'visibility' => VisibilityLevel::Internal,
+                'attachment' => $fakeFile,
+                'issued_date' => '2026-11-19',
+            ])
+            ->call('create')
+            ->assertHasFormErrors(['document_category_id']);
+
+        // User dengan bypass_unit_scope ketika berpindah unit dari A ke B: kategori eksklusif A otomatis di-reset
+        $userRektor = User::factory()->create([
+            'unit_id' => $this->unitA->id,
+            'is_active' => true,
+        ]);
+        $userRektor->assignRole($this->roleRektor);
+
+        $this->actingAs($userRektor);
+
+        Livewire::test(CreateDocument::class)
+            ->set('data.document_category_id', $onlyUnitACategory->id)
+            ->set('data.unit_id', $this->unitB->id)
+            ->assertSet('data.document_category_id', null)
+            ->assertSee($onlyUnitBCategory->name)
+            ->assertDontSee($onlyUnitACategory->name);
+    }
+
+    public function test_category_default_visibility_and_disallowed_manual_number_policy_are_enforced(): void
+    {
+        Storage::fake('private');
+
+        $strictAutoCategory = DocumentCategory::create([
+            'code' => 'SEAUTO',
+            'name' => 'Surat Edaran Penomoran Otomatis Wajib',
+            'slug' => 'se-penomoran-otomatis-wajib',
+            'default_visibility' => VisibilityLevel::Public,
+            'allow_manual_number' => false,
+            'requires_wet_signature' => true,
+            'requires_approval' => true,
+            'is_active' => true,
+        ]);
+
+        CategoryApprovalFlow::create([
+            'document_category_id' => $strictAutoCategory->id,
+            'step_order' => 1,
+            'approver_role' => 'rektor',
+            'step_label' => 'Pengesahan Rektor',
+            'is_mandatory' => true,
+        ]);
+
+        $userRektor = User::factory()->create([
+            'unit_id' => $this->unitA->id,
+            'is_active' => true,
+        ]);
+        $userRektor->assignRole($this->roleRektor);
+
+        $this->actingAs($userRektor);
+
+        $fakeFile = UploadedFile::fake()->create('se-publik.pdf', 512, 'application/pdf');
+
+        Livewire::test(CreateDocument::class)
+            ->set('data.document_category_id', $strictAutoCategory->id)
+            ->assertSet('data.visibility', VisibilityLevel::Public->value)
+            ->assertSet('data.requires_wet_signature', true)
+            ->assertSet('data.is_manual_number', false)
+            ->fillForm([
+                'title' => 'Surat Edaran Kebijakan Publik 2026',
+                'unit_id' => $this->unitA->id,
+                'academic_year_id' => $this->academicYear->id,
+                'is_manual_number' => true,
+                'document_number' => '999/ILLEGAL/2026',
+                'attachment' => $fakeFile,
+                'issued_date' => '2026-11-19',
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $doc = Document::where('title', 'Surat Edaran Kebijakan Publik 2026')->firstOrFail();
+        $this->assertFalse($doc->is_manual_number);
+        $this->assertNull($doc->document_number);
+        $this->assertSame(VisibilityLevel::Public, $doc->visibility);
+        $this->assertTrue($doc->requires_wet_signature);
+    }
 }

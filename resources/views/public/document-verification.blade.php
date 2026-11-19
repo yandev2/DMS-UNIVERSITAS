@@ -112,6 +112,17 @@
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400"></span>
                         <span>Sah</span>
                     </div>
+                @elseif($verificationStatus === 'waiting_signature')
+                    <!-- Desktop -->
+                    <div class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60 shadow-xs">
+                        <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                        <span class="font-bold">Menunggu TTD Basah & Cap</span>
+                    </div>
+                    <!-- Mobile -->
+                    <div class="sm:hidden inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/80">
+                        <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                        <span>TTD Basah</span>
+                    </div>
                 @elseif($verificationStatus === 'expired')
                     <!-- Desktop -->
                     <div class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 shadow-xs">
@@ -168,6 +179,27 @@
                             <span>•</span>
                             <span>Total Verifikasi: <strong>{{ number_format($document->views_count) }} kali</strong></span>
                         </div>
+                    </div>
+                </div>
+            </div>
+        @elseif($verificationStatus === 'waiting_signature')
+            <div class="rounded-2xl p-6 sm:p-8 bg-gradient-to-br from-blue-500/10 via-white to-blue-500/5 dark:from-blue-950/40 dark:via-slate-900 dark:to-slate-900 border-2 border-blue-500/40 dark:border-blue-500/30 shadow-md">
+                <div class="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-5 sm:gap-6">
+                    <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-600/20 shrink-0">
+                        <svg class="w-10 h-10 sm:w-12 sm:h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div class="space-y-1.5 flex-1 min-w-0">
+                        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300">
+                            Status: Menunggu Pengarsipan Scan TTD Basah & Cap
+                        </div>
+                        <h1 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                            SUBSTANSI DISETUJUI — MENUNGGU SCAN TTD BASAH
+                        </h1>
+                        <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                            Naskah dinas ini telah disetujui secara substansi dan bernomor resmi, namun berkas pindaian bertanda tangan basah & cap resmi kampus masih dalam proses pengarsipan akhir oleh Unit Pengaju atau Bagian Humas.
+                        </p>
                     </div>
                 </div>
             </div>

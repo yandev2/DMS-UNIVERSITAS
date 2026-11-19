@@ -16,7 +16,6 @@ use App\Models\PostPhoto;
 use App\Models\Unit;
 use App\Models\User;
 use App\Services\PostImageCompressionService;
-use Database\Seeders\MasterDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
@@ -24,6 +23,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\Livewire;
+use Tests\Support\LegacyMasterDataSeeder;
 use Tests\TestCase;
 
 class PostImageCompressionTest extends TestCase
@@ -37,7 +37,7 @@ class PostImageCompressionTest extends TestCase
         parent::setUp();
 
         Storage::fake('public');
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
         $this->service = app(PostImageCompressionService::class);
     }
 

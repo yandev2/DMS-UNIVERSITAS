@@ -14,7 +14,6 @@ use App\Models\Unit;
 use App\Models\User;
 use App\Services\SystemBackupService;
 use Carbon\Carbon;
-use Database\Seeders\MasterDataSeeder;
 use Filament\Notifications\DatabaseNotification;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
@@ -30,6 +29,7 @@ use Spatie\Activitylog\Models\Activity;
 use Spatie\Backup\Tasks\Backup\DbDumperFactory;
 use Spatie\DbDumper\DbDumper;
 use Spatie\Permission\PermissionRegistrar;
+use Tests\Support\LegacyMasterDataSeeder;
 use Tests\Support\SqlitePdoTestDumper;
 use Tests\TestCase;
 use ZipArchive;
@@ -96,7 +96,7 @@ class SystemBackupPageTest extends TestCase
         Storage::forgetDisk('local');
 
         $this->registerPdoSqliteDumper();
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
     }
 
     protected function tearDown(): void
@@ -134,7 +134,7 @@ class SystemBackupPageTest extends TestCase
                 ->assertForbidden();
         }
 
-        // Cabut izin system.backup_manage dari super_admin secara dinamis -> harus 403
+        // Super Admin otomatis memiliki akses ke semua modul via Gate::before meskipun izin eksplisit dicabut
         $superAdminRole = $superAdmin->roles()->firstOrFail();
         $superAdminRole->revokePermissionTo('system.backup_manage');
         app(PermissionRegistrar::class)->forgetCachedPermissions();
@@ -142,7 +142,7 @@ class SystemBackupPageTest extends TestCase
 
         $this->actingAs($superAdmin)
             ->get('/admin/system-backup')
-            ->assertForbidden();
+            ->assertOk();
 
         // Sekalipun punya izin system.backup_manage tanpa role super_admin, tetap ditolak 403
         Permission::findOrCreate('system.backup_manage', 'web');

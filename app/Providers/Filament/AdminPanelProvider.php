@@ -4,9 +4,11 @@ namespace App\Providers\Filament;
 
 use App\Filament\Pages\Auth\EditProfile;
 use App\Filament\Pages\Auth\Login;
+use App\Filament\Pages\Dashboard;
 use App\Filament\Widgets\AnnualPublishedDocumentChartWidget;
 use App\Filament\Widgets\DashboardQuickActionsWidget;
 use App\Filament\Widgets\DashboardWelcomeBannerWidget;
+use App\Filament\Widgets\DocumentLifecycleStatsWidget;
 use App\Filament\Widgets\DocumentOverviewWidget;
 use App\Filament\Widgets\PendingApprovalsWidget;
 use App\Filament\Widgets\PendingLettersAlertWidget;
@@ -17,7 +19,6 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -88,6 +89,7 @@ class AdminPanelProvider extends PanelProvider
                 PendingLettersAlertWidget::class,
                 DashboardQuickActionsWidget::class,
                 DocumentOverviewWidget::class,
+                DocumentLifecycleStatsWidget::class,
                 AnnualPublishedDocumentChartWidget::class,
                 PendingApprovalsWidget::class,
                 PostPeriodOverviewWidget::class,
