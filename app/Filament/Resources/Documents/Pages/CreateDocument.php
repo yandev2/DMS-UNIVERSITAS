@@ -21,11 +21,16 @@ class CreateDocument extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
+        $user = auth()->user();
         $data = DocumentForm::enforceCategoryExpiryPolicy($data);
-        $data['uploaded_by'] = auth()->id();
+        $data['uploaded_by'] = $user?->id;
 
-        if (empty($data['unit_id']) && auth()->user()?->unit_id) {
-            $data['unit_id'] = auth()->user()->unit_id;
+        if ($user && $user->unit_id) {
+            $requestedUnitId = filled($data['unit_id'] ?? null) ? (int) $data['unit_id'] : null;
+
+            if ($requestedUnitId === null || ! $user->canAccessUnit($requestedUnitId)) {
+                $data['unit_id'] = $user->unit_id;
+            }
         }
 
         if (empty($data['status'])) {

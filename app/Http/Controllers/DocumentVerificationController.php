@@ -49,7 +49,10 @@ class DocumentVerificationController extends Controller
             DocumentStatus::Rejected,
         ], true);
 
+        $isWaitingSignature = ($document->status === DocumentStatus::WaitingSignature);
+
         $verificationStatus = match (true) {
+            $isWaitingSignature => 'waiting_signature',
             $isDraftOrPending => 'unapproved',
             $isExpired => 'expired',
             $isApproved => 'valid',

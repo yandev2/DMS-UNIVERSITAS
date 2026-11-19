@@ -10,6 +10,7 @@ enum DocumentStatus: string implements HasColor, HasLabel
     case Draft = 'draft';
     case Pending = 'pending';
     case Revision = 'revision';
+    case WaitingSignature = 'waiting_signature';
     case Approved = 'approved';
     case Rejected = 'rejected';
     case Expired = 'expired';
@@ -21,6 +22,7 @@ enum DocumentStatus: string implements HasColor, HasLabel
             self::Draft => 'Draf',
             self::Pending => 'Menunggu Persetujuan',
             self::Revision => 'Perlu Revisi',
+            self::WaitingSignature => 'Menunggu TTD Basah & Cap',
             self::Approved => 'Disahkan (Approved)',
             self::Rejected => 'Ditolak',
             self::Expired => 'Kedaluwarsa',
@@ -34,6 +36,7 @@ enum DocumentStatus: string implements HasColor, HasLabel
             self::Draft => 'gray',
             self::Pending => 'warning',
             self::Revision => 'danger',
+            self::WaitingSignature => 'info',
             self::Approved => 'success',
             self::Rejected => 'danger',
             self::Expired => 'gray',

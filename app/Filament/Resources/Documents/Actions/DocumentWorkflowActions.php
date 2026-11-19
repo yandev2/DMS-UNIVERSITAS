@@ -6,13 +6,19 @@ namespace App\Filament\Resources\Documents\Actions;
 
 use App\Enums\DocumentStatus;
 use App\Models\Document;
+use App\Rules\PdfDocumentFileRule;
 use App\Services\DocumentApprovalService;
+use App\Services\DocumentNamingService;
 use App\Services\DocumentStampingService;
 use Closure;
 use Filament\Actions\Action;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Arr;
+use Illuminate\Support\HtmlString;
 use InvalidArgumentException;
 use Throwable;
 
@@ -44,12 +50,16 @@ class DocumentWorkflowActions
 
                     Notification::make()
                         ->success()
-                        ->title($doc->status === DocumentStatus::Approved
-                            ? 'Dokumen Berhasil Disahkan'
-                            : 'Dokumen Berhasil Diajukan')
-                        ->body($doc->status === DocumentStatus::Approved
-                            ? "Dokumen resmi disahkan! Nomor resmi {$doc->document_number} telah terbit."
-                            : 'Dokumen telah masuk ke antrean persetujuan tingkat 1.')
+                        ->title(match ($doc->status) {
+                            DocumentStatus::Approved => 'Dokumen Berhasil Disahkan',
+                            DocumentStatus::WaitingSignature => 'Nomor Terbit — Menunggu TTD Basah',
+                            default => 'Dokumen Berhasil Diajukan',
+                        })
+                        ->body(match ($doc->status) {
+                            DocumentStatus::Approved => "Dokumen resmi disahkan! Nomor resmi {$doc->document_number} telah terbit.",
+                            DocumentStatus::WaitingSignature => "Nomor {$doc->document_number} telah terbit! Silakan unduh berkas untuk TTD basah & cap, lalu unggah scan PDF final.",
+                            default => 'Dokumen telah masuk ke antrean persetujuan tingkat 1.',
+                        })
                         ->send();
                 });
             })
@@ -100,10 +110,14 @@ class DocumentWorkflowActions
 
                     Notification::make()
                         ->success()
-                        ->title('Dokumen Berhasil Disetujui')
-                        ->body($doc->status === DocumentStatus::Approved
-                            ? "Dokumen resmi disahkan! Nomor resmi {$doc->document_number} telah terbit."
-                            : 'Persetujuan Anda telah dicatat dan diteruskan ke tahapan berikutnya.')
+                        ->title($doc->status === DocumentStatus::WaitingSignature
+                            ? 'Substansi Disetujui — Menunggu TTD Basah'
+                            : 'Dokumen Berhasil Disetujui')
+                        ->body(match ($doc->status) {
+                            DocumentStatus::Approved => "Dokumen resmi disahkan! Nomor resmi {$doc->document_number} telah terbit.",
+                            DocumentStatus::WaitingSignature => "Substansi disetujui & nomor {$doc->document_number} telah terbit! Berkas siap diunduh untuk TTD basah, cap Humas, dan unggah scan PDF final.",
+                            default => 'Persetujuan Anda telah dicatat dan diteruskan ke tahapan berikutnya.',
+                        })
                         ->send();
                 });
             })
@@ -246,9 +260,11 @@ class DocumentWorkflowActions
                     Notification::make()
                         ->success()
                         ->title('Dokumen Berhasil Diajukan Kembali')
-                        ->body($doc->status === DocumentStatus::Approved
-                            ? "Dokumen resmi disahkan! Nomor resmi {$doc->document_number} telah terbit."
-                            : 'Dokumen telah masuk kembali ke antrean persetujuan tingkat 1.')
+                        ->body(match ($doc->status) {
+                            DocumentStatus::Approved => "Dokumen resmi disahkan! Nomor resmi {$doc->document_number} telah terbit.",
+                            DocumentStatus::WaitingSignature => "Nomor {$doc->document_number} telah terbit! Silakan cetak untuk TTD basah & cap lalu unggah scan PDF final.",
+                            default => 'Dokumen telah masuk kembali ke antrean persetujuan tingkat 1.',
+                        })
                         ->send();
                 });
             })
@@ -313,6 +329,147 @@ class DocumentWorkflowActions
                 return $target->status === DocumentStatus::Approved
                     && (auth()->user()?->can('update', $target) ?? false)
                     && self::hasPhysicalFile($target);
+            });
+    }
+
+    public static function makeUploadFinalScanAction(?Document $fixedRecord = null): Action
+    {
+        return Action::make('uploadFinalScan')
+            ->label('Unggah Scan TTD Basah')
+            ->icon('heroicon-o-arrow-up-tray')
+            ->color('success')
+            ->modalHeading('Unggah Berkas Scan Final (TTD Basah & Cap)')
+            ->modalDescription('Unggah berkas PDF hasil pemindaian dokumen fisik yang sudah bertanda tangan basah pimpinan dan berstempel/cap resmi kampus.')
+            ->modalSubmitActionLabel('Arsipkan & Sahkan Dokumen')
+            ->form([
+                Placeholder::make('wet_signature_summary')
+                    ->label('Informasi Penomoran & Unduhan')
+                    ->content(function (?Document $record = null) use ($fixedRecord): HtmlString {
+                        $target = $fixedRecord ?? $record;
+                        $number = e($target?->document_number ?: '-');
+                        $downloadUrl = $target ? e(route('admin.documents.download', $target)) : '#';
+
+                        return new HtmlString(
+                            '<div style="padding: 0.75rem 1rem; border-radius: 0.5rem; background: rgba(37, 99, 235, 0.08); border: 1px solid rgba(37, 99, 235, 0.25); font-size: 0.8125rem;">'
+                            .'<div><strong>Nomor Resmi:</strong> <code style="font-family: ui-monospace, monospace; font-weight: 700;">'.$number.'</code></div>'
+                            .'<div style="margin-top: 0.35rem;">Belum dicetak? <a href="'.$downloadUrl.'" target="_blank" style="text-decoration: underline; font-weight: 600;">Unduh Berkas Bernomor untuk Dicetak</a></div>'
+                            .'</div>'
+                        );
+                    }),
+
+                FileUpload::make('scan_file')
+                    ->label('Berkas Scan PDF Final (Ber-TTD Basah & Cap)')
+                    ->helperText('Wajib format PDF (.pdf), maks. 25 MB. Berkas ini akan menjadi arsip resmi terkunci dan acuan verifikasi SHA-256 publik.')
+                    ->disk('private')
+                    ->directory(function (?Document $record = null) use ($fixedRecord): string {
+                        $target = $fixedRecord ?? $record;
+
+                        return app(DocumentNamingService::class)->generateDirectory($target?->unit_id);
+                    })
+                    ->acceptedFileTypes(['application/pdf'])
+                    ->rules(['mimes:pdf', new PdfDocumentFileRule])
+                    ->maxSize(25600)
+                    ->storeFileNamesIn('scan_file_name')
+                    ->required(),
+
+                Textarea::make('note')
+                    ->label('Catatan Pengarsipan (Opsional)')
+                    ->placeholder('Contoh: Sudah ditandatangani basah Rektor dan dicap resmi Humas...')
+                    ->rows(2),
+            ])
+            ->action(function (array $data, ?Document $record = null) use ($fixedRecord): void {
+                $target = $fixedRecord ?? $record;
+                $user = auth()->user();
+
+                if (! $target || ! $user) {
+                    return;
+                }
+
+                self::runSafe($target, function (Document $doc) use ($data, $user): void {
+                    $rawPath = $data['scan_file'] ?? null;
+                    $storedPath = is_array($rawPath) ? Arr::first($rawPath) : $rawPath;
+
+                    if (! is_string($storedPath) || $storedPath === '') {
+                        throw new InvalidArgumentException('Berkas PDF scan final wajib diunggah.');
+                    }
+
+                    $originalName = is_string($data['scan_file_name'] ?? null) ? $data['scan_file_name'] : null;
+                    $note = is_string($data['note'] ?? null) ? $data['note'] : null;
+
+                    $finalDoc = app(DocumentApprovalService::class)->uploadFinalSignedScan(
+                        $doc,
+                        $user,
+                        $storedPath,
+                        $originalName,
+                        $note
+                    );
+
+                    Notification::make()
+                        ->success()
+                        ->title('Scan Final Diarsipkan & Dokumen Sah')
+                        ->body("Berkas TTD basah & cap untuk nomor {$finalDoc->document_number} telah tersimpan dan status resmi Disahkan.")
+                        ->send();
+                });
+            })
+            ->visible(function (?Document $record = null) use ($fixedRecord): bool {
+                $target = $fixedRecord ?? $record;
+                $user = auth()->user();
+
+                if (! $target || ! $user) {
+                    return false;
+                }
+
+                return app(DocumentApprovalService::class)->canUploadFinalScan($user, $target);
+            });
+    }
+
+    public static function makeReturnFromWaitingSignatureAction(?Document $fixedRecord = null): Action
+    {
+        return Action::make('returnToRevisionFromSignature')
+            ->label('Kembalikan ke Revisi')
+            ->icon('heroicon-o-arrow-uturn-left')
+            ->color('warning')
+            ->modalHeading('Kembalikan ke Perlu Revisi?')
+            ->modalDescription('Gunakan tindakan ini jika penandatanganan fisik dibatalkan atau ditemukan kesalahan redaksi sebelum diarsipkan.')
+            ->modalSubmitActionLabel('Kembalikan ke Revisi')
+            ->form([
+                Textarea::make('reason')
+                    ->label('Alasan Pengembalian Wajib')
+                    ->placeholder('Jelaskan alasan pembatalan/revisi...')
+                    ->required()
+                    ->rows(3),
+            ])
+            ->action(function (array $data, ?Document $record = null) use ($fixedRecord): void {
+                $target = $fixedRecord ?? $record;
+                $user = auth()->user();
+
+                if (! $target || ! $user) {
+                    return;
+                }
+
+                self::runSafe($target, function (Document $doc) use ($data, $user): void {
+                    app(DocumentApprovalService::class)->returnWaitingSignatureToRevision(
+                        $doc,
+                        $user,
+                        (string) ($data['reason'] ?? '')
+                    );
+
+                    Notification::make()
+                        ->warning()
+                        ->title('Dikembalikan ke Perlu Revisi')
+                        ->body('Status dokumen diubah menjadi Perlu Revisi dan pengaju telah diberitahu.')
+                        ->send();
+                });
+            })
+            ->visible(function (?Document $record = null) use ($fixedRecord): bool {
+                $target = $fixedRecord ?? $record;
+                $user = auth()->user();
+
+                if (! $target || ! $user) {
+                    return false;
+                }
+
+                return app(DocumentApprovalService::class)->canReturnWaitingSignatureToRevision($user, $target);
             });
     }
 

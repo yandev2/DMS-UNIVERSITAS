@@ -113,8 +113,9 @@ class DashboardQuickActionsWidget extends Widget
 
         // 2. Akses Portal Asesor Eksternal
         $canManageAssessor = $user->hasRole('super_admin')
+            || $user->can('borang.configure_assessor')
             || $user->can('document.bypass_unit_scope')
-            || $user->hasAnyRole(['lpm', 'dekan', 'kepala_biro']);
+            || $user->hasAnyRole(['ketua_spmi', 'staf_spmi', 'dekan', 'kaprodi', 'kepala_unit']);
 
         if ($canManageAssessor) {
             $openAssessorCount = Unit::countActiveAssessorUnitsForUser($user);

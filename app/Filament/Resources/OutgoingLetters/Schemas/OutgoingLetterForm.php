@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\OutgoingLetters\Schemas;
 
+use App\Enums\OutgoingLetterStatus;
 use App\Filament\Components\ButtonHint;
 use App\Models\AcademicYear;
 use App\Models\OutgoingLetter;
@@ -14,6 +15,7 @@ use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
@@ -129,10 +131,14 @@ class OutgoingLetterForm
 
                                     $preview = e(app(LetterManagementService::class)->previewNextOutgoingNumber((int) $unitId));
                                     $isHumas = auth()->user()?->can('letter.manage_humas') ?? false;
+                                    $requiresWetSignature = (bool) $get('requires_wet_signature');
 
-                                    $flowInfo = $isHumas
-                                        ? 'Karena Anda login sebagai <strong>Bagian Humas</strong>, nomor surat resmi dan stempel akan langsung diterbitkan otomatis begitu disimpan.'
-                                        : 'Setelah disimpan, surat akan diteruskan ke <strong>Bagian Humas</strong> untuk ditinjau dan diterbitkan nomor resminya secara otomatis.';
+                                    $flowInfo = match (true) {
+                                        $isHumas && $requiresWetSignature => 'Karena Anda login sebagai <strong>Bagian Humas</strong> dan opsi TTD basah aktif, nomor surat resmi langsung diterbitkan lalu berstatus <strong>Menunggu TTD Basah &amp; Cap</strong> hingga scan PDF final diunggah.',
+                                        $isHumas => 'Karena Anda login sebagai <strong>Bagian Humas</strong>, nomor surat resmi dan stempel akan langsung diterbitkan otomatis begitu disimpan.',
+                                        $requiresWetSignature => 'Setelah disimpan, surat diteruskan ke <strong>Bagian Humas</strong> untuk dinomori. Setelah nomor terbit, Unit atau Humas mengunggah hasil scan PDF ber-TTD basah &amp; cap.',
+                                        default => 'Setelah disimpan, surat akan diteruskan ke <strong>Bagian Humas</strong> untuk ditinjau dan diterbitkan nomor resminya secara otomatis.',
+                                    };
 
                                     return new HtmlString(
                                         '<div style="padding: 0.75rem; border-radius: 0.375rem; background: rgba(37, 99, 235, 0.06); border: 1px solid rgba(37, 99, 235, 0.25); font-size: 0.8rem;">'
@@ -142,6 +148,15 @@ class OutgoingLetterForm
                                         .'</div>'
                                     );
                                 }),
+
+                            Toggle::make('requires_wet_signature')
+                                ->label('Perlu TTD Basah, Cap & Scan Final')
+                                ->helperText('Aktifkan bila surat keluar perlu dicetak setelah penomoran untuk TTD basah pimpinan & cap Humas, lalu diunggah hasil scan PDF finalnya (oleh Unit Pengaju atau Humas).')
+                                ->default(false)
+                                ->live()
+                                ->disabled(fn (?OutgoingLetter $record): bool => $record !== null
+                                    && in_array($record->status, [OutgoingLetterStatus::WaitingSignature, OutgoingLetterStatus::Published], true))
+                                ->dehydrated(),
                         ]),
 
                     Section::make('Unggah Berkas Surat Keluar')

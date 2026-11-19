@@ -10,6 +10,8 @@
     $isManual = (bool) $document->is_manual_number;
     $requiresApproval = (bool) ($document->category?->requires_approval ?? false);
     $totalSteps = (int) $document->total_steps;
+    $isWaitingSignature = $docStatus === DocumentStatus::WaitingSignature;
+    $requiresWetSignature = (bool) ($document->requires_wet_signature || $document->category?->requires_wet_signature || $isWaitingSignature || $document->final_scan_uploaded_at !== null);
 
     // Ambil approvals untuk putaran aktif (terakhir)
     $maxRound = $document->approvals()->max('revision_round') ?? 1;
@@ -19,10 +21,15 @@
         ->orderBy('step_order')
         ->get();
 
-    // Dokumen telah disahkan secara resmi jika berstatus Approved, Diarsipkan, atau telah berstempel/bernomor naskah
-    $isApprovedOrArchived = in_array($docStatus, [DocumentStatus::Approved, DocumentStatus::Archived], true)
-        || $document->approved_at !== null
-        || filled($document->document_number);
+    // Substansi telah disetujui & bernomor jika sudah lewat approval terakhir atau status final
+    $isSubstantivelyNumbered = $document->approved_at !== null
+        || filled($document->document_number)
+        || in_array($docStatus, [DocumentStatus::WaitingSignature, DocumentStatus::Approved, DocumentStatus::Archived, DocumentStatus::Expired], true);
+
+    // Dokumen sah penuh setelah scan final TTD basah selesai (atau kategori non-TTD basah)
+    $isApprovedOrArchived = in_array($docStatus, [DocumentStatus::Approved, DocumentStatus::Archived, DocumentStatus::Expired], true);
+    $canDownloadForPrint = auth()->user()?->can('downloadPrivate', $document)
+        && ($document->primaryFile !== null || $document->files()->exists());
 
     // Catatan revisi atau penolakan pada putaran aktif terakhir jika ada
     $latestActionWithNote = match ($docStatus) {
@@ -65,7 +72,7 @@
 
             <span class="doc-badge
                 @if($docStatus === DocumentStatus::Approved) doc-badge-success
-                @elseif($docStatus === DocumentStatus::Archived) doc-badge-info
+                @elseif($docStatus === DocumentStatus::Archived || $isWaitingSignature) doc-badge-info
                 @elseif($docStatus === DocumentStatus::Pending) doc-badge-warning
                 @elseif($docStatus === DocumentStatus::Revision) doc-badge-danger
                 @elseif($docStatus === DocumentStatus::Rejected) doc-badge-danger
@@ -73,17 +80,17 @@
                 @endif
             " style="display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.25rem 0.625rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600;
                 @if($docStatus === DocumentStatus::Approved) background-color: var(--doc-badge-success-bg); color: var(--doc-badge-success-text); border: 1px solid var(--doc-badge-success-border);
-                @elseif($docStatus === DocumentStatus::Archived) background-color: var(--doc-badge-info-bg); color: var(--doc-badge-info-text); border: 1px solid var(--doc-badge-info-border);
+                @elseif($docStatus === DocumentStatus::Archived || $isWaitingSignature) background-color: var(--doc-badge-info-bg); color: var(--doc-badge-info-text); border: 1px solid var(--doc-badge-info-border);
                 @elseif($docStatus === DocumentStatus::Pending) background-color: var(--doc-badge-warning-bg); color: var(--doc-badge-warning-text); border: 1px solid var(--doc-badge-warning-border);
                 @elseif($docStatus === DocumentStatus::Revision || $docStatus === DocumentStatus::Rejected) background-color: var(--doc-badge-danger-bg); color: var(--doc-badge-danger-text); border: 1px solid var(--doc-badge-danger-border);
                 @else background-color: var(--doc-badge-gray-bg); color: var(--doc-badge-gray-text); border: 1px solid var(--doc-badge-gray-border);
                 @endif
             ">
                 <span class="doc-dot
-                    @if($docStatus === DocumentStatus::Pending) doc-dot-pulse @endif
+                    @if($docStatus === DocumentStatus::Pending || $isWaitingSignature) doc-dot-pulse @endif
                 " style="
                     @if($docStatus === DocumentStatus::Approved) background: var(--doc-badge-success-solid);
-                    @elseif($docStatus === DocumentStatus::Archived) background: var(--doc-badge-info-solid);
+                    @elseif($docStatus === DocumentStatus::Archived || $isWaitingSignature) background: var(--doc-badge-info-solid);
                     @elseif($docStatus === DocumentStatus::Pending) background: var(--doc-badge-warning-solid);
                     @elseif($docStatus === DocumentStatus::Revision || $docStatus === DocumentStatus::Rejected) background: var(--doc-badge-danger-solid);
                     @else background: var(--doc-badge-gray-solid);
@@ -101,8 +108,32 @@
         </div>
     </div>
 
-    {{-- Alert Banner jika Revisi atau Ditolak --}}
-    @if($docStatus === DocumentStatus::Revision && $latestActionWithNote)
+    {{-- Alert Banner jika Menunggu TTD Basah, Revisi, atau Ditolak --}}
+    @if($isWaitingSignature)
+        <div class="doc-alert-waiting-signature" style="background-color: var(--doc-badge-info-bg); border: 1px solid var(--doc-badge-info-border); border-radius: 0.375rem; padding: 1rem; margin-top: 1rem; display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 0.875rem; color: var(--doc-badge-info-text);">
+            <div style="display: flex; align-items: flex-start; gap: 0.75rem; flex: 1; min-width: 240px;">
+                <div style="flex-shrink: 0; color: var(--doc-badge-info-solid); margin-top: 0.125rem;">
+                    <x-heroicon-s-document-check class="doc-icon-md" style="width: 1.25rem; height: 1.25rem;" />
+                </div>
+                <div style="flex: 1; font-size: 0.8125rem; line-height: 1.35rem;">
+                    <h4 style="font-weight: 700; margin: 0; color: var(--doc-badge-info-text);">
+                        Nomor Resmi Terbit — Menunggu TTD Basah, Cap & Unggahan Scan Final
+                    </h4>
+                    <p style="margin: 0.25rem 0 0 0; color: var(--doc-text-secondary);">
+                        Substansi disetujui dengan nomor <strong style="font-family: ui-monospace, monospace;">{{ $document->document_number }}</strong>. Unduh berkas bernomor untuk dicetak, mintakan <strong>TTD basah pimpinan & cap resmi Humas</strong>, lalu unggah scan PDF final melalui tombol <strong>"Unggah Scan TTD Basah"</strong> (dapat dilakukan oleh Unit Pengaju atau Humas).
+                    </p>
+                </div>
+            </div>
+
+            @if($canDownloadForPrint)
+                <a href="{{ route('admin.documents.download', $document) }}"
+                    style="display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.5rem 0.9rem; border-radius: 0.375rem; font-size: 0.8125rem; font-weight: 600; background-color: #2563eb; color: #ffffff; text-decoration: none; white-space: nowrap; flex-shrink: 0;">
+                    <x-heroicon-m-arrow-down-tray style="width: 1rem; height: 1rem;" />
+                    <span>Unduh Berkas Bernomor untuk Dicetak</span>
+                </a>
+            @endif
+        </div>
+    @elseif($docStatus === DocumentStatus::Revision && $latestActionWithNote)
         <div class="doc-alert-revision" style="background-color: var(--doc-badge-warning-bg); border: 1px solid var(--doc-badge-warning-border); border-radius: 0.375rem; padding: 1rem; margin-top: 1rem; display: flex; align-items: flex-start; gap: 0.75rem; color: var(--doc-badge-warning-text);">
             <div style="flex-shrink: 0; color: var(--doc-badge-warning-solid); margin-top: 0.125rem;">
                 <x-heroicon-s-exclamation-triangle class="doc-icon-md" style="width: 1.25rem; height: 1.25rem;" />
@@ -194,7 +225,7 @@
                     </div>
                     <div>
                         <p style="font-size: 0.6875rem; color: var(--doc-badge-success-solid); font-weight: 700; text-transform: uppercase; margin: 0;">
-                            {{ $docStatus === DocumentStatus::Archived ? 'Resmi Disahkan & Diarsipkan' : ($isApprovedOrArchived ? 'Resmi Disahkan' : 'Pengesahan Naskah') }}
+                            {{ $requiresWetSignature ? 'Nomor Resmi Terbit' : ($docStatus === DocumentStatus::Archived ? 'Resmi Disahkan & Diarsipkan' : ($isApprovedOrArchived ? 'Resmi Disahkan' : 'Pengesahan Naskah')) }}
                         </p>
                         <h4 style="font-size: 0.8125rem; font-weight: 700; color: var(--doc-text-primary); margin: 0.125rem 0 0 0;">
                             {{ $document->document_number ?? $docStatus->getLabel() }}
@@ -204,6 +235,32 @@
                         </p>
                     </div>
                 </div>
+                @if($requiresWetSignature)
+                    <div class="doc-stepper-line" style="flex: 1; height: 3px; {{ $isApprovedOrArchived ? 'background-color: var(--doc-badge-success-solid);' : 'background-color: var(--doc-badge-info-solid);' }}"></div>
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <div class="doc-stepper-circle" style="width: 2.375rem; height: 2.375rem; border-radius: 9999px; display: flex; align-items: center; justify-content: center;
+                            {{ $isApprovedOrArchived
+                                ? 'background-color: var(--doc-badge-success-solid); color: #ffffff; box-shadow: 0 0 0 4px var(--doc-badge-success-bg);'
+                                : 'background-color: var(--doc-badge-info-solid); color: #ffffff; box-shadow: 0 0 0 4px var(--doc-badge-info-bg);' }}">
+                            @if($isApprovedOrArchived)
+                                <x-heroicon-s-document-check class="doc-icon-md" style="width: 1.25rem; height: 1.25rem;" />
+                            @else
+                                <x-heroicon-s-arrow-up-tray class="doc-icon-md" style="width: 1.25rem; height: 1.25rem;" />
+                            @endif
+                        </div>
+                        <div>
+                            <p style="font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; margin: 0; {{ $isApprovedOrArchived ? 'color: var(--doc-badge-success-solid);' : 'color: var(--doc-badge-info-solid);' }}">
+                                {{ $isApprovedOrArchived ? 'Scan TTD Basah Terarsip' : 'TTD Basah, Cap & Scan' }}
+                            </p>
+                            <h4 style="font-size: 0.8125rem; font-weight: 700; color: var(--doc-text-primary); margin: 0.125rem 0 0 0;">
+                                {{ $isApprovedOrArchived ? ($document->finalScanUploader?->name ?? 'Unit / Humas') : 'Menunggu Scan PDF Final' }}
+                            </h4>
+                            <p style="font-size: 0.6875rem; color: var(--doc-text-muted); margin: 0.125rem 0 0 0;">
+                                {{ $isApprovedOrArchived ? ($document->final_scan_uploaded_at?->translatedFormat('d M Y, H:i') ?? 'Arsip Sah') : 'Unit Pengaju atau Humas' }}
+                            </p>
+                        </div>
+                    </div>
+                @endif
             </div>
         @else
             {{-- Alur Persetujuan Bertingkat Estafet --}}
@@ -313,23 +370,23 @@
                     </div>
                 @endforeach
 
-                {{-- Final Step: Pengesahan & Penomoran Resmi --}}
+                {{-- Penomoran & ACC Substansi --}}
                 <div class="doc-stepper-line
-                    @if($isApprovedOrArchived) doc-line-approved
+                    @if($isSubstantivelyNumbered) doc-line-approved
                     @endif
                 " style="flex: 1; height: 3px; margin-top: 1.1875rem; min-width: 2rem;
-                    @if($isApprovedOrArchived) background-color: var(--doc-badge-success-solid);
+                    @if($isSubstantivelyNumbered) background-color: var(--doc-badge-success-solid);
                     @else background-color: var(--doc-stepper-rail);
                     @endif
                 "></div>
 
                 <div class="doc-stepper-node" style="display: flex; flex-direction: column; align-items: center; flex: 1; text-align: center;">
                     <div class="doc-stepper-circle
-                        @if($isApprovedOrArchived) doc-circle-approved
+                        @if($isSubstantivelyNumbered) doc-circle-approved
                         @else doc-circle-waiting
                         @endif
                     " style="width: 2.375rem; height: 2.375rem; border-radius: 9999px; display: flex; align-items: center; justify-content: center;
-                        @if($isApprovedOrArchived) background-color: var(--doc-badge-success-solid); color: #ffffff; box-shadow: 0 0 0 4px var(--doc-badge-success-bg);
+                        @if($isSubstantivelyNumbered) background-color: var(--doc-badge-success-solid); color: #ffffff; box-shadow: 0 0 0 4px var(--doc-badge-success-bg);
                         @else background-color: var(--doc-stepper-waiting-bg); color: var(--doc-stepper-waiting-text); border: 2px solid var(--doc-stepper-waiting-border);
                         @endif
                     ">
@@ -338,11 +395,13 @@
 
                     <div class="doc-stepper-info" style="margin-top: 0.5rem; max-width: 160px; text-align: center;">
                         <span class="doc-stepper-step-tag" style="
-                            @if($isApprovedOrArchived) color: var(--doc-badge-success-solid);
+                            @if($isSubstantivelyNumbered) color: var(--doc-badge-success-solid);
                             @else color: var(--doc-text-muted);
                             @endif
                         ">
-                            @if($docStatus === DocumentStatus::Archived)
+                            @if($requiresWetSignature)
+                                {{ $isSubstantivelyNumbered ? 'Nomor & QR Terbit' : 'Terbit Nomor & QR' }}
+                            @elseif($docStatus === DocumentStatus::Archived)
                                 Disahkan & Diarsipkan
                             @elseif($isApprovedOrArchived)
                                 Resmi Disahkan
@@ -351,7 +410,7 @@
                             @endif
                         </span>
 
-                        @if($isApprovedOrArchived)
+                        @if($isSubstantivelyNumbered)
                             <h5 class="doc-stepper-name" style="font-size: 0.75rem; font-weight: 700; color: var(--doc-text-primary); margin: 0.125rem 0 0 0; font-family: ui-monospace, monospace;" title="{{ $document->document_number }}">
                                 {{ $document->document_number }}
                             </h5>
@@ -368,6 +427,65 @@
                         @endif
                     </div>
                 </div>
+
+                @if($requiresWetSignature)
+                    {{-- Final Step (Khusus TTD Basah): Cetak, TTD Basah & Cap -> Upload Scan PDF Final --}}
+                    <div class="doc-stepper-line" style="flex: 1; height: 3px; margin-top: 1.1875rem; min-width: 2rem;
+                        @if($isApprovedOrArchived) background-color: var(--doc-badge-success-solid);
+                        @elseif($isWaitingSignature) background-color: var(--doc-badge-info-solid);
+                        @else background-color: var(--doc-stepper-rail);
+                        @endif
+                    "></div>
+
+                    <div class="doc-stepper-node" style="display: flex; flex-direction: column; align-items: center; flex: 1; text-align: center;">
+                        <div class="doc-stepper-circle" style="width: 2.375rem; height: 2.375rem; border-radius: 9999px; display: flex; align-items: center; justify-content: center;
+                            @if($isApprovedOrArchived) background-color: var(--doc-badge-success-solid); color: #ffffff; box-shadow: 0 0 0 4px var(--doc-badge-success-bg);
+                            @elseif($isWaitingSignature) background-color: var(--doc-badge-info-solid); color: #ffffff; box-shadow: 0 0 0 4px var(--doc-badge-info-bg);
+                            @else background-color: var(--doc-stepper-waiting-bg); color: var(--doc-stepper-waiting-text); border: 2px solid var(--doc-stepper-waiting-border);
+                            @endif
+                        ">
+                            @if($isApprovedOrArchived)
+                                <x-heroicon-s-document-check class="doc-icon-md" style="width: 1.25rem; height: 1.25rem;" />
+                            @else
+                                <x-heroicon-s-arrow-up-tray class="doc-icon-md" style="width: 1.25rem; height: 1.25rem;" />
+                            @endif
+                        </div>
+
+                        <div class="doc-stepper-info" style="margin-top: 0.5rem; max-width: 165px; text-align: center;">
+                            <span class="doc-stepper-step-tag" style="
+                                @if($isApprovedOrArchived) color: var(--doc-badge-success-solid);
+                                @elseif($isWaitingSignature) color: var(--doc-badge-info-solid);
+                                @else color: var(--doc-text-muted);
+                                @endif
+                            ">
+                                {{ $isApprovedOrArchived ? 'Arsip Scan Final Sah' : 'TTD Basah, Cap & Scan' }}
+                            </span>
+
+                            @if($isApprovedOrArchived)
+                                <h5 class="doc-stepper-name" style="font-size: 0.75rem; font-weight: 700; color: var(--doc-text-primary); margin: 0.125rem 0 0 0;">
+                                    {{ $document->finalScanUploader?->name ?? 'Unit / Humas' }}
+                                </h5>
+                                <p class="doc-stepper-sub" style="font-size: 0.6875rem; color: var(--doc-text-muted); margin: 0.125rem 0 0 0;">
+                                    Pengarsip Scan Final
+                                </p>
+                                <p class="doc-stepper-time" style="font-size: 0.625rem; color: var(--doc-text-subtle); margin: 0.125rem 0 0 0;">
+                                    {{ $document->final_scan_uploaded_at?->translatedFormat('d M Y, H:i') }}
+                                </p>
+                            @elseif($isWaitingSignature)
+                                <h5 class="doc-stepper-name" style="font-size: 0.75rem; font-weight: 700; color: var(--doc-text-primary); margin: 0.125rem 0 0 0;">
+                                    Unit / Humas
+                                </h5>
+                                <p class="doc-stepper-sub" style="font-size: 0.6875rem; font-style: italic; color: var(--doc-badge-info-solid); margin: 0.125rem 0 0 0;">
+                                    Siap unggah scan PDF final
+                                </p>
+                            @else
+                                <p class="doc-stepper-sub" style="font-size: 0.6875rem; font-style: italic; color: var(--doc-text-subtle); margin: 0.125rem 0 0 0;">
+                                    Setelah nomor terbit
+                                </p>
+                            @endif
+                        </div>
+                    </div>
+                @endif
             </div>
         @endif
     </div>

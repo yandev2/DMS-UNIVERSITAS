@@ -62,19 +62,79 @@ class DocumentForm
                                 ->columnSpanFull()
                                 ->native(false)
                                 ->live()
+                                ->afterStateUpdated(function (mixed $state, Get $get, Set $set): void {
+                                    $currentCatId = $get('document_category_id');
+                                    if (blank($currentCatId)) {
+                                        return;
+                                    }
+
+                                    $category = DocumentCategory::query()->with('allowedUnits:id')->find($currentCatId);
+                                    if ($category && ! $category->isAllowedForUnit(filled($state) ? (int) $state : null)) {
+                                        $set('document_category_id', null);
+                                        $set('has_expiry', false);
+                                        $set('requires_wet_signature', false);
+                                        $set('expired_date', null);
+                                        $set('reminder_intervals', []);
+                                        $set('reminder_recipients', []);
+                                    }
+                                })
                                 ->default(fn () => auth()->user()?->unit_id)
                                 ->disabled(fn (?Document $record): bool => ! (auth()->user()?->can('document.bypass_unit_scope') ?? false) || self::isWorkflowClassificationLocked($record))
                                 ->dehydrated(),
 
                             Select::make('document_category_id')
                                 ->label('Kategori Dokumen')
-                                ->relationship('category', 'name')
+                                ->options(function (Get $get, ?Document $record): array {
+                                    $unitId = $get('unit_id') ?: auth()->user()?->unit_id;
+                                    $unitIdInt = filled($unitId) ? (int) $unitId : null;
+
+                                    $query = DocumentCategory::query();
+
+                                    if ($record && filled($record->document_category_id)) {
+                                        $query->where(function (Builder $outer) use ($unitIdInt, $record): void {
+                                            $outer->availableForUnit($unitIdInt)
+                                                ->orWhere('document_categories.id', $record->document_category_id);
+                                        });
+                                    } else {
+                                        $query->availableForUnit($unitIdInt);
+                                    }
+
+                                    return $query
+                                        ->orderBy('name')
+                                        ->pluck('name', 'id')
+                                        ->all();
+                                })
                                 ->searchable()
-                                ->preload()
                                 ->native(false)
                                 ->columnSpanFull()
                                 ->required()
                                 ->live()
+                                ->rule(static function (Get $get, ?Document $record): \Closure {
+                                    return static function (string $attribute, mixed $value, \Closure $fail) use ($get, $record): void {
+                                        if (blank($value)) {
+                                            return;
+                                        }
+
+                                        if ($record && (int) $record->document_category_id === (int) $value) {
+                                            return;
+                                        }
+
+                                        $category = DocumentCategory::query()->with('allowedUnits:id')->find($value);
+                                        if (! $category) {
+                                            return;
+                                        }
+
+                                        $unitId = $get('unit_id') ?: auth()->user()?->unit_id;
+                                        $unitIdInt = filled($unitId) ? (int) $unitId : null;
+
+                                        if (! $category->isAllowedForUnit($unitIdInt)) {
+                                            $unitName = $unitIdInt
+                                                ? (Unit::query()->whereKey($unitIdInt)->value('name') ?? 'unit terpilih')
+                                                : 'unit Anda';
+                                            $fail("Kategori \"{$category->name}\" khusus untuk unit tertentu dan tidak tersedia untuk {$unitName}.");
+                                        }
+                                    };
+                                })
                                 ->disabled(fn (?Document $record): bool => self::isWorkflowClassificationLocked($record))
                                 ->dehydrated()
                                 ->hintAction(
@@ -110,9 +170,10 @@ class DocumentForm
                                         "Format baku tersedia: <a href='{$url}' target='_blank' class='underline hover:text-emerald-700 dark:hover:text-emerald-300'>Unduh {$name}</a></span>"
                                     );
                                 })
-                                ->afterStateUpdated(function (mixed $state, Set $set): void {
+                                ->afterStateUpdated(function (mixed $state, Set $set, string $operation): void {
                                     if (! $state) {
                                         $set('has_expiry', false);
+                                        $set('requires_wet_signature', false);
                                         $set('expired_date', null);
                                         $set('reminder_intervals', []);
                                         $set('reminder_recipients', []);
@@ -120,8 +181,19 @@ class DocumentForm
                                         return;
                                     }
 
-                                    $hasExpiry = (bool) DocumentCategory::query()->whereKey($state)->value('has_expiry');
+                                    $category = DocumentCategory::query()->find($state);
+                                    $hasExpiry = (bool) ($category?->has_expiry ?? false);
                                     $set('has_expiry', $hasExpiry);
+                                    $set('requires_wet_signature', (bool) ($category?->requires_wet_signature ?? false));
+
+                                    if ($operation === 'create' && $category?->default_visibility) {
+                                        $set('visibility', $category->default_visibility->value);
+                                    }
+
+                                    if ($category && ! $category->allow_manual_number) {
+                                        $set('is_manual_number', false);
+                                        $set('document_number', null);
+                                    }
 
                                     if (! $hasExpiry) {
                                         $set('expired_date', null);
@@ -129,6 +201,27 @@ class DocumentForm
                                         $set('reminder_recipients', []);
                                     }
                                 }),
+
+                            Placeholder::make('category_template_flags')
+                                ->hiddenLabel()
+                                ->content(function (Get $get): HtmlString {
+                                    $category = self::resolveSelectedCategory($get);
+                                    if (! $category) {
+                                        return new HtmlString('');
+                                    }
+
+                                    $unitId = $get('unit_id') ?: auth()->user()?->unit_id;
+                                    $unitCode = filled($unitId)
+                                        ? Unit::query()->whereKey($unitId)->value('code')
+                                        : null;
+
+                                    return new HtmlString(view('filament.components.document-category-flags', [
+                                        'category' => $category,
+                                        'unitCode' => $unitCode,
+                                    ])->render());
+                                })
+                                ->visible(fn (Get $get): bool => self::resolveSelectedCategory($get) !== null)
+                                ->columnSpanFull(),
 
                             DatePicker::make('issued_date')
                                 ->label('Tanggal Terbit / Pengesahan')
@@ -309,10 +402,20 @@ class DocumentForm
                         ->schema([
                             Toggle::make('is_manual_number')
                                 ->label('Gunakan Nomor Manual / Backdate')
-                                ->helperText(fn (): string => (auth()->user()?->can('document.manual_numbering') ?? false)
-                                    ? 'Aktifkan jika naskah dinas sudah memiliki nomor surat fisik terdahulu.'
-                                    : 'Input nomor manual memerlukan izin document.manual_numbering.')
-                                ->disabled(fn (?Document $record): bool => ! (auth()->user()?->can('document.manual_numbering') ?? false) || self::isWorkflowClassificationLocked($record))
+                                ->helperText(function (Get $get): string {
+                                    if (! (auth()->user()?->can('document.manual_numbering') ?? false)) {
+                                        return 'Input nomor manual memerlukan izin document.manual_numbering.';
+                                    }
+
+                                    if (! self::resolvesCategoryAllowManualNumber($get)) {
+                                        return 'Kategori dokumen ini mewajibkan penomoran otomatis sistem (input nomor manual dinonaktifkan).';
+                                    }
+
+                                    return 'Aktifkan jika naskah dinas sudah memiliki nomor surat fisik terdahulu.';
+                                })
+                                ->disabled(fn (Get $get, ?Document $record): bool => ! (auth()->user()?->can('document.manual_numbering') ?? false)
+                                    || self::isWorkflowClassificationLocked($record)
+                                    || ! self::resolvesCategoryAllowManualNumber($get))
                                 ->dehydrated()
                                 ->live()
                                 ->default(false),
@@ -331,6 +434,14 @@ class DocumentForm
                                 ->label('Penomoran Otomatis Sistem')
                                 ->content('Nomor surat resmi akan digenerate otomatis oleh sistem saat naskah dinas disetujui penuh oleh pejabat penandatangan.')
                                 ->visible(fn (Get $get): bool => ! (bool) $get('is_manual_number')),
+
+                            Toggle::make('requires_wet_signature')
+                                ->label('Memerlukan TTD Basah, Cap & Scan Final')
+                                ->helperText('Jika aktif, setelah disetujui pejabat dan nomor terbit, berkas wajib dicetak untuk TTD basah & cap lalu diunggah scan PDF finalnya (oleh Unit Pengaju atau Humas).')
+                                ->disabled(fn (?Document $record): bool => self::isWorkflowClassificationLocked($record))
+                                ->dehydrated()
+                                ->visible(fn (Get $get): bool => ! (bool) $get('is_manual_number'))
+                                ->default(false),
                         ]),
 
                     Section::make('Rantai Dokumen (Pembaruan / Pencabutan)')
@@ -369,9 +480,10 @@ class DocumentForm
     public static function enforceCategoryExpiryPolicy(array $data): array
     {
         $categoryId = $data['document_category_id'] ?? null;
-        $categoryHasExpiry = filled($categoryId)
-            ? (bool) DocumentCategory::query()->whereKey($categoryId)->value('has_expiry')
-            : false;
+        $category = filled($categoryId)
+            ? DocumentCategory::query()->find($categoryId)
+            : null;
+        $categoryHasExpiry = (bool) ($category?->has_expiry ?? false);
 
         $data['has_expiry'] = $categoryHasExpiry;
 
@@ -379,6 +491,20 @@ class DocumentForm
             $data['expired_date'] = null;
             $data['reminder_intervals'] = null;
             $data['reminder_recipients'] = null;
+        }
+
+        if ($category && ! $category->allow_manual_number) {
+            $data['is_manual_number'] = false;
+            $data['document_number'] = null;
+        }
+
+        $isManualNumber = (bool) ($data['is_manual_number'] ?? false);
+        if ($isManualNumber) {
+            $data['requires_wet_signature'] = false;
+        } elseif (! array_key_exists('requires_wet_signature', $data)) {
+            $data['requires_wet_signature'] = (bool) ($category?->requires_wet_signature ?? false);
+        } else {
+            $data['requires_wet_signature'] = (bool) $data['requires_wet_signature'];
         }
 
         return $data;
@@ -397,6 +523,13 @@ class DocumentForm
     private static function resolvesCategoryHasExpiry(Get $get): bool
     {
         return (bool) self::resolveSelectedCategory($get)?->has_expiry;
+    }
+
+    private static function resolvesCategoryAllowManualNumber(Get $get): bool
+    {
+        $category = self::resolveSelectedCategory($get);
+
+        return $category ? (bool) $category->allow_manual_number : true;
     }
 
     private static function isWorkflowClassificationLocked(?Document $record): bool

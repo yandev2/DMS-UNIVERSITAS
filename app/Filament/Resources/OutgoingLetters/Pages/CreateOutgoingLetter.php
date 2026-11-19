@@ -18,8 +18,13 @@ class CreateOutgoingLetter extends CreateRecord
         $user = auth()->user();
         $data['created_by'] = $user?->id;
 
-        if (empty($data['unit_id']) && $user?->unit_id) {
-            $data['unit_id'] = $user->unit_id;
+        if ($user && $user->unit_id) {
+            $requestedUnitId = filled($data['unit_id'] ?? null) ? (int) $data['unit_id'] : null;
+            $hasGlobalLetterScope = $user->can('letter.manage_humas') || $user->can('document.bypass_unit_scope');
+
+            if ($requestedUnitId === null || (! $hasGlobalLetterScope && ! $user->canAccessUnit($requestedUnitId))) {
+                $data['unit_id'] = $user->unit_id;
+            }
         }
 
         return $data;

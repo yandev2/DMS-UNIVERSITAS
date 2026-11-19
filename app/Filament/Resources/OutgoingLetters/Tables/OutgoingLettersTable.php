@@ -9,6 +9,8 @@ use App\Filament\Resources\OutgoingLetters\OutgoingLetterResource;
 use App\Jobs\GenerateBulkZipArchiveJob;
 use App\Models\BulkExport;
 use App\Models\OutgoingLetter;
+use App\Rules\PdfDocumentFileRule;
+use App\Services\LetterManagementService;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkAction;
@@ -16,6 +18,8 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Support\Enums\Width;
 use Filament\Tables\Columns\TextColumn;
@@ -24,6 +28,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
 class OutgoingLettersTable
@@ -113,6 +118,47 @@ class OutgoingLettersTable
 
                     EditAction::make()
                         ->visible(fn (OutgoingLetter $record): bool => OutgoingLetterResource::canEdit($record)),
+
+                    Action::make('uploadFinalScan')
+                        ->label('Unggah Scan TTD Basah')
+                        ->icon('heroicon-o-arrow-up-tray')
+                        ->color('success')
+                        ->modalHeading('Unggah Scan Final Surat Keluar (TTD Basah & Cap)')
+                        ->modalSubmitActionLabel('Arsipkan & Terbitkan')
+                        ->form([
+                            FileUpload::make('scan_file')
+                                ->label('Berkas Scan PDF Final')
+                                ->helperText('Wajib format PDF (.pdf), maks. 20 MB.')
+                                ->disk('private')
+                                ->directory('outgoing-letters')
+                                ->acceptedFileTypes(['application/pdf'])
+                                ->rules(['mimes:pdf', new PdfDocumentFileRule])
+                                ->maxSize(20480)
+                                ->storeFileNamesIn('scan_file_name')
+                                ->required(),
+                            Textarea::make('note')
+                                ->label('Catatan Pengarsipan (Opsional)')
+                                ->rows(2),
+                        ])
+                        ->action(function (array $data, OutgoingLetter $record): void {
+                            $rawPath = $data['scan_file'] ?? null;
+                            $storedPath = is_array($rawPath) ? Arr::first($rawPath) : $rawPath;
+
+                            app(LetterManagementService::class)->uploadOutgoingFinalScan(
+                                $record,
+                                auth()->user(),
+                                (string) $storedPath,
+                                is_string($data['scan_file_name'] ?? null) ? $data['scan_file_name'] : null,
+                                is_string($data['note'] ?? null) ? $data['note'] : null
+                            );
+
+                            Notification::make()
+                                ->success()
+                                ->title('Surat Keluar Resmi Terbit')
+                                ->body("Scan final untuk nomor {$record->letter_number} telah tersimpan.")
+                                ->send();
+                        })
+                        ->visible(fn (OutgoingLetter $record): bool => $record->canUploadFinalScan(auth()->user())),
 
                     DeleteAction::make()
                         ->visible(fn (OutgoingLetter $record): bool => OutgoingLetterResource::canDelete($record)),

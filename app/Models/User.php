@@ -120,10 +120,6 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
             $reasons[] = 'menulis '.$this->posts()->count().' artikel berita';
         }
 
-        if ($this->assignedAssets()->exists()) {
-            $reasons[] = 'penanggung jawab '.$this->assignedAssets()->count().' aset inventaris';
-        }
-
         return ! empty($reasons) ? implode(', ', $reasons) : null;
     }
 
@@ -166,22 +162,50 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
         return $this->hasMany(Post::class, 'author_id');
     }
 
-    public function assignedAssets(): HasMany
-    {
-        return $this->hasMany(Asset::class, 'assigned_to_user_id');
-    }
-
     public function canAccessPanel(Panel $panel): bool
     {
-        if (! $this->is_active) {
-            return false;
+        return $this->is_active;
+    }
+
+    /**
+     * Mengembalikan daftar ID unit yang dapat diakses pengguna,
+     * atau null apabila pengguna memiliki akses global lintas unit.
+     *
+     * @return list<int>|null
+     */
+    public function accessibleUnitIds(): ?array
+    {
+        if ($this->hasRole('super_admin') || $this->can('document.bypass_unit_scope')) {
+            return null;
         }
 
-        if ($panel->getId() === 'assets') {
-            return $this->hasRole(['super_admin', 'bauk', 'upt_ict', 'rektor', 'warek', 'dekan', 'kaprodi', 'lpm', 'kepala_biro', 'staf_unit'])
-                || $this->can('asset.access_panel');
+        if (! $this->unit_id) {
+            return [];
         }
 
-        return true;
+        $unitIds = [(int) $this->unit_id];
+
+        if ($this->hasRole('dekan')) {
+            $childIds = Unit::query()
+                ->where('parent_id', $this->unit_id)
+                ->pluck('id')
+                ->map(static fn (mixed $id): int => (int) $id)
+                ->all();
+
+            $unitIds = array_values(array_unique(array_merge($unitIds, $childIds)));
+        }
+
+        return $unitIds;
+    }
+
+    public function canAccessUnit(?int $unitId): bool
+    {
+        $accessibleUnitIds = $this->accessibleUnitIds();
+
+        if ($accessibleUnitIds === null) {
+            return true;
+        }
+
+        return $unitId !== null && in_array($unitId, $accessibleUnitIds, true);
     }
 }

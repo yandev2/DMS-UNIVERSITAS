@@ -24,7 +24,7 @@
                         Penerbitan Naskah Dinas Sah
                     </h3>
                     <p class="db-chart-subtitle">
-                        Grafik volume naskah resmi yang telah divalidasi dan terbit per bulan pada tahun berjalan
+                        Grafik volume naskah resmi yang telah divalidasi dan terbit per bulan pada tahun {{ $year }}
                     </p>
                 </div>
             </div>
@@ -32,7 +32,10 @@
             <!-- Pill Metrik Ringkas di Sisi Kanan (Satu Baris Rapi) -->
             <div class="db-chart-pills-group">
                 <div class="db-chart-stat-pill">
-                    <span class="db-pill-title">Total Terbit ({{ $year }})</span>
+                    <span class="db-pill-title">
+                        <span class="db-pill-title-long">Total Terbit ({{ $year }})</span>
+                        <span class="db-pill-title-short">Total ({{ $year }})</span>
+                    </span>
                     <div class="db-pill-value-row">
                         <span class="db-pill-num text-blue-600 dark:text-blue-400">{{ $totalYearly }}</span>
                         <span class="db-pill-unit">Naskah</span>
@@ -40,7 +43,10 @@
                 </div>
 
                 <div class="db-chart-stat-pill">
-                    <span class="db-pill-title">Bulan Ini ({{ $currentMonthName }})</span>
+                    <span class="db-pill-title">
+                        <span class="db-pill-title-long">{{ $periodPillLong ?? "Bulan Ini ({$currentMonthName})" }}</span>
+                        <span class="db-pill-title-short">{{ $periodPillShort ?? 'Bulan Ini' }}</span>
+                    </span>
                     <div class="db-pill-value-row">
                         <span class="db-pill-num text-emerald-600 dark:text-emerald-400">{{ $currentMonthCount }}</span>
                         <span class="db-pill-unit">Naskah</span>
@@ -48,7 +54,10 @@
                 </div>
 
                 <div class="db-chart-stat-pill">
-                    <span class="db-pill-title">Rata-rata Bulanan</span>
+                    <span class="db-pill-title">
+                        <span class="db-pill-title-long">Rata-rata Bulanan</span>
+                        <span class="db-pill-title-short">Rata-rata</span>
+                    </span>
                     <div class="db-pill-value-row">
                         <span class="db-pill-num text-amber-500 dark:text-amber-400">{{ $monthlyAverage }}</span>
                         <span class="db-pill-unit">/bln</span>
@@ -94,7 +103,7 @@
                                         </span>
                                     @endif
                                     @if ($month['is_current'])
-                                        <span class="db-tooltip-current-tag">&bull; Sedang Berjalan</span>
+                                        <span class="db-tooltip-current-tag">&bull; Periode Terpilih</span>
                                     @endif
                                 </div>
                             </div>
@@ -134,7 +143,7 @@
                         Puncak Penerbitan: <strong>{{ $highestMonthLabel }}</strong>
                     </span>
                 @endif
-                <a href="{{ \App\Filament\Resources\Documents\DocumentResource::getUrl('index', ['tab' => 'all', 'filters' => ['status' => ['values' => [\App\Enums\DocumentStatus::Approved->value, \App\Enums\DocumentStatus::Archived->value, \App\Enums\DocumentStatus::Expired->value]]]]) }}"
+                <a href="{{ \App\Filament\Resources\Documents\DocumentResource::getUrl('index', ['tab' => 'all', 'filters' => ['status' => ['values' => [\App\Enums\DocumentStatus::Approved->value, \App\Enums\DocumentStatus::Archived->value, \App\Enums\DocumentStatus::Expired->value]], 'issued_period' => ['issued_from' => $periodStartDate ?? now()->startOfYear()->toDateString(), 'issued_until' => $periodEndDate ?? now()->endOfYear()->toDateString()]]]) }}"
                     class="db-chart-action-link">
                     <span>Buka Arsip Naskah Sah</span>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"

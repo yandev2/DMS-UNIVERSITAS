@@ -7,6 +7,7 @@ namespace App\Filament\Resources\DocumentCategories\Schemas;
 use App\Enums\VisibilityLevel;
 use App\Filament\Components\ButtonHint;
 use App\Models\Role;
+use App\Models\Unit;
 use App\Rules\WordDocumentFileRule;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
@@ -18,6 +19,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class DocumentCategoryForm
@@ -65,6 +67,20 @@ class DocumentCategoryForm
                             ->default(VisibilityLevel::Internal)
                             ->required()
                             ->native(false),
+
+                        Select::make('allowedUnits')
+                            ->label('Batasi untuk Unit Kerja Tertentu (Opsional)')
+                            ->relationship('allowedUnits', 'name')
+                            ->getOptionLabelFromRecordUsing(fn (Unit $record): string => filled($record->code)
+                                ? "[{$record->code}] {$record->name}"
+                                : $record->name)
+                            ->multiple()
+                            ->searchable()
+                            ->preload()
+                            ->native(false)
+                            ->placeholder('Kosongkan agar berlaku UMUM untuk seluruh unit kerja')
+                            ->helperText('Jika kosong (default), kategori ini bersifat UMUM dan tersedia untuk semua unit. Jika dipilih satu atau beberapa unit, kategori hanya muncul saat unit tersebut membuat dokumen.')
+                            ->columnSpanFull(),
 
                         Textarea::make('description')
                             ->label('Deskripsi & Pedoman Kategori')
@@ -161,6 +177,11 @@ class DocumentCategoryForm
                             ->helperText('Aktifkan jika dokumen memiliki masa berlaku terbatas (MoU, PKS, Sertifikat Akreditasi, SK Periodik).')
                             ->default(false),
 
+                        Toggle::make('requires_wet_signature')
+                            ->label('Memerlukan TTD Basah, Cap & Scan Final')
+                            ->helperText('Aktifkan jika setelah disetujui dan bernomor resmi, berkas wajib dicetak untuk TTD basah pimpinan, cap Humas, dan diunggah ulang hasil scan PDF finalnya.')
+                            ->default(false),
+
                         Toggle::make('is_active')
                             ->label('Status Kategori Aktif')
                             ->helperText('Kategori aktif dapat dipilih oleh pengguna saat membuat atau menyunting dokumen arsip.')
@@ -171,17 +192,57 @@ class DocumentCategoryForm
 
                 Section::make('Alur Persetujuan Berjenjang (Multi-Level Approval)')
                     ->icon('heroicon-o-clipboard-document-check')
-                    ->description('Urutan pejabat peninjau dan pengesah naskah (Tingkat 1 s/d Tingkat 3).')
+                    ->description('Urutan pejabat peninjau dan pengesah naskah (Tingkat 1 s/d Tingkat 5, misalnya Humas → Kaprodi/Dekan → Warek → Rektor).')
                     ->visible(fn (Get $get): bool => (bool) $get('requires_approval'))
                     ->schema([
                         Repeater::make('approvalFlows')
                             ->label('Daftar Tahapan Persetujuan')
                             ->relationship()
                             ->orderColumn('step_order')
-                            ->maxItems(3)
+                            ->saveRelationshipsUsing(static function (Repeater $component): void {
+                                DB::transaction(static function () use ($component): void {
+                                    $state = $component->getState();
+                                    if (! is_array($state)) {
+                                        $state = [];
+                                    }
+
+                                    $relationship = $component->getRelationship();
+                                    $existingRecords = $component->getCachedExistingRecords();
+
+                                    $keptIds = [];
+                                    foreach ($existingRecords as $itemKey => $record) {
+                                        if (array_key_exists($itemKey, $state)) {
+                                            $keptIds[] = $record->getKey();
+                                        }
+                                    }
+
+                                    // Bersihkan baris yatim / terhapus di DB terlebih dahulu agar slot step_order 1..N benar-benar bersih
+                                    $cleanupQuery = $relationship->getRelated()->newQuery()
+                                        ->where($relationship->getForeignKeyName(), $relationship->getParent()->getKey());
+                                    if (filled($keptIds)) {
+                                        $cleanupQuery->whereNotIn($relationship->getRelated()->getKeyName(), $keptIds);
+                                    }
+                                    $cleanupQuery->delete();
+
+                                    // Geser sementara step_order record lama yang dipertahankan agar tidak bentrok dengan
+                                    // unique index (document_category_id, step_order) di PostgreSQL saat reorder/sisip baru.
+                                    foreach ($existingRecords as $itemKey => $record) {
+                                        if (! array_key_exists($itemKey, $state)) {
+                                            continue;
+                                        }
+
+                                        $record->forceFill([
+                                            'step_order' => 1_000_000 + (int) $record->getKey(),
+                                        ])->saveQuietly();
+                                    }
+
+                                    $component->saveToRelationship();
+                                });
+                            })
+                            ->maxItems(5)
                             ->defaultItems(0)
                             ->live()
-                            ->afterStateUpdated(function (Repeater $component, ?array $state, Set $set): void {
+                            ->afterStateUpdated(function (Repeater $component, ?array $state): void {
                                 if (! is_array($state)) {
                                     return;
                                 }
@@ -190,7 +251,7 @@ class DocumentCategoryForm
                                 $hasChanges = false;
 
                                 foreach ($state as $uuid => $itemData) {
-                                    if (($itemData['step_order'] ?? null) !== $order) {
+                                    if ((int) ($itemData['step_order'] ?? 0) !== $order) {
                                         $state[$uuid]['step_order'] = $order;
                                         $hasChanges = true;
                                     }
@@ -199,7 +260,6 @@ class DocumentCategoryForm
 
                                 if ($hasChanges) {
                                     $component->rawState($state);
-                                    $set('approvalFlows', $state);
                                 }
                             })
                             ->schema([
@@ -211,40 +271,10 @@ class DocumentCategoryForm
                                         'tabindex' => '-1',
                                         'class' => 'bg-gray-50/70 dark:bg-white/5 cursor-default select-none pointer-events-none font-medium',
                                     ])
-                                    ->default(function (TextInput $component, Get $get): int {
-                                        $statePath = (string) $component->getStatePath();
-                                        $parentItems = $get('../../approvalFlows') ?? $get('../') ?? [];
-
-                                        if (is_array($parentItems) && count($parentItems) > 0) {
-                                            $keys = array_keys($parentItems);
-                                            foreach ($keys as $idx => $k) {
-                                                if (str_contains($statePath, (string) $k)) {
-                                                    return $idx + 1;
-                                                }
-                                            }
-
-                                            return count($parentItems);
-                                        }
-
-                                        return 1;
-                                    })
-                                    ->formatStateUsing(function (TextInput $component, Get $get, mixed $state): int {
-                                        $statePath = (string) $component->getStatePath();
-                                        $parentItems = $get('../../approvalFlows') ?? $get('../') ?? [];
-
-                                        if (is_array($parentItems) && count($parentItems) > 0) {
-                                            $keys = array_keys($parentItems);
-                                            foreach ($keys as $idx => $k) {
-                                                if (str_contains($statePath, (string) $k)) {
-                                                    return $idx + 1;
-                                                }
-                                            }
-                                        }
-
-                                        return filled($state) ? (int) $state : 1;
-                                    })
+                                    ->default(fn (TextInput $component, Get $get): int => self::resolveStepOrderPosition($component, $get))
+                                    ->formatStateUsing(fn (TextInput $component, Get $get, mixed $state): int => self::resolveStepOrderPosition($component, $get, $state))
                                     ->minValue(1)
-                                    ->maxValue(3)
+                                    ->maxValue(5)
                                     ->required(),
 
                                 Select::make('approver_role')
@@ -272,5 +302,26 @@ class DocumentCategoryForm
                     ])
                     ->columnSpanFull(),
             ]);
+    }
+
+    /**
+     * Menghitung nomor urut tingkat persetujuan secara akurat dari posisi item pada Repeater.
+     */
+    private static function resolveStepOrderPosition(TextInput $component, Get $get, mixed $state = null): int
+    {
+        $containerPath = (string) $component->getContainer()->getStatePath();
+        $itemKey = Str::afterLast($containerPath, '.');
+        $repeaterItems = $get('../');
+
+        if (is_array($repeaterItems) && count($repeaterItems) > 0) {
+            $index = array_search($itemKey, array_keys($repeaterItems), true);
+            if ($index !== false) {
+                return $index + 1;
+            }
+
+            return count($repeaterItems);
+        }
+
+        return filled($state) ? (int) $state : 1;
     }
 }

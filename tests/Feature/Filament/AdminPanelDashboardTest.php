@@ -175,11 +175,11 @@ class AdminPanelDashboardTest extends TestCase
         $superAdmin = User::factory()->create(['is_active' => true]);
         $superAdmin->assignRole($superAdminRole);
 
-        // 1. When logo is null, fallback hidden (no fi-custom-brand-logo)
+        // 1. When logo is null, fallback hidden (no <img class="fi-custom-brand-logo...">)
         $responseWithoutLogo = $this->actingAs($superAdmin)->get('/admin');
         $responseWithoutLogo->assertOk();
         $responseWithoutLogo->assertSee('Archiver-Sistem');
-        $responseWithoutLogo->assertDontSee('fi-custom-brand-logo');
+        $responseWithoutLogo->assertDontSee('class="fi-custom-brand-logo', false);
 
         // 2. When logo is uploaded in CMS, img with url is rendered
         $file = UploadedFile::fake()->image('univbi-logo.png', 120, 120);
@@ -190,7 +190,7 @@ class AdminPanelDashboardTest extends TestCase
         $responseWithLogo = $this->actingAs($superAdmin)->get('/admin');
         $responseWithLogo->assertOk();
         $responseWithLogo->assertSee(Storage::disk('public')->url($path));
-        $responseWithLogo->assertSee('fi-custom-brand-logo');
+        $responseWithLogo->assertSee('class="fi-custom-brand-logo', false);
         $responseWithLogo->assertSee('Archiver-Sistem');
     }
 

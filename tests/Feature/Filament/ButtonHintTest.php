@@ -4,10 +4,10 @@ namespace Tests\Feature\Filament;
 
 use App\Filament\Components\ButtonHint;
 use App\Models\User;
-use Database\Seeders\MasterDataSeeder;
 use Filament\Actions\Action;
 use Filament\Support\Enums\Width;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
+use Tests\Support\LegacyMasterDataSeeder;
 use Tests\TestCase;
 
 class ButtonHintTest extends TestCase
@@ -54,7 +54,7 @@ class ButtonHintTest extends TestCase
 
     public function test_super_admin_can_render_forms_with_button_hints_successfully(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
 
         $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
         $this->actingAs($superAdmin);

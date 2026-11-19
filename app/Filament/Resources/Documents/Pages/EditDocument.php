@@ -46,6 +46,7 @@ class EditDocument extends EditRecord
             $data['document_category_id'] = $this->record->document_category_id;
             $data['is_manual_number'] = $this->record->is_manual_number;
             $data['document_number'] = $this->record->document_number;
+            $data['requires_wet_signature'] = $this->record->requires_wet_signature;
         }
 
         return $data;

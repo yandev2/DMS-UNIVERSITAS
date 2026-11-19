@@ -19,13 +19,13 @@ use App\Models\User;
 use App\Services\BorangExportService;
 use App\Services\BorangQueuedExportService;
 use App\Services\BorangZipExportService;
-use Database\Seeders\MasterDataSeeder;
 use Filament\Tables\Enums\PaginationMode;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
+use Tests\Support\LegacyMasterDataSeeder;
 use Tests\TestCase;
 
 class AccreditationDataBankTest extends TestCase
@@ -79,7 +79,7 @@ class AccreditationDataBankTest extends TestCase
 
     public function test_super_admin_and_lpm_can_access_accreditation_data_bank_page(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
 
         $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
         $this->actingAs($superAdmin)
@@ -99,7 +99,7 @@ class AccreditationDataBankTest extends TestCase
 
     public function test_accreditation_data_bank_renders_borang_records_in_table(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
         Storage::fake(StorageDisk::Private->value);
 
         $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
@@ -117,7 +117,7 @@ class AccreditationDataBankTest extends TestCase
 
     public function test_can_configure_assessor_access_via_header_action(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
 
         $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
         $this->actingAs($superAdmin);
@@ -146,7 +146,7 @@ class AccreditationDataBankTest extends TestCase
 
     public function test_can_close_assessor_access_via_action_and_displays_open_portals(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
 
         $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
         $this->actingAs($superAdmin);
@@ -174,7 +174,7 @@ class AccreditationDataBankTest extends TestCase
 
     public function test_can_trigger_export_excel_action(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
         Storage::fake(StorageDisk::Private->value);
 
         $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
@@ -190,7 +190,7 @@ class AccreditationDataBankTest extends TestCase
 
     public function test_can_trigger_filtered_export_excel_action(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
         Storage::fake(StorageDisk::Private->value);
 
         $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
@@ -211,7 +211,7 @@ class AccreditationDataBankTest extends TestCase
 
     public function test_can_trigger_download_all_zip_action(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
         Storage::fake(StorageDisk::Private->value);
 
         $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
@@ -227,7 +227,7 @@ class AccreditationDataBankTest extends TestCase
 
     public function test_accreditation_data_bank_renders_criteria_statistics_cards(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
         Storage::fake(StorageDisk::Private->value);
 
         $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
@@ -248,7 +248,7 @@ class AccreditationDataBankTest extends TestCase
 
     public function test_clicking_criteria_card_filters_table_records_and_updates_counts(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
         Storage::fake(StorageDisk::Private->value);
 
         $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
@@ -317,7 +317,7 @@ class AccreditationDataBankTest extends TestCase
 
     public function test_table_has_copy_assessor_url_and_view_detail_record_actions(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
         Storage::fake(StorageDisk::Private->value);
 
         $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
@@ -335,7 +335,7 @@ class AccreditationDataBankTest extends TestCase
 
     public function test_accreditation_data_bank_uses_simple_pagination_and_chunked_query_exports(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
         Storage::fake(StorageDisk::Private->value);
 
         $superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
@@ -370,7 +370,7 @@ class AccreditationDataBankTest extends TestCase
     public function test_heavy_borang_export_dispatches_background_queue_job(): void
     {
         Queue::fake();
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
         Storage::fake(StorageDisk::Private->value);
 
         $lpmUser = User::where('email', 'lpm@univbi.ac.id')->firstOrFail();
@@ -406,7 +406,7 @@ class AccreditationDataBankTest extends TestCase
 
     public function test_queued_borang_export_service_generates_files_notifications_and_enforces_download_access(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
         Storage::fake(StorageDisk::Private->value);
 
         $lpmUser = User::where('email', 'lpm@univbi.ac.id')->firstOrFail();

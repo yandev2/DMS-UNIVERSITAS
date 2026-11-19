@@ -7,6 +7,7 @@ namespace App\Policies;
 use App\Enums\DocumentStatus;
 use App\Enums\VisibilityLevel;
 use App\Models\Document;
+use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Foundation\Auth\User as AuthUser;
 
@@ -33,23 +34,34 @@ class DocumentPolicy
             }
         }
 
-        // Dokumen bertaraf publik atau berkas borang akreditasi dapat diakses luas oleh pemegang izin view
-        if ($document->visibility === VisibilityLevel::Public || $document->is_borang) {
+        // Dokumen bertaraf publik dapat diakses luas oleh pemegang izin view
+        if ($document->visibility === VisibilityLevel::Public) {
             return true;
         }
 
-        // Pengguna dengan hak lintas unit (Rektorat, Warek, LPM, Super Admin)
+        // Pengguna dengan hak lintas unit (Rektorat, Warek, SPMI, Super Admin)
         if ($authUser->can('document.bypass_unit_scope')) {
             return true;
         }
 
-        // Unit tenancy scope: Dokumen unit sendiri, diunggah oleh pengguna, atau prodi bawahan dekan
-        if ($document->unit_id === $authUser->unit_id || $document->uploaded_by === $authUser->id) {
+        // Bagian Humas dapat mengakses dokumen dalam alur verifikasi Humas, menunggu TTD basah, atau yang sudah di-scan Humas
+        if ($authUser->can('letter.manage_humas')) {
+            if (
+                $document->status === DocumentStatus::WaitingSignature
+                || (int) $document->final_scan_uploaded_by === (int) $authUser->id
+                || $document->approvals()->where('approver_role', 'humas')->exists()
+            ) {
+                return true;
+            }
+        }
+
+        // Unit tenancy scope: Dokumen yang diunggah oleh pengguna, unit sendiri, atau prodi bawahan dekan
+        if ($document->uploaded_by === $authUser->id) {
             return true;
         }
 
-        if ($authUser->hasRole('dekan') && $document->unit?->parent_id === $authUser->unit_id) {
-            return true;
+        if ($authUser instanceof User) {
+            return $authUser->canAccessUnit($document->unit_id);
         }
 
         return false;
@@ -71,9 +83,10 @@ class DocumentPolicy
             return false;
         }
 
-        // Dokumen Ditolak, Diarsipkan, Kedaluwarsa, atau sedang Menunggu Persetujuan tidak boleh disunting staf biasa
+        // Dokumen Ditolak, Diarsipkan, Kedaluwarsa, Menunggu TTD Basah, atau sedang Menunggu Persetujuan tidak boleh disunting metadata umumnya oleh staf biasa
         if (in_array($document->status, [
             DocumentStatus::Pending,
+            DocumentStatus::WaitingSignature,
             DocumentStatus::Rejected,
             DocumentStatus::Archived,
             DocumentStatus::Expired,

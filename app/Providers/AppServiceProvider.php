@@ -13,6 +13,7 @@ use Illuminate\Auth\Events\Failed as AuthFailed;
 use Illuminate\Auth\Events\Login as AuthLogin;
 use Illuminate\Auth\Events\Logout as AuthLogout;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -31,6 +32,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::before(static function ($user, string $ability): ?bool {
+            return method_exists($user, 'hasRole') && $user->hasRole('super_admin')
+                ? true
+                : null;
+        });
+
         DatePicker::configureUsing(function (DatePicker $datePicker): void {
             $datePicker->native(false);
         });

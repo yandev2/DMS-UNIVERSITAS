@@ -14,6 +14,7 @@ use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
@@ -40,6 +41,19 @@ class DocumentCategoriesTable
                     ->label('Visibilitas Default')
                     ->badge(),
 
+                TextColumn::make('allowed_units_summary')
+                    ->label('Cakupan Unit')
+                    ->badge()
+                    ->state(fn (DocumentCategory $record): array|string => $record->allowedUnits->isEmpty()
+                        ? 'Semua Unit'
+                        : $record->allowedUnits->pluck('code')->all())
+                    ->color(fn (DocumentCategory $record): string => $record->allowedUnits->isEmpty()
+                        ? 'gray'
+                        : 'info')
+                    ->tooltip(fn (DocumentCategory $record): string => $record->allowedUnits->isEmpty()
+                        ? 'Umum — dapat dipilih oleh seluruh unit kerja.'
+                        : 'Khusus unit: '.$record->allowedUnits->pluck('name')->implode(', ')),
+
                 IconColumn::make('requires_approval')
                     ->label('Wajib Approval')
                     ->boolean(),
@@ -53,6 +67,10 @@ class DocumentCategoriesTable
 
                 IconColumn::make('has_expiry')
                     ->label('Masa Berlaku')
+                    ->boolean(),
+
+                IconColumn::make('requires_wet_signature')
+                    ->label('TTD Basah')
                     ->boolean(),
 
                 IconColumn::make('template_file_path')
@@ -88,6 +106,17 @@ class DocumentCategoriesTable
                 TernaryFilter::make('has_expiry')
                     ->label('Memiliki Masa Berlaku')
                     ->native(false),
+
+                TernaryFilter::make('requires_wet_signature')
+                    ->label('Memerlukan TTD Basah & Cap')
+                    ->native(false),
+
+                SelectFilter::make('allowedUnits')
+                    ->label('Khusus Unit Kerja')
+                    ->relationship('allowedUnits', 'name')
+                    ->multiple()
+                    ->searchable()
+                    ->preload(),
             ], layout: FiltersLayout::Modal)
             ->recordActions([
                 Action::make('download_template')

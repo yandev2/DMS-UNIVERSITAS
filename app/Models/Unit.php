@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
@@ -167,14 +168,6 @@ class Unit extends Model
             $reasons[] = $this->posts()->count().' artikel berita';
         }
 
-        if ($this->currentAssets()->exists()) {
-            $reasons[] = $this->currentAssets()->count().' aset inventaris';
-        }
-
-        if ($this->assetLocations()->exists()) {
-            $reasons[] = $this->assetLocations()->count().' ruangan/lokasi aset';
-        }
-
         return ! empty($reasons) ? implode(', ', $reasons) : null;
     }
 
@@ -217,24 +210,15 @@ class Unit extends Model
         return $this->hasMany(Document::class);
     }
 
+    public function documentCategories(): BelongsToMany
+    {
+        return $this->belongsToMany(DocumentCategory::class, 'document_category_unit')
+            ->withTimestamps();
+    }
+
     public function posts(): HasMany
     {
         return $this->hasMany(Post::class);
-    }
-
-    public function assetLocations(): HasMany
-    {
-        return $this->hasMany(AssetLocation::class);
-    }
-
-    public function currentAssets(): HasMany
-    {
-        return $this->hasMany(Asset::class, 'current_unit_id');
-    }
-
-    public function initialAssets(): HasMany
-    {
-        return $this->hasMany(Asset::class, 'initial_unit_id');
     }
 
     public function isAssessorAccessOpen(): bool

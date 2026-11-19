@@ -64,6 +64,16 @@ class UnitResource extends Resource
         ];
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with([
+                'parent:id,name,code,parent_id',
+                'parent.parent:id,name,code',
+                'headUser:id,name',
+            ]);
+    }
+
     public static function getRecordRouteBindingEloquentQuery(): Builder
     {
         return parent::getRecordRouteBindingEloquentQuery()

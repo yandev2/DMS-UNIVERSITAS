@@ -9,7 +9,9 @@ use App\Enums\PostStatus;
 use App\Filament\Resources\Posts\PostResource;
 use App\Models\Post;
 use App\Models\User;
+use App\Support\DashboardPeriodFilter;
 use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -17,10 +19,11 @@ use Illuminate\Support\Facades\Cache;
 class PostPeriodOverviewWidget extends Widget
 {
     use HasWidgetShield;
+    use InteractsWithPageFilters;
 
     protected static bool $isLazy = false;
 
-    protected static ?int $sort = 4;
+    protected static ?int $sort = 5;
 
     protected ?string $pollingInterval = null;
 
@@ -51,7 +54,10 @@ class PostPeriodOverviewWidget extends Widget
             return ['stats' => []];
         }
 
-        $monthStart = now()->startOfMonth()->toDateTimeString();
+        $period = DashboardPeriodFilter::resolve($this->pageFilters);
+        $rangeStart = $period['start_date']->startOfDay()->toDateTimeString();
+        $rangeEnd = $period['end_date']->endOfDay()->toDateTimeString();
+
         $isBypass = $user->can('post.moderate_humas') || $user->can('document.bypass_unit_scope');
         $scopeKey = $isBypass
             ? 'all'
@@ -62,15 +68,16 @@ class PostPeriodOverviewWidget extends Widget
             ]);
 
         $version = Post::getStatsCacheVersion();
-        $cacheKey = "post_period_overview_rows:v{$version}:{$scopeKey}:".now()->format('Y-m');
+        $cacheKey = "post_period_overview_rows:v{$version}:{$scopeKey}:{$period['cache_key']}";
 
-        /** @var array<int, array{period: string, status: string, total: int, total_views: int, month_count: int}> $aggregates */
-        $aggregates = Cache::remember($cacheKey, now()->addSeconds(120), static function () use ($user, $monthStart): array {
+        /** @var array<int, array{period: string, status: string, total: int, total_views: int, period_published_count: int}> $aggregates */
+        $aggregates = Cache::remember($cacheKey, now()->addSeconds(120), static function () use ($user, $rangeStart, $rangeEnd): array {
             return Post::query()
                 ->accessibleFor($user)
+                ->whereRaw('COALESCE(posts.published_at, posts.created_at) BETWEEN ? AND ?', [$rangeStart, $rangeEnd])
                 ->toBase()
                 ->selectRaw('period, status, COUNT(*) as total, COALESCE(SUM(views_count), 0) as total_views')
-                ->selectRaw('SUM(CASE WHEN published_at >= ? THEN 1 ELSE 0 END) as month_count', [$monthStart])
+                ->selectRaw('SUM(CASE WHEN published_at BETWEEN ? AND ? THEN 1 ELSE 0 END) as period_published_count', [$rangeStart, $rangeEnd])
                 ->groupBy('period', 'status')
                 ->get()
                 ->map(static fn (object $row): array => [
@@ -78,7 +85,7 @@ class PostPeriodOverviewWidget extends Widget
                     'status' => (string) ($row->status ?? ''),
                     'total' => (int) ($row->total ?? 0),
                     'total_views' => (int) ($row->total_views ?? 0),
-                    'month_count' => (int) ($row->month_count ?? 0),
+                    'period_published_count' => (int) ($row->period_published_count ?? 0),
                 ])
                 ->all();
         });
@@ -93,9 +100,9 @@ class PostPeriodOverviewWidget extends Widget
             ];
         }
 
-        $publishedThisMonth = 0;
+        $publishedInPeriod = 0;
         $totalViews = 0;
-        $totalPublishedAll = 0;
+        $totalPublishedFiltered = 0;
 
         foreach ($aggregates as $row) {
             if (! is_array($row)) {
@@ -117,12 +124,16 @@ class PostPeriodOverviewWidget extends Widget
 
             if ($statusKey === PostStatus::Published->value) {
                 $byPeriod[$periodKey]['published'] += $count;
-                $totalPublishedAll += $count;
-                $publishedThisMonth += (int) ($row['month_count'] ?? 0);
+                $totalPublishedFiltered += $count;
+                $publishedInPeriod += (int) ($row['period_published_count'] ?? 0);
             } elseif ($statusKey === PostStatus::PendingReview->value) {
                 $byPeriod[$periodKey]['pending'] += $count;
             }
         }
+
+        $fourthCardLabel = $period['is_default_current_month']
+            ? 'Tayang Bulan Ini'
+            : 'Tayang Periode Ini';
 
         $stats = [
             [
@@ -156,9 +167,9 @@ class PostPeriodOverviewWidget extends Widget
                 ]),
             ],
             [
-                'label' => 'Tayang Bulan Ini',
-                'value' => $publishedThisMonth,
-                'description' => "{$totalPublishedAll} tayang • ".number_format($totalViews, 0, ',', '.').' pembaca',
+                'label' => $fourthCardLabel,
+                'value' => $publishedInPeriod,
+                'description' => "{$period['label']} • ".number_format($totalViews, 0, ',', '.').' pembaca',
                 'color' => 'purple',
                 'icon' => 'chart-bar',
                 'url' => PostResource::getUrl('index', ['tab' => 'published']),

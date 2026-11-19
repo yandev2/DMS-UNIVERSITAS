@@ -13,9 +13,9 @@ use App\Models\DocumentCategory;
 use App\Models\DocumentFile;
 use App\Models\Unit;
 use App\Models\User;
-use Database\Seeders\MasterDataSeeder;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Storage;
+use Tests\Support\LegacyMasterDataSeeder;
 use Tests\TestCase;
 
 class BorangPublicViewerTest extends TestCase
@@ -68,7 +68,7 @@ class BorangPublicViewerTest extends TestCase
 
     public function test_assessor_can_view_document_when_access_is_open(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
         Storage::fake(StorageDisk::Private->value);
 
         $unitTi = Unit::where('code', 'TI')->firstOrFail();
@@ -91,7 +91,7 @@ class BorangPublicViewerTest extends TestCase
 
     public function test_assessor_access_is_blocked_when_access_is_inactive(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
         Storage::fake(StorageDisk::Private->value);
 
         $unitTi = Unit::where('code', 'TI')->firstOrFail();
@@ -110,7 +110,7 @@ class BorangPublicViewerTest extends TestCase
 
     public function test_assessor_access_is_blocked_when_outside_date_window(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
         Storage::fake(StorageDisk::Private->value);
 
         $unitTi = Unit::where('code', 'TI')->firstOrFail();
@@ -130,7 +130,7 @@ class BorangPublicViewerTest extends TestCase
 
     public function test_assessor_access_prompts_passcode_and_unlocks_with_correct_pin(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
         Storage::fake(StorageDisk::Private->value);
 
         $unitTi = Unit::where('code', 'TI')->firstOrFail();
@@ -166,7 +166,7 @@ class BorangPublicViewerTest extends TestCase
 
     public function test_assessor_can_stream_and_download_file(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
         Storage::fake(StorageDisk::Private->value);
 
         $unitTi = Unit::where('code', 'TI')->firstOrFail();
@@ -189,7 +189,7 @@ class BorangPublicViewerTest extends TestCase
 
     public function test_single_document_viewer_does_not_render_multi_document_list(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
         Storage::fake(StorageDisk::Private->value);
 
         $unitTi = Unit::where('code', 'TI')->firstOrFail();
@@ -206,7 +206,7 @@ class BorangPublicViewerTest extends TestCase
 
     public function test_assessor_can_access_full_unit_portal_and_see_all_unit_documents(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
         Storage::fake(StorageDisk::Private->value);
 
         $unitTi = Unit::where('code', 'TI')->firstOrFail();
@@ -248,7 +248,7 @@ class BorangPublicViewerTest extends TestCase
 
     public function test_assessor_can_switch_active_document_in_unit_portal(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
         Storage::fake(StorageDisk::Private->value);
 
         $unitTi = Unit::where('code', 'TI')->firstOrFail();
@@ -282,7 +282,7 @@ class BorangPublicViewerTest extends TestCase
 
     public function test_unit_portal_respects_access_window_and_passcode(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
         Storage::fake(StorageDisk::Private->value);
 
         $unitTi = Unit::where('code', 'TI')->firstOrFail();
@@ -316,7 +316,7 @@ class BorangPublicViewerTest extends TestCase
 
     public function test_unit_portal_paginates_filters_by_criterion_year_search_and_tracks_views(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
         Storage::fake(StorageDisk::Private->value);
 
         $unitTi = Unit::where('code', 'TI')->firstOrFail();

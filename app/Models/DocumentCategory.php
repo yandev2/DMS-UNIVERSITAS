@@ -4,8 +4,10 @@ namespace App\Models;
 
 use App\Enums\StampingPosition;
 use App\Enums\VisibilityLevel;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -29,6 +31,7 @@ class DocumentCategory extends Model
         'number_format',
         'requires_approval',
         'allow_manual_number',
+        'requires_wet_signature',
         'has_expiry',
         'default_visibility',
         'stamp_position',
@@ -46,6 +49,7 @@ class DocumentCategory extends Model
         return [
             'requires_approval' => 'boolean',
             'allow_manual_number' => 'boolean',
+            'requires_wet_signature' => 'boolean',
             'has_expiry' => 'boolean',
             'default_visibility' => VisibilityLevel::class,
             'stamp_position' => StampingPosition::class,
@@ -114,6 +118,54 @@ class DocumentCategory extends Model
     public function documents(): HasMany
     {
         return $this->hasMany(Document::class);
+    }
+
+    public function allowedUnits(): BelongsToMany
+    {
+        return $this->belongsToMany(Unit::class, 'document_category_unit')
+            ->withTimestamps()
+            ->orderBy('units.name');
+    }
+
+    /**
+     * Memeriksa apakah kategori boleh dipilih oleh unit kerja tertentu.
+     * Jika daftar unit khusus kosong, kategori bersifat umum untuk seluruh unit.
+     */
+    public function isAllowedForUnit(int|Unit|null $unit): bool
+    {
+        $allowedIds = $this->relationLoaded('allowedUnits')
+            ? $this->allowedUnits->pluck('id')->all()
+            : $this->allowedUnits()->pluck('units.id')->all();
+
+        if (empty($allowedIds)) {
+            return true;
+        }
+
+        $unitId = $unit instanceof Unit ? $unit->id : (filled($unit) ? (int) $unit : null);
+        if (! $unitId) {
+            return false;
+        }
+
+        return in_array($unitId, array_map('intval', $allowedIds), true);
+    }
+
+    /**
+     * Menyaring kategori aktif yang tersedia untuk unit tertentu (kategori umum atau terikat ke unit tersebut).
+     */
+    public function scopeAvailableForUnit(Builder $query, int|Unit|null $unit): Builder
+    {
+        $unitId = $unit instanceof Unit ? $unit->id : (filled($unit) ? (int) $unit : null);
+
+        $query->where('document_categories.is_active', true);
+
+        if (! $unitId) {
+            return $query->whereDoesntHave('allowedUnits');
+        }
+
+        return $query->where(function (Builder $q) use ($unitId): void {
+            $q->whereDoesntHave('allowedUnits')
+                ->orWhereHas('allowedUnits', fn (Builder $uq): Builder => $uq->where('units.id', $unitId));
+        });
     }
 
     public function hasTemplate(): bool

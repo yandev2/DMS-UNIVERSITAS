@@ -39,10 +39,13 @@ class Document extends Model
         'current_step',
         'total_steps',
         'final_approved_by',
+        'final_scan_uploaded_by',
         'approved_at',
+        'final_scan_uploaded_at',
         'signer_name_snapshot',
         'signer_position_snapshot',
         'is_borang',
+        'requires_wet_signature',
         'has_expiry',
         'issued_date',
         'expired_date',
@@ -195,7 +198,9 @@ class Document extends Model
             'current_step' => 'integer',
             'total_steps' => 'integer',
             'approved_at' => 'datetime',
+            'final_scan_uploaded_at' => 'datetime',
             'is_borang' => 'boolean',
+            'requires_wet_signature' => 'boolean',
             'has_expiry' => 'boolean',
             'issued_date' => 'date',
             'expired_date' => 'date',
@@ -254,6 +259,11 @@ class Document extends Model
         return $this->belongsTo(User::class, 'final_approved_by');
     }
 
+    public function finalScanUploader(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'final_scan_uploaded_by');
+    }
+
     public function replacedDocument(): BelongsTo
     {
         return $this->belongsTo(Document::class, 'replaces_document_id');
@@ -308,6 +318,10 @@ class Document extends Model
     {
         if ($this->status === DocumentStatus::Revision) {
             return 'Perlu Revisi';
+        }
+
+        if ($this->status === DocumentStatus::WaitingSignature) {
+            return 'Menunggu TTD Basah & Cap';
         }
 
         if ($this->status === DocumentStatus::Approved || $this->status === DocumentStatus::Archived) {
@@ -458,20 +472,25 @@ class Document extends Model
         }
 
         // Filter Tenancy & Hak Unit
-        if (! $user->can('document.bypass_unit_scope')) {
-            $query->where(function (Builder $builder) use ($user): void {
+        $accessibleUnitIds = $user->accessibleUnitIds();
+        if ($accessibleUnitIds !== null) {
+            $query->where(function (Builder $builder) use ($user, $accessibleUnitIds): void {
                 $builder->where('documents.uploaded_by', $user->id)
-                    ->orWhere('documents.visibility', VisibilityLevel::Public)
-                    ->orWhere('documents.is_borang', true);
+                    ->orWhere('documents.visibility', VisibilityLevel::Public);
 
-                if ($user->unit_id) {
-                    $builder->orWhere('documents.unit_id', $user->unit_id);
+                if ($accessibleUnitIds !== []) {
+                    $builder->orWhereIn('documents.unit_id', $accessibleUnitIds);
                 }
 
-                if ($user->hasRole('dekan') && $user->unit_id) {
-                    $builder->orWhereIn('documents.unit_id', function ($sub) use ($user): void {
-                        $sub->select('id')->from('units')->where('parent_id', $user->unit_id);
-                    });
+                if ($user->can('letter.manage_humas')) {
+                    $builder->orWhere('documents.status', DocumentStatus::WaitingSignature->value)
+                        ->orWhere('documents.final_scan_uploaded_by', $user->id)
+                        ->orWhereExists(function ($approvalSub): void {
+                            $approvalSub->selectRaw('1')
+                                ->from('document_approvals')
+                                ->whereColumn('document_approvals.document_id', 'documents.id')
+                                ->where('document_approvals.approver_role', 'humas');
+                        });
                 }
             });
         }

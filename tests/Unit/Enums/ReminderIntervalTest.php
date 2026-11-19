@@ -3,12 +3,6 @@
 namespace Tests\Unit\Enums;
 
 use App\Enums\ApprovalStatus;
-use App\Enums\AssetCondition;
-use App\Enums\AssetEventType;
-use App\Enums\AssetMaintenanceStatus;
-use App\Enums\AssetMaintenanceType;
-use App\Enums\AssetOwnership;
-use App\Enums\AssetStatus;
 use App\Enums\DegreeLevel;
 use App\Enums\DocumentStatus;
 use App\Enums\PostStatus;
@@ -56,12 +50,6 @@ class ReminderIntervalTest extends TestCase
     {
         $enumClasses = [
             ApprovalStatus::class,
-            AssetCondition::class,
-            AssetEventType::class,
-            AssetMaintenanceStatus::class,
-            AssetMaintenanceType::class,
-            AssetOwnership::class,
-            AssetStatus::class,
             DegreeLevel::class,
             DocumentStatus::class,
             PostStatus::class,

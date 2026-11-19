@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\DocumentStatus;
+use App\Enums\VisibilityLevel;
 use App\Models\AcademicYear;
 use App\Models\AccreditationCriterion;
 use App\Models\BulkExport;
@@ -150,8 +151,20 @@ class BorangQueuedExportService
             ->where('documents.is_borang', true)
             ->where('documents.status', DocumentStatus::Approved);
 
-        if (! ($payload['bypass_unit_scope'] ?? false) && ! empty($payload['scope_unit_id'])) {
-            $query->where('documents.unit_id', (int) $payload['scope_unit_id']);
+        if (! ($payload['bypass_unit_scope'] ?? false)) {
+            if (isset($payload['scope_unit_ids']) && is_array($payload['scope_unit_ids'])) {
+                $query->whereIn('documents.unit_id', array_map('intval', $payload['scope_unit_ids']));
+            } elseif (! empty($payload['scope_unit_id'])) {
+                $query->where('documents.unit_id', (int) $payload['scope_unit_id']);
+            }
+        }
+
+        if (! ($payload['can_view_confidential'] ?? true)) {
+            $userId = isset($payload['user_id']) ? (int) $payload['user_id'] : 0;
+            $query->where(function (Builder $q) use ($userId): void {
+                $q->where('documents.visibility', '!=', VisibilityLevel::Confidential->value)
+                    ->orWhere('documents.uploaded_by', $userId);
+            });
         }
 
         if (! empty($payload['document_ids']) && is_array($payload['document_ids'])) {

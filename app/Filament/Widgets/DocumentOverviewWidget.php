@@ -7,7 +7,9 @@ use App\Filament\Resources\Documents\DocumentResource;
 use App\Models\Document;
 use App\Models\Unit;
 use App\Models\User;
+use App\Support\DashboardPeriodFilter;
 use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -16,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 class DocumentOverviewWidget extends Widget
 {
     use HasWidgetShield;
+    use InteractsWithPageFilters;
 
     protected static bool $isLazy = false;
 
@@ -34,6 +37,7 @@ class DocumentOverviewWidget extends Widget
     {
         /** @var User|null $user */
         $user = Auth::user();
+        $period = DashboardPeriodFilter::resolve($this->pageFilters);
 
         if (! $user) {
             return [
@@ -43,23 +47,34 @@ class DocumentOverviewWidget extends Widget
 
         $docVersion = Document::getStatsCacheVersion();
         $scopeKey = Document::statsCacheScopeKeyFor($user);
-        $cacheKey = "dashboard_doc_overview:v{$docVersion}:{$scopeKey}";
+        $cacheKey = "dashboard_doc_overview:v{$docVersion}:{$period['cache_key']}:{$scopeKey}";
 
         /** @var array{pending: int, approved: int, borang: int} $counts */
-        $counts = Cache::remember($cacheKey, now()->addSeconds(120), static function () use ($user): array {
-            // 1. Dokumen Menunggu Persetujuan / Tindak Lanjut tanpa eager load mubazir
+        $counts = Cache::remember($cacheKey, now()->addSeconds(120), static function () use ($user, $period): array {
+            // 1. Dokumen Menunggu Persetujuan / Tindak Lanjut bersifat antrean live saat ini
             $pendingCount = PendingApprovalsWidget::getPendingQueryForUser($user, withEagerLoads: false)
                 ->reorder()
                 ->count();
 
-            // 2 & 3. Gabungkan hitungan Naskah Sah & Bukti Borang dalam 1 pass SQL agregat
-            $restrictBorangToUnit = ! $user->hasRole('super_admin')
-                && ! $user->can('document.bypass_unit_scope')
-                && $user->unit_id;
+            // 2 & 3. Hitungan Naskah Sah & Bukti Borang pada rentang periode issued_date aktif dalam 1 pass SQL
+            $accessibleUnitIds = $user->accessibleUnitIds();
 
             $borangCondition = DB::connection()->getDriverName() === 'pgsql'
                 ? 'documents.is_borang IS TRUE'
                 : 'documents.is_borang = 1';
+
+            $borangSelect = "COALESCE(SUM(CASE WHEN {$borangCondition} THEN 1 ELSE 0 END), 0) as borang_count";
+            $borangBindings = [];
+
+            if ($accessibleUnitIds !== null) {
+                if ($accessibleUnitIds === []) {
+                    $borangSelect = '0 as borang_count';
+                } else {
+                    $placeholders = implode(', ', array_fill(0, count($accessibleUnitIds), '?'));
+                    $borangSelect = "COALESCE(SUM(CASE WHEN {$borangCondition} AND documents.unit_id IN ({$placeholders}) THEN 1 ELSE 0 END), 0) as borang_count";
+                    $borangBindings = $accessibleUnitIds;
+                }
+            }
 
             $approvedStatuses = [
                 DocumentStatus::Approved->value,
@@ -67,19 +82,16 @@ class DocumentOverviewWidget extends Widget
                 DocumentStatus::Expired->value,
             ];
 
-            $aggregateRow = Document::query()
-                ->accessibleFor($user)
+            $aggregateQuery = Document::query()->accessibleFor($user);
+            DashboardPeriodFilter::applyToDocumentIssuedDate($aggregateQuery, $period);
+
+            $aggregateRow = $aggregateQuery
                 ->toBase()
                 ->selectRaw(
                     'COALESCE(SUM(CASE WHEN documents.status IN (?, ?, ?) THEN 1 ELSE 0 END), 0) as approved_count',
                     $approvedStatuses
                 )
-                ->selectRaw(
-                    $restrictBorangToUnit
-                        ? "COALESCE(SUM(CASE WHEN {$borangCondition} AND documents.unit_id = ? THEN 1 ELSE 0 END), 0) as borang_count"
-                        : "COALESCE(SUM(CASE WHEN {$borangCondition} THEN 1 ELSE 0 END), 0) as borang_count",
-                    $restrictBorangToUnit ? [(int) $user->unit_id] : []
-                )
+                ->selectRaw($borangSelect, $borangBindings)
                 ->first();
 
             return [
@@ -95,6 +107,11 @@ class DocumentOverviewWidget extends Widget
 
         // 4. Portal Asesor Aktif (ter-cache bersama dengan Quick Actions & memoized per-request)
         $assessorCount = Unit::countActiveAssessorUnitsForUser($user);
+
+        $issuedPeriodFilter = [
+            'issued_from' => $period['start_date']->toDateString(),
+            'issued_until' => $period['end_date']->toDateString(),
+        ];
 
         return [
             'stats' => [
@@ -122,7 +139,7 @@ class DocumentOverviewWidget extends Widget
                     'key' => 'approved',
                     'label' => 'Naskah Sah & Resmi',
                     'value' => $approvedCount,
-                    'description' => 'Telah divalidasi & memiliki nomor',
+                    'description' => "Tervalidasi • {$period['label']}",
                     'icon' => 'check-badge',
                     'color' => 'emerald',
                     'url' => DocumentResource::getUrl('index', [
@@ -135,6 +152,7 @@ class DocumentOverviewWidget extends Widget
                                     DocumentStatus::Expired->value,
                                 ],
                             ],
+                            'issued_period' => $issuedPeriodFilter,
                         ],
                     ]),
                     'is_alert' => false,
@@ -143,7 +161,7 @@ class DocumentOverviewWidget extends Widget
                     'key' => 'borang',
                     'label' => 'Bukti Borang Akreditasi',
                     'value' => $borangCount,
-                    'description' => 'Dokumen bukti borang terdata',
+                    'description' => "Bukti borang • {$period['label']}",
                     'icon' => 'academic-cap',
                     'color' => 'blue',
                     'url' => DocumentResource::getUrl('index', [
@@ -152,6 +170,7 @@ class DocumentOverviewWidget extends Widget
                             'is_borang' => [
                                 'value' => '1',
                             ],
+                            'issued_period' => $issuedPeriodFilter,
                         ],
                     ]),
                     'is_alert' => false,

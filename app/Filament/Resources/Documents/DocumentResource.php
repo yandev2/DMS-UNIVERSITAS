@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Documents;
 
-use App\Enums\VisibilityLevel;
 use App\Filament\Resources\Documents\Pages\CreateDocument;
 use App\Filament\Resources\Documents\Pages\EditDocument;
 use App\Filament\Resources\Documents\Pages\ListDocuments;
@@ -79,28 +78,7 @@ class DocumentResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery();
-        $user = auth()->user();
-
-        if (! $user) {
-            return $query;
-        }
-
-        if ($user->can('document.bypass_unit_scope')) {
-            return $query;
-        }
-
-        return $query->where(function (Builder $builder) use ($user): void {
-            $builder->where('unit_id', $user->unit_id)
-                ->orWhere('uploaded_by', $user->id)
-                ->orWhere('visibility', VisibilityLevel::Public)
-                ->orWhere('is_borang', true);
-
-            if ($user->hasRole('dekan')) {
-                $builder->orWhereIn('unit_id', function ($sub) use ($user): void {
-                    $sub->select('id')->from('units')->where('parent_id', $user->unit_id);
-                });
-            }
-        });
+        return parent::getEloquentQuery()
+            ->accessibleFor(auth()->user());
     }
 }

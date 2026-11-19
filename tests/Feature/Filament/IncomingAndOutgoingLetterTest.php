@@ -20,8 +20,6 @@ use App\Models\OutgoingLetter;
 use App\Models\Unit;
 use App\Models\User;
 use App\Services\LetterManagementService;
-use Database\Seeders\LetterSeeder;
-use Database\Seeders\MasterDataSeeder;
 use Filament\Tables\Enums\PaginationMode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -29,6 +27,7 @@ use Livewire\Livewire;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\PhpWord;
 use setasign\Fpdi\Fpdi;
+use Tests\Support\LegacyMasterDataSeeder;
 use Tests\TestCase;
 
 class IncomingAndOutgoingLetterTest extends TestCase
@@ -40,7 +39,7 @@ class IncomingAndOutgoingLetterTest extends TestCase
         parent::setUp();
 
         Storage::fake('private');
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
     }
 
     protected function makeValidPdfContent(string $text = 'Surat Eksternal Resmi', int $pages = 1): string
@@ -514,24 +513,6 @@ class IncomingAndOutgoingLetterTest extends TestCase
 
         Storage::disk('private')->assertMissing($originalPath);
         Storage::disk('private')->assertMissing($stampedPath);
-    }
-
-    public function test_letter_seeder_runs_successfully(): void
-    {
-        $this->seed(LetterSeeder::class);
-
-        $this->assertGreaterThanOrEqual(4, IncomingLetter::count());
-        $this->assertGreaterThanOrEqual(4, OutgoingLetter::count());
-
-        $completedSm = IncomingLetter::where('status', IncomingLetterStatus::Completed)->first();
-        $this->assertNotNull($completedSm);
-        $this->assertNotNull($completedSm->stamped_file_path);
-        Storage::disk('private')->assertExists($completedSm->stamped_file_path);
-
-        $publishedSk = OutgoingLetter::where('status', OutgoingLetterStatus::Published)->first();
-        $this->assertNotNull($publishedSk);
-        $this->assertNotNull($publishedSk->stamped_file_path);
-        Storage::disk('private')->assertExists($publishedSk->stamped_file_path);
     }
 
     public function test_dashboard_pending_letters_alert_widget_behavior(): void

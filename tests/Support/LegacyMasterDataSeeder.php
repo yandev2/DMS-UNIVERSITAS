@@ -1,6 +1,6 @@
 <?php
 
-namespace Database\Seeders;
+namespace Tests\Support;
 
 use App\Enums\AccreditationInstrument;
 use App\Enums\DegreeLevel;
@@ -9,21 +9,19 @@ use App\Enums\UnitType;
 use App\Enums\VisibilityLevel;
 use App\Models\AcademicYear;
 use App\Models\AccreditationCriterion;
-use App\Models\AssetCategory;
-use App\Models\AssetLocation;
 use App\Models\CategoryApprovalFlow;
 use App\Models\DocumentCategory;
-use App\Models\Permission;
 use App\Models\PostCategory;
 use App\Models\Role;
 use App\Models\Setting;
 use App\Models\Unit;
 use App\Models\User;
+use Database\Seeders\CampusStructureSeeder;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\PermissionRegistrar;
 
-class MasterDataSeeder extends Seeder
+class LegacyMasterDataSeeder extends Seeder
 {
     /**
      * Run the master data seeds (Safe & Idempotent for both Local and Production).
@@ -40,109 +38,23 @@ class MasterDataSeeder extends Seeder
         $this->seedAccreditationCriteria();
         $this->seedDocumentCategoriesAndFlows();
         $this->seedPostCategories();
-        $this->seedAssetCategoriesAndLocations($units, $users);
         $this->seedSettings();
     }
 
     private function seedRolesAndPermissions(): void
     {
-        $standardShieldAffixes = [
-            'view_any',
-            'view',
-            'create',
-            'update',
-            'delete',
-            'delete_any',
-            'restore',
-            'restore_any',
-            'force_delete',
-            'force_delete_any',
-            'replicate',
-            'reorder',
-        ];
-
-        $shieldSubjects = [
-            'role' => $standardShieldAffixes,
-            'user' => $standardShieldAffixes,
-            'unit' => $standardShieldAffixes,
-            'academic_year' => $standardShieldAffixes,
-            'document_category' => $standardShieldAffixes,
-            'accreditation_criterion' => $standardShieldAffixes,
-            'document' => $standardShieldAffixes,
-            'incoming_letter' => $standardShieldAffixes,
-            'outgoing_letter' => $standardShieldAffixes,
-            'post_category' => $standardShieldAffixes,
-            'post' => $standardShieldAffixes,
-            'activity_log' => ['view_any', 'view'],
-        ];
-
-        $shieldResourcePermissions = [];
-        foreach ($shieldSubjects as $subject => $affixes) {
-            foreach ($affixes as $affix) {
-                $shieldResourcePermissions[] = "{$affix}:{$subject}";
-            }
-        }
-
         $widgetPermissions = [
             'view:dashboard_welcome_banner_widget',
             'view:dashboard_quick_actions_widget',
             'view:document_overview_widget',
+            'view:document_lifecycle_stats_widget',
             'view:annual_published_document_chart_widget',
             'view:pending_approvals_widget',
             'view:pending_letters_alert_widget',
             'view:post_period_overview_widget',
         ];
 
-        $customPermissions = [
-            // Custom Document & E-Arsip Permissions
-            'document.view_confidential',
-            'document.download_private',
-            'document.approve',
-            'document.manual_numbering',
-            'document.bypass_unit_scope',
-            'letter.manage_humas',
-            'archive.bulk_export_zip',
-
-            // Borang Akreditasi Permissions
-            'borang.export_excel',
-            'borang.download_bulk_zip',
-            'borang.configure_assessor',
-
-            // Reminder Permissions
-            'reminder.manage_recipients',
-
-            // CMS & Portal Publik Permissions
-            'post.moderate_humas',
-            'post.download_zip',
-            'cms.manage_landing_page',
-
-            // Sistem Backup & Pemulihan (Eksklusif Super Admin)
-            'system.backup_manage',
-            'system.backup_restore',
-
-            // Dedicated Asset Management Panel (/assets) Permissions
-            'asset.access_panel',
-            'asset.bypass_unit_scope',
-            'asset.create',
-            'asset.print_qr',
-            'asset.transfer_unit',
-            'asset.relocate_room',
-            'asset.report_issue',
-            'asset.process_maintenance',
-            'asset.stock_opname',
-            'asset.dispose',
-            'asset.export_borang_k5',
-        ];
-
-        $allPermissions = array_values(array_unique(array_merge(
-            $shieldResourcePermissions,
-            $widgetPermissions,
-            $customPermissions,
-        )));
-
-        foreach ($allPermissions as $permissionName) {
-            Permission::findOrCreate($permissionName, 'web');
-        }
+        $allPermissions = CampusStructureSeeder::ensurePermissionsExist();
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
@@ -193,9 +105,6 @@ class MasterDataSeeder extends Seeder
                 'borang.configure_assessor',
                 'cms.manage_landing_page',
                 'post.download_zip',
-                'asset.access_panel',
-                'asset.bypass_unit_scope',
-                'asset.export_borang_k5',
             ]),
             'warek' => array_merge($documentReadWrite, [
                 'view_any:activity_log',
@@ -210,9 +119,6 @@ class MasterDataSeeder extends Seeder
                 'borang.configure_assessor',
                 'cms.manage_landing_page',
                 'post.download_zip',
-                'asset.access_panel',
-                'asset.bypass_unit_scope',
-                'asset.export_borang_k5',
             ]),
             'dekan' => array_merge($documentReadWrite, $postReadWrite, [
                 'delete:document',
@@ -223,10 +129,6 @@ class MasterDataSeeder extends Seeder
                 'borang.download_bulk_zip',
                 'borang.configure_assessor',
                 'reminder.manage_recipients',
-                'asset.access_panel',
-                'asset.relocate_room',
-                'asset.report_issue',
-                'asset.export_borang_k5',
             ]),
             'kaprodi' => array_merge($documentReadWrite, $postReadWrite, [
                 'delete:document',
@@ -237,11 +139,6 @@ class MasterDataSeeder extends Seeder
                 'borang.download_bulk_zip',
                 'borang.configure_assessor',
                 'reminder.manage_recipients',
-                'asset.access_panel',
-                'asset.print_qr',
-                'asset.relocate_room',
-                'asset.report_issue',
-                'asset.export_borang_k5',
             ]),
             'lpm' => array_merge($documentReadWrite, [
                 'create:accreditation_criterion',
@@ -254,41 +151,23 @@ class MasterDataSeeder extends Seeder
                 'borang.download_bulk_zip',
                 'borang.configure_assessor',
                 'post.download_zip',
-                'asset.access_panel',
-                'asset.bypass_unit_scope',
-                'asset.export_borang_k5',
             ]),
             'lppm' => array_merge($documentReadWrite, $postReadWrite, [
                 'document.download_private',
                 'document.approve',
                 'document.manual_numbering',
                 'reminder.manage_recipients',
-                'asset.access_panel',
-                'asset.report_issue',
             ]),
             'kepala_biro' => array_merge($documentReadWrite, [
                 'document.download_private',
                 'document.approve',
                 'document.manual_numbering',
                 'reminder.manage_recipients',
-                'asset.access_panel',
-                'asset.report_issue',
             ]),
             'bauk' => array_merge($documentReadWrite, [
                 'document.download_private',
                 'document.manual_numbering',
                 'reminder.manage_recipients',
-                'asset.access_panel',
-                'asset.bypass_unit_scope',
-                'asset.create',
-                'asset.print_qr',
-                'asset.transfer_unit',
-                'asset.relocate_room',
-                'asset.report_issue',
-                'asset.process_maintenance',
-                'asset.stock_opname',
-                'asset.dispose',
-                'asset.export_borang_k5',
             ]),
             'upt_ict' => array_merge($documentReadWrite, [
                 'view_any:user',
@@ -298,15 +177,6 @@ class MasterDataSeeder extends Seeder
                 'view_any:activity_log',
                 'view:activity_log',
                 'document.download_private',
-                'asset.access_panel',
-                'asset.bypass_unit_scope',
-                'asset.create',
-                'asset.print_qr',
-                'asset.relocate_room',
-                'asset.report_issue',
-                'asset.process_maintenance',
-                'asset.stock_opname',
-                'asset.export_borang_k5',
             ]),
             'humas' => array_merge($documentReadWrite, $postReadWrite, [
                 'create:incoming_letter',
@@ -329,9 +199,6 @@ class MasterDataSeeder extends Seeder
                 'document.manual_numbering',
                 'reminder.manage_recipients',
                 'post.download_zip',
-                'asset.access_panel',
-                'asset.report_issue',
-                'asset.export_borang_k5',
             ]),
         ];
 
@@ -856,100 +723,6 @@ class MasterDataSeeder extends Seeder
             PostCategory::updateOrCreate(
                 ['slug' => $category['slug']],
                 array_merge($category, ['is_active' => true])
-            );
-        }
-    }
-
-    /**
-     * @param  array<string, Unit>  $units
-     * @param  array<string, User>  $users
-     */
-    private function seedAssetCategoriesAndLocations(array $units, array $users): void
-    {
-        $assetCategories = [
-            ['code' => 'KOM', 'name' => 'Komputer, Laptop, Server & Perangkat IT', 'useful_life_years' => 4, 'maintenance_interval_days' => 180, 'is_it_asset' => true],
-            ['code' => 'ELK', 'name' => 'Elektronik & Audio Visual (Proyektor, TV, Kamera)', 'useful_life_years' => 5, 'maintenance_interval_days' => 180, 'is_it_asset' => true],
-            ['code' => 'AC', 'name' => 'Pendingin & Tata Udara (AC Split / Cassette)', 'useful_life_years' => 5, 'maintenance_interval_days' => 90, 'is_it_asset' => false],
-            ['code' => 'FUR', 'name' => 'Furnitur & Mebel Kampus (Meja, Kursi, Lemari)', 'useful_life_years' => 8, 'maintenance_interval_days' => null, 'is_it_asset' => false],
-            ['code' => 'LAB', 'name' => 'Alat Peraga & Peralatan Laboratorium Prodi', 'useful_life_years' => 5, 'maintenance_interval_days' => 180, 'is_it_asset' => false],
-            ['code' => 'KND', 'name' => 'Kendaraan Dinas & Operasional Kampus', 'useful_life_years' => 8, 'maintenance_interval_days' => 90, 'is_it_asset' => false],
-            ['code' => 'GDG', 'name' => 'Mesin & Instalasi Gedung (Genset, Pompa, APAR)', 'useful_life_years' => 10, 'maintenance_interval_days' => 180, 'is_it_asset' => false],
-        ];
-
-        foreach ($assetCategories as $cat) {
-            AssetCategory::updateOrCreate(
-                ['code' => $cat['code']],
-                array_merge($cat, ['is_active' => true])
-            );
-        }
-
-        $locations = [
-            [
-                'code' => 'GD-A-LAB01',
-                'name' => 'Laboratorium Pemrograman 1',
-                'building_name' => 'Gedung A Kampus Utama',
-                'floor' => 'Lantai 2',
-                'unit_id' => $units['TI']->id,
-                'pic_user_id' => $users['kaprodi_ti']->id,
-                'pic_name_snapshot' => $users['kaprodi_ti']->name,
-                'capacity' => 40,
-            ],
-            [
-                'code' => 'GD-A-LAB02',
-                'name' => 'Laboratorium Jaringan & Server',
-                'building_name' => 'Gedung A Kampus Utama',
-                'floor' => 'Lantai 2',
-                'unit_id' => $units['ICT']->id,
-                'pic_user_id' => $users['kepala_ict']->id,
-                'pic_name_snapshot' => $users['kepala_ict']->name,
-                'capacity' => 35,
-            ],
-            [
-                'code' => 'GD-A-R201',
-                'name' => 'Ruang Dosen Fakultas Ilmu Komputer',
-                'building_name' => 'Gedung A Kampus Utama',
-                'floor' => 'Lantai 2',
-                'unit_id' => $units['FIK']->id,
-                'pic_user_id' => $users['dekan_fik']->id,
-                'pic_name_snapshot' => $users['dekan_fik']->name,
-                'capacity' => 25,
-            ],
-            [
-                'code' => 'GD-B-R101',
-                'name' => 'Ruang Dekanat & Dosen FEB',
-                'building_name' => 'Gedung B',
-                'floor' => 'Lantai 1',
-                'unit_id' => $units['FEB']->id,
-                'pic_user_id' => $users['dekan_feb']->id,
-                'pic_name_snapshot' => $users['dekan_feb']->name,
-                'capacity' => 25,
-            ],
-            [
-                'code' => 'GD-REK-R101',
-                'name' => 'Ruang Sidang Utama Rektorat',
-                'building_name' => 'Gedung Rektorat',
-                'floor' => 'Lantai 1',
-                'unit_id' => $units['REKTORAT']->id,
-                'pic_user_id' => $users['rektor']->id,
-                'pic_name_snapshot' => $users['rektor']->name,
-                'capacity' => 50,
-            ],
-            [
-                'code' => 'GD-BAUK-GDG',
-                'name' => 'Gudang Sentral Inventaris BAUK',
-                'building_name' => 'Gedung B',
-                'floor' => 'Lantai 1',
-                'unit_id' => $units['BAUK']->id,
-                'pic_user_id' => $users['kepala_bauk']->id,
-                'pic_name_snapshot' => $users['kepala_bauk']->name,
-                'capacity' => 100,
-            ],
-        ];
-
-        foreach ($locations as $loc) {
-            AssetLocation::updateOrCreate(
-                ['code' => $loc['code']],
-                array_merge($loc, ['is_active' => true])
             );
         }
     }

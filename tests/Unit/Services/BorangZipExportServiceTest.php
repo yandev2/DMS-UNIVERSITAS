@@ -14,10 +14,10 @@ use App\Models\DocumentFile;
 use App\Models\Unit;
 use App\Models\User;
 use App\Services\BorangZipExportService;
-use Database\Seeders\MasterDataSeeder;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Tests\Support\LegacyMasterDataSeeder;
 use Tests\TestCase;
 
 class BorangZipExportServiceTest extends TestCase
@@ -26,7 +26,7 @@ class BorangZipExportServiceTest extends TestCase
 
     public function test_downloads_zip_response_with_bundled_files(): void
     {
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
         Storage::fake(StorageDisk::Private->value);
 
         $unitTi = Unit::where('code', 'TI')->firstOrFail();

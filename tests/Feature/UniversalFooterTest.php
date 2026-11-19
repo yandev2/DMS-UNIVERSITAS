@@ -7,8 +7,8 @@ namespace Tests\Feature;
 use App\Models\Document;
 use App\Models\User;
 use App\Support\Security\RuntimeIntegrityManifest;
-use Database\Seeders\MasterDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Support\LegacyMasterDataSeeder;
 use Tests\TestCase;
 
 class UniversalFooterTest extends TestCase
@@ -21,7 +21,7 @@ class UniversalFooterTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(MasterDataSeeder::class);
+        $this->seed(LegacyMasterDataSeeder::class);
 
         $this->superAdmin = User::where('email', 'admin@univbi.ac.id')->firstOrFail();
     }

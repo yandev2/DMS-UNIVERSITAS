@@ -11,16 +11,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Master Data Utama (Aman dijalankan di Local maupun Production Server Kampus)
-        $this->call(MasterDataSeeder::class);
-        $this->call(LandingPageSettingSeeder::class);
-
-        // 2. ⚠️ KHUSUS TESTING / ENVIRONMENT LOCAL:
-        // DummyTestingSeeder (beserta auto-generate file fisik .pdf, .docx, dan .jpg di storage/)
-        // HANYA dijalankan apabila APP_ENV bernilai 'local' atau 'testing'.
-        if (app()->environment(['local', 'testing'])) {
-            $this->call(DummyTestingSeeder::class);
-            $this->call(LetterSeeder::class);
-        }
+        // Mengisi struktur resmi UNIVBI (10 role, 25 unit, 57 akun dengan 1 super_admin)
+        // beserta 11 kategori dokumen umum dan alur persetujuan standarnya.
+        $this->call([
+            CampusStructureSeeder::class,
+            DocumentCategorySeeder::class,
+        ]);
     }
 }

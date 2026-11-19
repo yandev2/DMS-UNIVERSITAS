@@ -6,8 +6,11 @@ use App\Enums\ApprovalStatus;
 use App\Enums\DegreeLevel;
 use App\Enums\DocumentStatus;
 use App\Enums\OutgoingLetterStatus;
+use App\Enums\PostPeriod;
+use App\Enums\PostStatus;
 use App\Enums\UnitType;
 use App\Enums\VisibilityLevel;
+use App\Filament\Pages\Dashboard;
 use App\Filament\Resources\Documents\DocumentResource;
 use App\Filament\Resources\Documents\Pages\ListDocuments;
 use App\Filament\Resources\IncomingLetters\IncomingLetterResource;
@@ -17,9 +20,11 @@ use App\Filament\Resources\OutgoingLetters\Pages\ListOutgoingLetters;
 use App\Filament\Widgets\AnnualPublishedDocumentChartWidget;
 use App\Filament\Widgets\DashboardQuickActionsWidget;
 use App\Filament\Widgets\DashboardWelcomeBannerWidget;
+use App\Filament\Widgets\DocumentLifecycleStatsWidget;
 use App\Filament\Widgets\DocumentOverviewWidget;
 use App\Filament\Widgets\PendingApprovalsWidget;
 use App\Filament\Widgets\PendingLettersAlertWidget;
+use App\Filament\Widgets\PostPeriodOverviewWidget;
 use App\Models\AcademicYear;
 use App\Models\Document;
 use App\Models\DocumentApproval;
@@ -27,9 +32,12 @@ use App\Models\DocumentCategory;
 use App\Models\IncomingLetter;
 use App\Models\OutgoingLetter;
 use App\Models\Permission;
+use App\Models\Post;
+use App\Models\PostCategory;
 use App\Models\Role;
 use App\Models\Unit;
 use App\Models\User;
+use App\Support\DashboardPeriodFilter;
 use BezhanSalleh\FilamentShield\Facades\FilamentShield;
 use Filament\Tables\Enums\PaginationMode;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
@@ -96,12 +104,14 @@ class DashboardWidgetsTest extends TestCase
         $this->assertArrayHasKey(DashboardWelcomeBannerWidget::class, $discovered);
         $this->assertArrayHasKey(DashboardQuickActionsWidget::class, $discovered);
         $this->assertArrayHasKey(DocumentOverviewWidget::class, $discovered);
+        $this->assertArrayHasKey(DocumentLifecycleStatsWidget::class, $discovered);
         $this->assertArrayHasKey(AnnualPublishedDocumentChartWidget::class, $discovered);
         $this->assertArrayHasKey(PendingApprovalsWidget::class, $discovered);
 
         $this->assertArrayHasKey('view:dashboard_welcome_banner_widget', $discovered[DashboardWelcomeBannerWidget::class]['permissions']);
         $this->assertArrayHasKey('view:dashboard_quick_actions_widget', $discovered[DashboardQuickActionsWidget::class]['permissions']);
         $this->assertArrayHasKey('view:document_overview_widget', $discovered[DocumentOverviewWidget::class]['permissions']);
+        $this->assertArrayHasKey('view:document_lifecycle_stats_widget', $discovered[DocumentLifecycleStatsWidget::class]['permissions']);
         $this->assertArrayHasKey('view:annual_published_document_chart_widget', $discovered[AnnualPublishedDocumentChartWidget::class]['permissions']);
         $this->assertArrayHasKey('view:pending_approvals_widget', $discovered[PendingApprovalsWidget::class]['permissions']);
     }
@@ -1047,5 +1057,266 @@ class DashboardWidgetsTest extends TestCase
             ->assertDontSee('Pending Unit Lain Tidak Boleh Bocor');
 
         $this->assertSame(PaginationMode::Simple, $component->instance()->getTable()->getPaginationMode());
+    }
+
+    public function test_document_lifecycle_stats_widget_counts_expiry_permanent_archived_expired_and_rejected_with_period_filter(): void
+    {
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
+        $permLifecycle = Permission::findOrCreate('view:document_lifecycle_stats_widget', 'web');
+        $permOverview = Permission::findOrCreate('view:document_overview_widget', 'web');
+
+        $superAdminRole = Role::findOrCreate('super_admin', 'web');
+        $superAdminRole->givePermissionTo([$permLifecycle, $permOverview]);
+
+        $stafRole = Role::findOrCreate('staf_unit', 'web');
+        $stafRole->givePermissionTo([$permLifecycle, $permOverview]);
+
+        $superAdmin = User::factory()->create(['unit_id' => $this->unitA->id, 'is_active' => true]);
+        $superAdmin->assignRole($superAdminRole);
+
+        $stafUnitA = User::factory()->create(['unit_id' => $this->unitA->id, 'is_active' => true]);
+        $stafUnitA->assignRole($stafRole);
+
+        $now = now();
+        $currentMonthDate = $now->toDateString();
+        $prevMonth = $now->copy()->subMonthNoOverflow();
+        $prevMonthDate = $prevMonth->toDateString();
+
+        // Dokumen bulan berjalan Unit A: bermasa berlaku & aktif
+        Document::create([
+            'title' => 'MoU Aktif Bulan Ini Unit A',
+            'slug' => 'mou-aktif-bulan-ini-unit-a',
+            'unit_id' => $this->unitA->id,
+            'document_category_id' => $this->category->id,
+            'academic_year_id' => $this->academicYear->id,
+            'status' => DocumentStatus::Approved,
+            'visibility' => VisibilityLevel::Internal,
+            'has_expiry' => true,
+            'expired_date' => $now->copy()->addYear()->toDateString(),
+            'uploaded_by' => $superAdmin->id,
+            'issued_date' => $currentMonthDate,
+        ]);
+
+        // Dokumen bulan berjalan Unit A: bermasa berlaku & kedaluwarsa (dihitung di Bermasa Berlaku DAN Arsip)
+        Document::create([
+            'title' => 'MoU Kedaluwarsa Bulan Ini Unit A',
+            'slug' => 'mou-kedaluwarsa-bulan-ini-unit-a',
+            'unit_id' => $this->unitA->id,
+            'document_category_id' => $this->category->id,
+            'academic_year_id' => $this->academicYear->id,
+            'status' => DocumentStatus::Expired,
+            'visibility' => VisibilityLevel::Internal,
+            'has_expiry' => true,
+            'expired_date' => $now->copy()->subDay()->toDateString(),
+            'uploaded_by' => $superAdmin->id,
+            'issued_date' => $currentMonthDate,
+        ]);
+
+        // Dokumen bulan berjalan Unit B: permanen & diarsipkan pasif (Archived)
+        Document::create([
+            'title' => 'SK Permanen Arsip Pasif Unit B',
+            'slug' => 'sk-permanen-arsip-pasif-unit-b',
+            'unit_id' => $this->unitB->id,
+            'document_category_id' => $this->category->id,
+            'academic_year_id' => $this->academicYear->id,
+            'status' => DocumentStatus::Archived,
+            'visibility' => VisibilityLevel::Internal,
+            'has_expiry' => false,
+            'uploaded_by' => $superAdmin->id,
+            'issued_date' => $currentMonthDate,
+        ]);
+
+        // Dokumen bulan berjalan Unit B: permanen & ditolak
+        Document::create([
+            'title' => 'Usulan SK Ditolak Bulan Ini Unit B',
+            'slug' => 'usulan-sk-ditolak-bulan-ini-unit-b',
+            'unit_id' => $this->unitB->id,
+            'document_category_id' => $this->category->id,
+            'academic_year_id' => $this->academicYear->id,
+            'status' => DocumentStatus::Rejected,
+            'visibility' => VisibilityLevel::Internal,
+            'has_expiry' => false,
+            'uploaded_by' => $superAdmin->id,
+            'issued_date' => $currentMonthDate,
+        ]);
+
+        // Dokumen bulan sebelumnya Unit A: permanen & disahkan (tidak boleh masuk hitungan default bulan berjalan)
+        Document::create([
+            'title' => 'SK Permanen Bulan Lalu Unit A',
+            'slug' => 'sk-permanen-bulan-lalu-unit-a',
+            'unit_id' => $this->unitA->id,
+            'document_category_id' => $this->category->id,
+            'academic_year_id' => $this->academicYear->id,
+            'status' => DocumentStatus::Approved,
+            'visibility' => VisibilityLevel::Internal,
+            'has_expiry' => false,
+            'uploaded_by' => $superAdmin->id,
+            'issued_date' => $prevMonthDate,
+        ]);
+
+        // 1. Default bulan berjalan untuk Super Admin (Unit A + Unit B pada bulan ini saja)
+        $this->actingAs($superAdmin);
+        $component = Livewire::test(DocumentLifecycleStatsWidget::class);
+        $component->assertSuccessful()
+            ->assertSee('Bermasa Berlaku')
+            ->assertSee('Dokumen Permanen')
+            ->assertSee('Dokumen Arsip')
+            ->assertSee('Dokumen Ditolak');
+
+        $stats = collect($component->viewData('stats'))->keyBy('key');
+        $this->assertSame(2, $stats['has_expiry']['value']);
+        $this->assertSame(2, $stats['permanent']['value']);
+        $this->assertSame(2, $stats['archived']['value']); // 1 Expired + 1 Archived
+        $this->assertSame(1, $stats['rejected']['value']);
+
+        // 2. Ubah pageFilters menjadi bulan lalu -> sekarang menghitung dokumen bulan lalu (1 permanen, lainnya 0)
+        $prevMonthComponent = Livewire::test(DocumentLifecycleStatsWidget::class, [
+            'pageFilters' => [
+                'start_month' => $prevMonth->month,
+                'start_year' => $prevMonth->year,
+                'end_month' => $prevMonth->month,
+                'end_year' => $prevMonth->year,
+            ],
+        ]);
+        $prevStats = collect($prevMonthComponent->viewData('stats'))->keyBy('key');
+        $this->assertSame(0, $prevStats['has_expiry']['value']);
+        $this->assertSame(1, $prevStats['permanent']['value']);
+        $this->assertSame(0, $prevStats['archived']['value']);
+        $this->assertSame(0, $prevStats['rejected']['value']);
+
+        // 3. Staf Unit A pada rentang 2 bulan hanya melihat dokumen Unit A (tidak bocor Unit B)
+        $this->actingAs($stafUnitA);
+        $rangeComponent = Livewire::test(DocumentLifecycleStatsWidget::class, [
+            'pageFilters' => [
+                'start_month' => $prevMonth->month,
+                'start_year' => $prevMonth->year,
+                'end_month' => $now->month,
+                'end_year' => $now->year,
+            ],
+        ]);
+        $rangeStats = collect($rangeComponent->viewData('stats'))->keyBy('key');
+        $this->assertSame(2, $rangeStats['has_expiry']['value']);
+        $this->assertSame(1, $rangeStats['permanent']['value']);
+        $this->assertSame(1, $rangeStats['archived']['value']);
+        $this->assertSame(0, $rangeStats['rejected']['value']);
+    }
+
+    public function test_dashboard_period_filter_defaults_normalization_and_cross_widget_effects(): void
+    {
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
+        $permissions = [
+            Permission::findOrCreate('view:document_overview_widget', 'web'),
+            Permission::findOrCreate('view:document_lifecycle_stats_widget', 'web'),
+            Permission::findOrCreate('view:annual_published_document_chart_widget', 'web'),
+            Permission::findOrCreate('view:post_period_overview_widget', 'web'),
+            Permission::findOrCreate('view:pending_approvals_widget', 'web'),
+        ];
+
+        $superAdminRole = Role::findOrCreate('super_admin', 'web');
+        $superAdminRole->givePermissionTo($permissions);
+
+        $admin = User::factory()->create(['unit_id' => $this->unitA->id, 'is_active' => true]);
+        $admin->assignRole($superAdminRole);
+
+        // Uji normalisasi rentang terbalik
+        $resolvedReversed = DashboardPeriodFilter::resolve([
+            'start_month' => 11,
+            'start_year' => 2026,
+            'end_month' => 3,
+            'end_year' => 2025,
+        ]);
+        $this->assertSame(3, $resolvedReversed['start_month']);
+        $this->assertSame(2025, $resolvedReversed['start_year']);
+        $this->assertSame(11, $resolvedReversed['end_month']);
+        $this->assertSame(2026, $resolvedReversed['end_year']);
+
+        $prevYear = now()->copy()->subYear();
+        $prevYearDate = $prevYear->toDateString();
+
+        Document::create([
+            'title' => 'Naskah Sah Tahun Lalu',
+            'slug' => 'naskah-sah-tahun-lalu',
+            'unit_id' => $this->unitA->id,
+            'document_category_id' => $this->category->id,
+            'academic_year_id' => $this->academicYear->id,
+            'status' => DocumentStatus::Approved,
+            'is_borang' => true,
+            'has_expiry' => false,
+            'uploaded_by' => $admin->id,
+            'issued_date' => $prevYearDate,
+        ]);
+
+        Document::create([
+            'title' => 'Naskah Pending Bulan Ini Tetap Tampil',
+            'slug' => 'naskah-pending-bulan-ini-tetap-tampil',
+            'unit_id' => $this->unitA->id,
+            'document_category_id' => $this->category->id,
+            'academic_year_id' => $this->academicYear->id,
+            'status' => DocumentStatus::Pending,
+            'current_step' => 1,
+            'uploaded_by' => $admin->id,
+            'issued_date' => now()->toDateString(),
+        ]);
+
+        $postCategory = PostCategory::create([
+            'name' => 'Berita Kampus',
+            'slug' => 'berita-kampus',
+            'is_active' => true,
+        ]);
+
+        Post::create([
+            'title' => 'Berita Tayang Tahun Lalu',
+            'slug' => 'berita-tayang-tahun-lalu',
+            'post_category_id' => $postCategory->id,
+            'period' => PostPeriod::Daily,
+            'unit_id' => $this->unitA->id,
+            'author_id' => $admin->id,
+            'content' => '<p>Berita lama.</p>',
+            'status' => PostStatus::Published,
+            'published_at' => $prevYear->copy()->startOfDay(),
+        ]);
+
+        $this->actingAs($admin);
+
+        // Render halaman Dashboard dan pastikan Filter Periode Statistik muncul dengan default bulan & tahun saat ini
+        $dashboard = Livewire::test(Dashboard::class);
+        $dashboard->assertSuccessful()
+            ->assertSee('Filter Periode Statistik')
+            ->assertSet('filters.start_month', now()->month)
+            ->assertSet('filters.start_year', now()->year)
+            ->assertSet('filters.end_month', now()->month)
+            ->assertSet('filters.end_year', now()->year);
+
+        $prevYearFilters = [
+            'start_month' => $prevYear->month,
+            'start_year' => $prevYear->year,
+            'end_month' => $prevYear->month,
+            'end_year' => $prevYear->year,
+        ];
+
+        // DocumentOverviewWidget: Menunggu Persetujuan tetap 1 (live), sedangkan Sah & Borang mengikuti filter tahun lalu
+        $overviewDefault = collect(Livewire::test(DocumentOverviewWidget::class)->viewData('stats'))->keyBy('key');
+        $this->assertSame(1, $overviewDefault['pending']['value']);
+        $this->assertSame(0, $overviewDefault['approved']['value']);
+
+        $overviewFiltered = collect(Livewire::test(DocumentOverviewWidget::class, ['pageFilters' => $prevYearFilters])->viewData('stats'))->keyBy('key');
+        $this->assertSame(1, $overviewFiltered['pending']['value']);
+        $this->assertSame(1, $overviewFiltered['approved']['value']);
+        $this->assertSame(1, $overviewFiltered['borang']['value']);
+
+        // AnnualPublishedDocumentChartWidget mengikuti tahun dari filter
+        $chartFiltered = Livewire::test(AnnualPublishedDocumentChartWidget::class, ['pageFilters' => $prevYearFilters])->instance()->getViewData();
+        $this->assertSame($prevYear->year, $chartFiltered['year']);
+        $this->assertSame(1, $chartFiltered['totalYearly']);
+        $this->assertSame(1, $chartFiltered['currentMonthCount']);
+
+        // PostPeriodOverviewWidget mengikuti rentang filter
+        $postWidgetFiltered = Livewire::test(PostPeriodOverviewWidget::class, ['pageFilters' => $prevYearFilters]);
+        $postWidgetFiltered->assertSee('Tayang Periode Ini');
+        $postStats = $postWidgetFiltered->viewData('stats');
+        $this->assertSame(1, $postStats[0]['value']);
+        $this->assertSame(1, $postStats[3]['value']);
     }
 }

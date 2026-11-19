@@ -8,9 +8,12 @@
 
     $status = $letter->status;
     $isPublished = $status === OutgoingLetterStatus::Published;
+    $isWaitingSignature = $status === OutgoingLetterStatus::WaitingSignature;
+    $isNumberIssued = $isPublished || $isWaitingSignature || filled($letter->letter_number);
     $isPending = $status === OutgoingLetterStatus::PendingHumas;
     $isRevision = $status === OutgoingLetterStatus::NeedsRevision;
     $isRejected = $status === OutgoingLetterStatus::Rejected;
+    $usesWetSignatureFlow = (bool) ($letter->requires_wet_signature || $isWaitingSignature || $letter->final_scan_uploaded_at !== null);
 
     $activePath = $letter->getActiveFilePath();
     $hasFile = $activePath && Storage::disk('private')->exists($activePath);
@@ -46,12 +49,14 @@
         <div class="doc-badge-group" style="display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
             <span class="doc-badge" style="display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.25rem 0.625rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600;
                 @if($isPublished) background-color: var(--doc-badge-success-bg); color: var(--doc-badge-success-text); border: 1px solid var(--doc-badge-success-border);
+                @elseif($isWaitingSignature) background-color: var(--doc-badge-info-bg); color: var(--doc-badge-info-text); border: 1px solid var(--doc-badge-info-border);
                 @elseif($isPending) background-color: var(--doc-badge-warning-bg); color: var(--doc-badge-warning-text); border: 1px solid var(--doc-badge-warning-border);
                 @else background-color: var(--doc-badge-danger-bg); color: var(--doc-badge-danger-text); border: 1px solid var(--doc-badge-danger-border);
                 @endif
             ">
-                <span class="doc-dot @if($isPending) doc-dot-pulse @endif" style="
+                <span class="doc-dot @if($isPending || $isWaitingSignature) doc-dot-pulse @endif" style="
                     @if($isPublished) background: var(--doc-badge-success-solid);
+                    @elseif($isWaitingSignature) background: var(--doc-badge-info-solid);
                     @elseif($isPending) background: var(--doc-badge-warning-solid);
                     @else background: var(--doc-badge-danger-solid);
                     @endif
@@ -68,7 +73,22 @@
         </div>
     </div>
 
-    @if(($isRevision || $isRejected) && filled($letter->review_note))
+    @if($isWaitingSignature)
+        <div style="background-color: var(--doc-badge-info-bg); border: 1px solid var(--doc-badge-info-border); border-radius: 0.375rem; padding: 0.875rem 1rem; margin-top: 1rem; display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+            <div style="flex: 1; min-width: 240px; font-size: 0.8125rem; line-height: 1.35rem; color: var(--doc-text-primary);">
+                <strong>Nomor Terbit — Menunggu TTD Basah, Cap & Scan Final</strong>
+                <p style="margin: 0.25rem 0 0 0; color: var(--doc-text-secondary);">
+                    Unduh berkas bernomor <strong style="font-family: ui-monospace, monospace;">{{ $letter->letter_number }}</strong> untuk dicetak, dimintakan TTD basah & cap resmi, lalu unggah scan PDF final melalui tombol <strong>"Unggah Scan TTD Basah"</strong> (dapat dilakukan Unit Pengaju atau Humas).
+                </p>
+            </div>
+            @if($hasFile)
+                <a href="{{ $downloadUrl }}" style="display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.5rem 0.9rem; border-radius: 0.375rem; font-size: 0.8125rem; font-weight: 600; background-color: #2563eb; color: #ffffff; text-decoration: none; white-space: nowrap;">
+                    <x-heroicon-m-arrow-down-tray style="width: 1rem; height: 1rem;" />
+                    <span>Unduh Berkas Bernomor</span>
+                </a>
+            @endif
+        </div>
+    @elseif(($isRevision || $isRejected) && filled($letter->review_note))
         <div style="background-color: {{ $isRevision ? 'var(--doc-badge-warning-bg)' : 'var(--doc-badge-danger-bg)' }}; border: 1px solid {{ $isRevision ? 'var(--doc-badge-warning-border)' : 'var(--doc-badge-danger-border)' }}; border-radius: 0.375rem; padding: 0.875rem 1rem; margin-top: 1rem; display: flex; align-items: flex-start; gap: 0.75rem;">
             <div style="flex-shrink: 0; color: {{ $isRevision ? 'var(--doc-badge-warning-solid)' : 'var(--doc-badge-danger-solid)' }}; margin-top: 0.125rem;">
                 <x-heroicon-s-exclamation-triangle style="width: 1.25rem; height: 1.25rem;" />
@@ -106,7 +126,7 @@
             </div>
 
             <div class="doc-stepper-line" style="flex: 1; height: 3px; margin-top: 1.1875rem; min-width: 2rem;
-                @if($isPublished) background-color: var(--doc-badge-success-solid);
+                @if($isNumberIssued) background-color: var(--doc-badge-success-solid);
                 @elseif($isPending) background-color: var(--doc-badge-warning-solid);
                 @else background-color: var(--doc-badge-danger-solid);
                 @endif
@@ -115,12 +135,12 @@
             {{-- Node 2: Verifikasi & Penomoran Humas --}}
             <div class="doc-stepper-node" style="display: flex; flex-direction: column; align-items: center; flex: 1; text-align: center;">
                 <div class="doc-stepper-circle" style="width: 2.375rem; height: 2.375rem; border-radius: 9999px; display: flex; align-items: center; justify-content: center;
-                    @if($isPublished) background-color: var(--doc-badge-success-solid); color: #ffffff; box-shadow: 0 0 0 4px var(--doc-badge-success-bg);
+                    @if($isNumberIssued) background-color: var(--doc-badge-success-solid); color: #ffffff; box-shadow: 0 0 0 4px var(--doc-badge-success-bg);
                     @elseif($isPending) background-color: var(--doc-badge-warning-solid); color: #ffffff; box-shadow: 0 0 0 4px var(--doc-badge-warning-bg);
                     @else background-color: var(--doc-badge-danger-solid); color: #ffffff; box-shadow: 0 0 0 4px var(--doc-badge-danger-bg);
                     @endif
                 ">
-                    @if($isPublished)
+                    @if($isNumberIssued)
                         <x-heroicon-s-check class="doc-icon-md" style="width: 1.25rem; height: 1.25rem;" />
                     @elseif($isPending)
                         <x-heroicon-s-clock class="doc-icon-md" style="width: 1.25rem; height: 1.25rem;" />
@@ -130,7 +150,7 @@
                 </div>
                 <div class="doc-stepper-info" style="margin-top: 0.5rem; max-width: 185px; text-align: center;">
                     <span class="doc-stepper-step-tag" style="display: inline-block; font-size: 0.6875rem; font-weight: 700; text-transform: uppercase;
-                        @if($isPublished) color: var(--doc-badge-success-solid);
+                        @if($isNumberIssued) color: var(--doc-badge-success-solid);
                         @elseif($isPending) color: var(--doc-badge-warning-solid);
                         @else color: var(--doc-badge-danger-solid);
                         @endif
@@ -141,7 +161,7 @@
                         {{ $letter->reviewer?->name ?? 'Bagian Humas' }}
                     </h5>
                     <p class="doc-stepper-sub" style="font-size: 0.6875rem; color: var(--doc-text-muted); margin: 0.125rem 0 0 0;">
-                        {{ $isPublished ? 'Nomor Resmi Diterbitkan' : ($isPending ? 'Menunggu Tinjauan Humas' : $status->getLabel()) }}
+                        {{ $isNumberIssued ? 'Nomor Resmi Diterbitkan' : ($isPending ? 'Menunggu Tinjauan Humas' : $status->getLabel()) }}
                     </p>
                     @if($letter->reviewed_at)
                         <p class="doc-stepper-time" style="font-size: 0.625rem; color: var(--doc-text-subtle); margin: 0.125rem 0 0 0;">
@@ -153,33 +173,47 @@
 
             <div class="doc-stepper-line" style="flex: 1; height: 3px; margin-top: 1.1875rem; min-width: 2rem;
                 @if($isPublished) background-color: var(--doc-badge-success-solid);
+                @elseif($isWaitingSignature) background-color: var(--doc-badge-info-solid);
                 @else background-color: var(--doc-stepper-rail);
                 @endif
             "></div>
 
-            {{-- Node 3: Berkas Siap Diunduh --}}
+            {{-- Node 3: Berkas Siap Diunduh / TTD Basah Final --}}
             <div class="doc-stepper-node" style="display: flex; flex-direction: column; align-items: center; flex: 1; text-align: center;">
                 <div class="doc-stepper-circle" style="width: 2.375rem; height: 2.375rem; border-radius: 9999px; display: flex; align-items: center; justify-content: center;
                     @if($isPublished) background-color: var(--doc-badge-success-solid); color: #ffffff; box-shadow: 0 0 0 4px var(--doc-badge-success-bg);
+                    @elseif($isWaitingSignature) background-color: var(--doc-badge-info-solid); color: #ffffff; box-shadow: 0 0 0 4px var(--doc-badge-info-bg);
                     @else background-color: var(--doc-stepper-waiting-bg); color: var(--doc-stepper-waiting-text); border: 2px solid var(--doc-stepper-waiting-border);
                     @endif
                 ">
-                    <x-heroicon-s-check-badge class="doc-icon-md" style="width: 1.25rem; height: 1.25rem;" />
+                    @if($isWaitingSignature)
+                        <x-heroicon-s-arrow-up-tray class="doc-icon-md" style="width: 1.25rem; height: 1.25rem;" />
+                    @else
+                        <x-heroicon-s-check-badge class="doc-icon-md" style="width: 1.25rem; height: 1.25rem;" />
+                    @endif
                 </div>
                 <div class="doc-stepper-info" style="margin-top: 0.5rem; max-width: 185px; text-align: center;">
                     <span class="doc-stepper-step-tag" style="display: inline-block; font-size: 0.6875rem; font-weight: 700; text-transform: uppercase;
                         @if($isPublished) color: var(--doc-badge-success-solid);
+                        @elseif($isWaitingSignature) color: var(--doc-badge-info-solid);
                         @else color: var(--doc-text-muted);
                         @endif
                     ">
-                        3. Siap Diunduh
+                        {{ $usesWetSignatureFlow ? ($isPublished ? '3. Arsip Scan Final Sah' : '3. TTD Basah, Cap & Scan') : '3. Siap Diunduh' }}
                     </span>
                     @if($isPublished)
                         <h5 class="doc-stepper-name" style="font-size: 0.75rem; font-weight: 700; color: var(--doc-text-primary); margin: 0.125rem 0 0 0; font-family: ui-monospace, monospace;">
                             {{ $letter->letter_number }}
                         </h5>
                         <p class="doc-stepper-sub" style="font-size: 0.6875rem; color: var(--doc-text-muted); margin: 0.125rem 0 0 0;">
-                            Berkas berstempel tersimpan
+                            {{ $letter->final_scan_uploaded_at ? 'Scan final oleh '.($letter->finalScanUploader?->name ?? 'Unit / Humas') : 'Berkas berstempel tersimpan' }}
+                        </p>
+                    @elseif($isWaitingSignature)
+                        <h5 class="doc-stepper-name" style="font-size: 0.75rem; font-weight: 700; color: var(--doc-text-primary); margin: 0.125rem 0 0 0; font-family: ui-monospace, monospace;">
+                            {{ $letter->letter_number }}
+                        </h5>
+                        <p class="doc-stepper-sub" style="font-size: 0.6875rem; color: var(--doc-badge-info-solid); margin: 0.125rem 0 0 0;">
+                            Menunggu scan PDF (Unit / Humas)
                         </p>
                     @else
                         <p class="doc-stepper-sub" style="font-size: 0.6875rem; font-style: italic; color: var(--doc-text-subtle); margin: 0.125rem 0 0 0;">
