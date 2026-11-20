@@ -22,6 +22,13 @@ class Document extends Model
 {
     use HasFactory, LogsActivity, SoftDeletes;
 
+    /**
+     * Daftar berkas fisik yang akan dibersihkan setelah penghapusan permanen (force delete) berhasil.
+     *
+     * @var array<int, array{disk: string, path: ?string}>
+     */
+    protected array $pendingPhysicalFilesToPurge = [];
+
     protected $fillable = [
         'uuid',
         'title',
@@ -89,6 +96,26 @@ class Document extends Model
             }
 
             return true;
+        });
+
+        static::forceDeleting(function (Document $document): void {
+            $document->pendingPhysicalFilesToPurge = [];
+
+            $files = $document->files()->get(['disk', 'original_file_path', 'stamped_file_path']);
+            foreach ($files as $file) {
+                $disk = $file->disk?->value ?? 'private';
+
+                $document->pendingPhysicalFilesToPurge[] = ['disk' => $disk, 'path' => $file->original_file_path];
+                $document->pendingPhysicalFilesToPurge[] = ['disk' => $disk, 'path' => $file->stamped_file_path];
+            }
+        });
+
+        static::forceDeleted(function (Document $document): void {
+            foreach ($document->pendingPhysicalFilesToPurge as $entry) {
+                DocumentFile::deleteStoredFileIfUnreferenced($entry['disk'], $entry['path']);
+            }
+
+            $document->pendingPhysicalFilesToPurge = [];
         });
     }
 

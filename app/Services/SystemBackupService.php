@@ -32,12 +32,39 @@ class SystemBackupService
     public const SCOPE_FULL = 'full';
 
     /**
+     * Sub-direktori internal/sementara di dalam storage yang tidak pernah dipaketkan ulang maupun dipulihkan.
+     *
+     * @var array<int, string>
+     */
+    private const EXCLUDED_RUNTIME_STORAGE_PREFIXES = [
+        'app/backups/',
+        'app/backup-temp/',
+        'app/private/backup-restore-uploads/',
+        'app/private/temp-exports/',
+        'app/private/livewire-tmp/',
+        'framework/',
+        'logs/',
+    ];
+
+    /**
+     * Daftar ekstensi dokumen dan gambar aman yang diizinkan (whitelist) di dalam folder storage arsip backup.
+     * Format berbasis skrip/markup aktif (.php, .xml, .svg, .html, .js, dll.) otomatis ditolak.
+     *
+     * @var array<int, string>
+     */
+    private const ALLOWED_STORAGE_EXTENSIONS = [
+        'pdf', 'doc', 'docx',
+        'jpg', 'jpeg', 'png', 'webp', 'gif', 'avif', 'bmp', 'ico', 'tif', 'tiff', 'heic', 'heif',
+    ];
+
+    /**
      * Daftar ekstensi dan nama berkas berbahaya yang diblokir mutlak saat inspeksi arsip restore.
      *
      * @var array<int, string>
      */
     private const FORBIDDEN_EXTENSIONS = [
         'php', 'phtml', 'php3', 'php4', 'php5', 'php7', 'php8', 'phps', 'phar',
+        'xml', 'xsl', 'xslt', 'xsd', 'svg', 'html', 'htm', 'xhtml',
         'py', 'pyc', 'pyo', 'pyw',
         'sh', 'bash', 'zsh', 'ksh', 'csh',
         'bat', 'cmd', 'com', 'exe', 'msi', 'msp', 'dll', 'so', 'dylib',
@@ -57,6 +84,7 @@ class SystemBackupService
      */
     private const FORBIDDEN_DOUBLE_EXTENSIONS = [
         'php', 'phtml', 'php3', 'php4', 'php5', 'php7', 'php8', 'phar',
+        'xml', 'svg', 'html', 'htm', 'xhtml', 'js', 'mjs', 'sql',
         'py', 'pyc', 'sh', 'bash', 'bat', 'cmd', 'exe', 'ps1',
         'jsp', 'asp', 'aspx', 'cgi', 'vbs', 'dll', 'hta', 'pl', 'rb',
     ];
@@ -895,7 +923,7 @@ class SystemBackupService
 
         /** @var array{private_files: int, private_bytes: int, public_files: int, public_bytes: int, backup_count: int, backup_bytes: int, backup_human: string, storage_human: string} $summary */
         $summary = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($privateRoot, $publicRoot, $disk): array {
-            $privateStats = $this->measureDirectory($privateRoot, ['temp-exports', 'livewire-tmp']);
+            $privateStats = $this->measureDirectory($privateRoot, ['temp-exports', 'livewire-tmp', 'backup-restore-uploads']);
             $publicStats = $this->measureDirectory($publicRoot);
 
             $backupFiles = collect($disk->allFiles())
@@ -1047,13 +1075,41 @@ class SystemBackupService
         }
 
         // File .sql/.sql.gz/.sqlite hanya diperbolehkan di dalam folder db-dumps/
-        $isDbFile = str_ends_with($baseLower, '.sql')
-            || str_ends_with($baseLower, '.sql.gz')
-            || str_ends_with($baseLower, '.sqlite');
+        if ($this->isDatabaseDumpEntry($normalizedPath)) {
+            return;
+        }
 
-        if ($isDbFile && ! str_starts_with($normalizedPath, 'db-dumps/')) {
+        // File .gitignore bawaan struktur folder storage Laravel diizinkan secara spesifik
+        if ($baseLower === '.gitignore') {
+            return;
+        }
+
+        // Lewati validasi whitelist storage pada sub-folder runtime/sementara yang tidak akan dipulihkan
+        // (tetap lolos cek FORBIDDEN_FILENAMES / FORBIDDEN_EXTENSIONS / FORBIDDEN_DOUBLE_EXTENSIONS di atas)
+        if ($this->isExcludedRuntimeStorageEntry($normalizedPath)) {
+            return;
+        }
+
+        // Whitelist ketat untuk seluruh berkas di luar db-dumps/:
+        // hanya izinkan PDF, DOC/DOCX, dan format gambar aman (tanpa .xml, .svg, .html, dll.)
+        if ($ext === '' || ! in_array($ext, self::ALLOWED_STORAGE_EXTENSIONS, true)) {
             $violations[] = $normalizedPath;
         }
+    }
+
+    protected function isExcludedRuntimeStorageEntry(string $normalizedPath): bool
+    {
+        $relative = str_starts_with($normalizedPath, 'storage/')
+            ? substr($normalizedPath, strlen('storage/'))
+            : $normalizedPath;
+
+        foreach (self::EXCLUDED_RUNTIME_STORAGE_PREFIXES as $prefix) {
+            if (str_starts_with($relative, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     protected function isDatabaseDumpEntry(string $normalizedPath): bool
@@ -1094,16 +1150,7 @@ class SystemBackupService
             return null;
         }
 
-        $blockedPrefixes = [
-            'app/backups/',
-            'app/backup-temp/',
-            'app/private/temp-exports/',
-            'app/private/livewire-tmp/',
-            'framework/',
-            'logs/',
-        ];
-
-        foreach ($blockedPrefixes as $prefix) {
+        foreach (self::EXCLUDED_RUNTIME_STORAGE_PREFIXES as $prefix) {
             if (str_starts_with($relative, $prefix)) {
                 return null;
             }
@@ -1531,5 +1578,93 @@ class SystemBackupService
         }
 
         return ['files' => $files, 'bytes' => $bytes];
+    }
+
+    /**
+     * Menghitung batas efektif unggahan browser berdasarkan nilai PHP INI, Livewire, dan plafon 512 MB.
+     *
+     * @return array{
+     *     max_bytes: int,
+     *     max_kb: int,
+     *     max_human: string,
+     *     php_upload_max: string,
+     *     php_post_max: string,
+     *     livewire_max_kb: ?int,
+     *     is_restricted_by_server: bool
+     * }
+     */
+    public function getEffectiveBrowserUploadLimits(
+        ?string $phpUploadIni = null,
+        ?string $phpPostIni = null,
+        mixed $livewireRules = null
+    ): array {
+        $desiredMaxBytes = 512 * 1024 * 1024;
+        $rawUploadIni = trim((string) ($phpUploadIni ?? ini_get('upload_max_filesize') ?: '0'));
+        $rawPostIni = trim((string) ($phpPostIni ?? ini_get('post_max_size') ?: '0'));
+
+        $phpUploadBytes = $this->parseIniSizeToBytes($rawUploadIni);
+        $phpPostBytes = $this->parseIniSizeToBytes($rawPostIni);
+        $livewireMaxKb = $this->extractMaxKilobytesFromRules(
+            $livewireRules ?? config('livewire.temporary_file_upload.rules')
+        );
+        $livewireMaxBytes = ($livewireMaxKb !== null && $livewireMaxKb > 0) ? $livewireMaxKb * 1024 : 0;
+
+        $candidates = [$desiredMaxBytes];
+        foreach ([$phpUploadBytes, $phpPostBytes, $livewireMaxBytes] as $limitBytes) {
+            if ($limitBytes > 0) {
+                $candidates[] = $limitBytes;
+            }
+        }
+
+        $effectiveBytes = max(1024 * 1024, (int) min($candidates));
+        $effectiveKb = (int) floor($effectiveBytes / 1024);
+
+        return [
+            'max_bytes' => $effectiveBytes,
+            'max_kb' => $effectiveKb,
+            'max_human' => $this->formatBytes($effectiveBytes),
+            'php_upload_max' => $rawUploadIni !== '' ? $rawUploadIni : 'tidak terbatas',
+            'php_post_max' => $rawPostIni !== '' ? $rawPostIni : 'tidak terbatas',
+            'livewire_max_kb' => $livewireMaxKb,
+            'is_restricted_by_server' => $effectiveBytes < $desiredMaxBytes,
+        ];
+    }
+
+    public function parseIniSizeToBytes(string $size): int
+    {
+        $trimmed = trim($size);
+        if ($trimmed === '' || $trimmed === '-1') {
+            return 0;
+        }
+
+        if (! preg_match('/^(\d+)\s*([kmgtp])?b?$/i', $trimmed, $matches)) {
+            return (int) $trimmed;
+        }
+
+        $value = (int) $matches[1];
+        $unit = strtolower($matches[2] ?? '');
+
+        return match ($unit) {
+            'k' => $value * 1024,
+            'm' => $value * 1024 * 1024,
+            'g' => $value * 1024 * 1024 * 1024,
+            't' => $value * 1024 * 1024 * 1024 * 1024,
+            default => $value,
+        };
+    }
+
+    private function extractMaxKilobytesFromRules(mixed $rules): ?int
+    {
+        $ruleList = is_array($rules)
+            ? $rules
+            : (is_string($rules) ? explode('|', $rules) : []);
+
+        foreach ($ruleList as $rule) {
+            if (is_string($rule) && preg_match('/^max:(\d+)$/i', trim($rule), $matches)) {
+                return (int) $matches[1];
+            }
+        }
+
+        return null;
     }
 }

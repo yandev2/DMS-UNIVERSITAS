@@ -247,10 +247,25 @@ class SystemBackup extends Page
                         ->label('Berkas Paket Backup (.zip)')
                         ->disk('local')
                         ->directory('backup-restore-uploads')
-                        ->acceptedFileTypes(['application/zip', 'application/x-zip-compressed', '.zip'])
-                        ->maxSize(1024 * 512)
+                        ->acceptedFileTypes([
+                            'application/zip',
+                            'application/x-zip-compressed',
+                            'application/x-zip',
+                            'multipart/x-zip',
+                            'application/octet-stream',
+                            '.zip',
+                        ])
+                        ->rules(['extensions:zip'])
+                        ->maxSize(fn (SystemBackupService $backupService): int => $backupService->getEffectiveBrowserUploadLimits()['max_kb'])
                         ->required()
-                        ->helperText('Maksimal 512 MB via browser. Untuk file backup bergiga-giga (>512 MB), salin .ZIP ke folder backup server via SFTP/rclone, klik "Segarkan Daftar", lalu Restore langsung dari tabel.'),
+                        ->helperText(function (SystemBackupService $backupService): string {
+                            $limits = $backupService->getEffectiveBrowserUploadLimits();
+                            $prefix = $limits['is_restricted_by_server']
+                                ? "Batas unggah browser saat ini dibatasi server PHP: {$limits['max_human']} (PHP upload: {$limits['php_upload_max']}, POST: {$limits['php_post_max']}). "
+                                : "Maksimal {$limits['max_human']} via browser (PHP upload: {$limits['php_upload_max']}, POST: {$limits['php_post_max']}). ";
+
+                            return $prefix.'Untuk file backup yang lebih besar, salin .ZIP ke folder backup server via SFTP/rclone, klik "Segarkan Daftar", lalu Restore langsung dari tabel.';
+                        }),
                     Select::make('mode')
                         ->label('Komponen yang Dipulihkan')
                         ->options([

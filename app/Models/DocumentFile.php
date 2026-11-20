@@ -6,6 +6,7 @@ use App\Enums\StorageDisk;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class DocumentFile extends Model
 {
@@ -88,5 +89,41 @@ class DocumentFile extends Model
         $nameWithoutExt = pathinfo($baseName, PATHINFO_FILENAME);
 
         return "{$nameWithoutExt}.{$actualExtension}";
+    }
+
+    protected static function booted(): void
+    {
+        static::deleted(function (DocumentFile $file): void {
+            $disk = $file->disk?->value ?? 'private';
+
+            self::deleteStoredFileIfUnreferenced($disk, $file->original_file_path);
+            self::deleteStoredFileIfUnreferenced($disk, $file->stamped_file_path);
+        });
+    }
+
+    /**
+     * Menghapus berkas fisik di storage jika tidak lagi direferensikan oleh baris DocumentFile mana pun.
+     */
+    public static function deleteStoredFileIfUnreferenced(string $disk, ?string $path): void
+    {
+        if (! is_string($path) || trim($path) === '') {
+            return;
+        }
+
+        $stillReferenced = self::query()
+            ->where(function ($query) use ($path): void {
+                $query->where('original_file_path', $path)
+                    ->orWhere('stamped_file_path', $path);
+            })
+            ->exists();
+
+        if ($stillReferenced) {
+            return;
+        }
+
+        $storage = Storage::disk($disk);
+        if ($storage->exists($path)) {
+            $storage->delete($path);
+        }
     }
 }

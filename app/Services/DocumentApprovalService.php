@@ -620,6 +620,8 @@ class DocumentApprovalService
             : hash('sha256', (string) $storage->get($storedFilePath));
 
         $finalizedDoc = null;
+        /** @var array<int, array{disk: string, path: string}> $staleStampedFiles */
+        $staleStampedFiles = [];
 
         try {
             $finalizedDoc = DB::transaction(function () use (
@@ -630,7 +632,8 @@ class DocumentApprovalService
                 $note,
                 $fileSize,
                 $mimeType,
-                $fileHash
+                $fileHash,
+                &$staleStampedFiles
             ): Document {
                 $lockedDoc = Document::query()
                     ->with(['unit', 'category', 'uploader', 'files'])
@@ -658,13 +661,35 @@ class DocumentApprovalService
                     $lockedDoc->issued_date ? (int) $lockedDoc->issued_date->format('Y') : null
                 );
 
-                // Non-aktifkan file draf pra-TTD tanpa menghapus riwayat untuk audit trail
+                // Kumpulkan path file stamped pra-TTD lama untuk dihapus setelah transaksi commit,
+                // sementara file original_file_path (draf asli) tetap dipertahankan sebagai arsip historis.
+                $priorFilesWithStamp = DocumentFile::query()
+                    ->where('document_id', $lockedDoc->id)
+                    ->whereNotNull('stamped_file_path')
+                    ->get(['disk', 'stamped_file_path']);
+
+                foreach ($priorFilesWithStamp as $priorFile) {
+                    $oldStampedPath = (string) $priorFile->stamped_file_path;
+                    if ($oldStampedPath !== '' && $oldStampedPath !== $storedFilePath) {
+                        $staleStampedFiles[] = [
+                            'disk' => $priorFile->disk?->value ?? 'private',
+                            'path' => $oldStampedPath,
+                        ];
+                    }
+                }
+
+                // Non-aktifkan file draf pra-TTD & bersihkan referensi stamped lama agar tidak menjadi dangling pointer
                 DocumentFile::query()
                     ->where('document_id', $lockedDoc->id)
-                    ->where('is_active', true)
+                    ->where(function (Builder $fileQuery): void {
+                        $fileQuery->where('is_active', true)
+                            ->orWhereNotNull('stamped_file_path');
+                    })
                     ->update([
                         'is_active' => false,
                         'is_primary' => false,
+                        'stamped_file_path' => null,
+                        'stamped_file_hash_sha256' => null,
                     ]);
 
                 $nextVersion = ((int) DocumentFile::query()
@@ -727,6 +752,11 @@ class DocumentApprovalService
             }
 
             throw $e;
+        }
+
+        // Hapus file fisik hasil stamping pra-TTD yang sudah digantikan scan TTD basah (Opsi A)
+        foreach ($staleStampedFiles as $staleFile) {
+            DocumentFile::deleteStoredFileIfUnreferenced($staleFile['disk'], $staleFile['path']);
         }
 
         $this->notifyCounterpartOnFinalScanUploaded($finalizedDoc, $actor);

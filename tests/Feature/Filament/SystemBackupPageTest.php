@@ -16,6 +16,7 @@ use App\Services\SystemBackupService;
 use Carbon\Carbon;
 use Filament\Notifications\DatabaseNotification;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -80,6 +81,7 @@ class SystemBackupPageTest extends TestCase
             'backup.backup.source.files.exclude' => [
                 $this->isolatedStoragePath.DIRECTORY_SEPARATOR.'app'.DIRECTORY_SEPARATOR.'backups',
                 $this->isolatedStoragePath.DIRECTORY_SEPARATOR.'app'.DIRECTORY_SEPARATOR.'backup-temp',
+                $this->isolatedStoragePath.DIRECTORY_SEPARATOR.'app'.DIRECTORY_SEPARATOR.'private'.DIRECTORY_SEPARATOR.'backup-restore-uploads',
                 $this->isolatedStoragePath.DIRECTORY_SEPARATOR.'app'.DIRECTORY_SEPARATOR.'private'.DIRECTORY_SEPARATOR.'temp-exports',
                 $this->isolatedStoragePath.DIRECTORY_SEPARATOR.'app'.DIRECTORY_SEPARATOR.'private'.DIRECTORY_SEPARATOR.'livewire-tmp',
                 $this->isolatedStoragePath.DIRECTORY_SEPARATOR.'framework',
@@ -212,12 +214,19 @@ class SystemBackupPageTest extends TestCase
 
         $maliciousPayloads = [
             'php_webshell' => ['storage/app/private/shell.php' => '<?php system($_GET["c"]);'],
+            'xml_payload' => ['storage/app/private/config.xml' => '<?xml version="1.0"?><!DOCTYPE foo>'],
+            'svg_xss' => ['storage/app/public/xss.svg' => '<svg onload="alert(1)"/>'],
+            'html_script' => ['storage/app/public/phish.html' => '<script>alert(1)</script>'],
+            'txt_unknown' => ['storage/app/private/notes.txt' => 'arbitrary text file'],
+            'extensionless_file' => ['storage/app/private/binaryfile' => 'ELF_DATA'],
             'python_script' => ['storage/app/public/exploit.py' => 'import os; print("x")'],
             'shell_script' => ['storage/app/private/run.sh' => '#!/bin/sh'],
-            'double_extension' => ['storage/app/public/avatar.php.jpg' => 'payload'],
+            'double_extension_php' => ['storage/app/public/avatar.php.jpg' => 'payload'],
+            'double_extension_xml' => ['storage/app/private/dokumen.xml.pdf' => 'payload'],
             'htaccess' => ['storage/app/public/.htaccess' => 'AddType application/x-httpd-php .jpg'],
             'zip_slip' => ['../../public/backdoor.txt' => 'traversal'],
             'unexpected_sql' => ['storage/app/private/hijack.sql' => 'DROP TABLE users;'],
+            'nested_zip_in_documents' => ['storage/app/private/documents/2026/11/unexpected.zip' => 'PK_ARCHIVE'],
         ];
 
         foreach ($maliciousPayloads as $label => $files) {
@@ -243,6 +252,29 @@ class SystemBackupPageTest extends TestCase
             ->count();
 
         $this->assertSame(count($maliciousPayloads), $blockedCount);
+
+        // Pastikan seluruh ekstensi whitelist sah (pdf, doc, docx, gambar aman, db-dumps .sql, .gitignore) lolos inspeksi
+        $safeZipPath = $this->isolatedStoragePath.'/safe_whitelist.zip';
+        $safeZip = new ZipArchive;
+        $this->assertTrue($safeZip->open($safeZipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE));
+        $safeZip->addFromString('db-dumps/postgresql-unbi.sql', 'SELECT 1;');
+        $safeZip->addFromString('storage/app/private/.gitignore', "*\n!.gitignore\n");
+        $safeZip->addFromString('storage/app/private/backup-restore-uploads/legacy-temp.zip', 'TEMP_UPLOAD_ARCHIVE');
+        $safeZip->addFromString('storage/app/private/documents/2026/11/sk.pdf', '%PDF-1.4 SAFE');
+        $safeZip->addFromString('storage/app/private/documents/2026/11/surat.doc', 'DOC_SAFE');
+        $safeZip->addFromString('storage/app/private/documents/2026/11/naskah.docx', 'DOCX_SAFE');
+        $safeZip->addFromString('storage/app/public/landing/foto.jpg', 'JPG_SAFE');
+        $safeZip->addFromString('storage/app/public/landing/logo.png', 'PNG_SAFE');
+        $safeZip->addFromString('storage/app/public/landing/banner.webp', 'WEBP_SAFE');
+        $safeZip->addFromString('storage/app/public/landing/anim.gif', 'GIF_SAFE');
+        $safeZip->addFromString('storage/app/public/landing/modern.avif', 'AVIF_SAFE');
+        $safeZip->close();
+
+        $inspection = $service->inspectArchive($safeZipPath, $superAdmin, recordSecurityAudit: false);
+        $this->assertTrue($inspection['valid']);
+        $this->assertTrue($inspection['has_database']);
+        $this->assertTrue($inspection['has_storage']);
+        $this->assertSame(9, $inspection['storage_files_count']);
     }
 
     public function test_restore_storage_merge_and_replace_and_database_restore_work_safely(): void
@@ -589,6 +621,55 @@ class SystemBackupPageTest extends TestCase
         $this->assertDatabaseMissing('cache_locks', [
             'key' => 'e-arsip-unbi-cache-system_backup_execution_lock',
         ]);
+    }
+
+    public function test_effective_browser_upload_limits_and_upload_and_restore_action_work_cleanly(): void
+    {
+        Queue::fake();
+
+        $service = app(SystemBackupService::class);
+
+        // Simulasi batas PHP sempit (2M) harus langsung terdeteksi sebagai pembatas
+        $restricted = $service->getEffectiveBrowserUploadLimits('2M', '8M', ['required', 'file', 'max:524288']);
+        $this->assertTrue($restricted['is_restricted_by_server']);
+        $this->assertSame(2048, $restricted['max_kb']);
+
+        // Simulasi batas 512M di PHP + Livewire (sesuai config aplikasi)
+        $aligned = $service->getEffectiveBrowserUploadLimits('512M', '528M', config('livewire.temporary_file_upload.rules'));
+        $this->assertFalse($aligned['is_restricted_by_server']);
+        $this->assertSame(524288, $aligned['max_kb']);
+
+        // Buat arsip .zip backup berukuran > 2 MB menggunakan data acak tak terkompresi untuk uji batas unggah
+        $superAdmin = $this->makeUserWithRole('super_admin');
+        File::put(storage_path('app/private/documents/2026/11/upload-check.pdf'), random_bytes(2_500_000));
+        $backup = $service->runFullBackup($superAdmin, 'manual');
+        $zipAbsolutePath = (string) $service->resolveBackupFileOnDisk($backup['file_name']);
+        $this->assertGreaterThan(2 * 1024 * 1024, filesize($zipAbsolutePath));
+
+        $uploadedFile = UploadedFile::fake()->createWithContent(
+            $backup['file_name'],
+            (string) file_get_contents($zipAbsolutePath)
+        );
+
+        $this->actingAs($superAdmin);
+
+        Livewire::test(SystemBackup::class)
+            ->callAction('uploadAndRestore', data: [
+                'archive' => $uploadedFile,
+                'mode' => 'full',
+                'storage_strategy' => 'merge',
+                'execution_mode' => 'queue',
+                'create_safety_backup' => false,
+                'current_password' => 'password',
+            ])
+            ->assertHasNoActionErrors()
+            ->assertNotified('Proses Restore Dijadwalkan ke Latar Belakang');
+
+        Queue::assertPushed(RunSystemRestoreJob::class, function (RunSystemRestoreJob $job) use ($superAdmin): bool {
+            return $job->actorId === $superAdmin->id
+                && $job->sourceType === 'uploaded_path'
+                && $job->mode === 'full';
+        });
     }
 
     protected function makeUserWithRole(string $role): User
