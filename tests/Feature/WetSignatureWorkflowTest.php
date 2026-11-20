@@ -308,6 +308,14 @@ class WetSignatureWorkflowTest extends TestCase
         $this->assertFalse($service->canUploadFinalScan($this->otherUnitStaff, $doc));
 
         // 7. Pengunggahan scan final oleh Humas (atau unit pengaju) dengan PDF valid
+        $preSignedFile = $doc->fresh()->primaryFile;
+        $this->assertNotNull($preSignedFile);
+        $oldOriginalPath = $preSignedFile->original_file_path;
+        $oldStampedPath = $preSignedFile->stamped_file_path;
+        $this->assertNotNull($oldStampedPath);
+        Storage::disk('private')->assertExists($oldOriginalPath);
+        Storage::disk('private')->assertExists($oldStampedPath);
+
         $scannedPdfBinary = $this->makeValidPdfBinary('HASIL SCAN RESMI BER-TTD BASAH DAN CAP REKTOR');
         $scannedRelativePath = "documents/2026/11/SDM/scan-final-{$doc->uuid}.pdf";
         Storage::disk('private')->put($scannedRelativePath, $scannedPdfBinary);
@@ -325,17 +333,24 @@ class WetSignatureWorkflowTest extends TestCase
         $this->assertSame($this->humasUser->id, $finalizedDoc->final_scan_uploaded_by);
         $this->assertNotNull($finalizedDoc->final_scan_uploaded_at);
 
-        // Versi lama (v1) tetap tersimpan non-aktif; versi baru (v2) menjadi aktif & primer tanpa stempel ganda
+        // Versi lama (v1) tetap tersimpan non-aktif dengan original_file_path dipertahankan,
+        // sedangkan file stamped pra-TTD basah lama telah dihapus otomatis (Opsi A: sisa 2 file).
         $v1File = DocumentFile::where('document_id', $finalizedDoc->id)->where('version', 1)->firstOrFail();
         $v2File = DocumentFile::where('document_id', $finalizedDoc->id)->where('version', 2)->firstOrFail();
 
         $this->assertFalse((bool) $v1File->is_active);
         $this->assertFalse((bool) $v1File->is_primary);
+        $this->assertNull($v1File->stamped_file_path);
+        $this->assertNull($v1File->stamped_file_hash_sha256);
+        Storage::disk('private')->assertExists($oldOriginalPath);
+        Storage::disk('private')->assertMissing($oldStampedPath);
+
         $this->assertTrue((bool) $v2File->is_active);
         $this->assertTrue((bool) $v2File->is_primary);
         $this->assertNull($v2File->stamped_file_path);
         $this->assertSame($expectedScanSha256, $v2File->getEffectiveSha256Hash());
         $this->assertSame($scannedRelativePath, $v2File->getEffectiveFilePath());
+        Storage::disk('private')->assertExists($scannedRelativePath);
 
         // Dokumen yang digantikan BARU diarsipkan otomatis saat arsip scan final disahkan
         $this->assertSame(DocumentStatus::Archived, $oldApprovedDoc->fresh()->status);
@@ -356,6 +371,13 @@ class WetSignatureWorkflowTest extends TestCase
 
         $downloadResponse = $this->get(route('document.verify.download', $finalizedDoc->uuid));
         $downloadResponse->assertOk();
+
+        // 9. Force delete permanen menghapus sisa berkas fisik (original & scan final) agar storage bersih
+        $finalizedDoc->approvals()->delete();
+        $finalizedDoc->forceDelete();
+
+        Storage::disk('private')->assertMissing($oldOriginalPath);
+        Storage::disk('private')->assertMissing($scannedRelativePath);
     }
 
     public function test_wet_signature_upload_rejects_unauthorized_spoofed_pdf_and_duplicate_race(): void

@@ -37,6 +37,7 @@ return [
                 'exclude' => [
                     storage_path('app/backups'),
                     storage_path('app/backup-temp'),
+                    storage_path('app/private/backup-restore-uploads'),
                     storage_path('app/private/temp-exports'),
                     storage_path('app/private/livewire-tmp'),
                     storage_path('framework'),

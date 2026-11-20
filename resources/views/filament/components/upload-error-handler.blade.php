@@ -25,11 +25,11 @@
 
     const translateServerUploadError = (status, responseText) => {
         if (status === 413) {
-            return 'Ukuran foto melebihi batas unggahan web server (HTTP 413 Payload Too Large). Minta administrator memeriksa client_max_body_size atau upload_max_filesize.';
+            return 'Ukuran berkas melebihi batas unggahan web server (HTTP 413 Payload Too Large). Periksa client_max_body_size atau upload_max_filesize di server.';
         }
 
         if (status === 419) {
-            return 'Sesi halaman kedaluwarsa (HTTP 419 CSRF). Muat ulang halaman lalu unggah foto kembali.';
+            return 'Sesi halaman kedaluwarsa (HTTP 419 CSRF). Muat ulang halaman lalu unggah berkas kembali.';
         }
 
         if (status === 422) {
@@ -43,7 +43,7 @@
 
                 if (typeof firstError === 'string' && firstError.trim() !== '') {
                     if (/failed to upload/i.test(firstError)) {
-                        return 'Berkas gagal diterima server PHP (kemungkinan ukuran file melebihi batas upload_max_filesize / post_max_size di server atau koneksi terputus).';
+                        return 'Berkas gagal diterima server PHP (kemungkinan ukuran berkas melebihi batas upload_max_filesize / post_max_size di server atau koneksi terputus).';
                     }
 
                     return firstError;
@@ -52,15 +52,15 @@
                 // Abaikan error parsing JSON, gunakan pesan fallback di bawah
             }
 
-            return 'Validasi file sementara ditolak server (HTTP 422). Pastikan ukuran file <= 50 MB dan berformat gambar valid (JPG/PNG/WebP/GIF/AVIF).';
+            return 'Validasi file sementara ditolak server (HTTP 422). Pastikan ukuran dan format berkas sesuai ketentuan kolom unggahan serta batas server.';
         }
 
         if (status === 0) {
-            return 'Koneksi jaringan terputus atau waktu unggah habis sebelum foto selesai dikirim ke server.';
+            return 'Koneksi jaringan terputus atau waktu unggah habis sebelum berkas selesai dikirim ke server.';
         }
 
         if (status >= 500) {
-            return `Terjadi gangguan internal server saat menerima unggahan foto (HTTP ${status}). Coba ulangi beberapa saat lagi atau cek log Laravel.`;
+            return `Terjadi gangguan internal server saat menerima unggahan berkas (HTTP ${status}). Coba ulangi beberapa saat lagi atau cek log Laravel.`;
         }
 
         return `Gagal mengunggah berkas ke server (HTTP ${status}).`;
@@ -82,16 +82,16 @@
             this.addEventListener('load', () => {
                 if (this.status >= 400) {
                     const reason = translateServerUploadError(this.status, this.responseText);
-                    notifyUploadError('Upload Foto Gagal', reason);
+                    notifyUploadError('Upload Berkas Gagal', reason);
                 }
             });
 
             this.addEventListener('error', () => {
-                notifyUploadError('Upload Foto Gagal', translateServerUploadError(0, ''));
+                notifyUploadError('Upload Berkas Gagal', translateServerUploadError(0, ''));
             });
 
             this.addEventListener('timeout', () => {
-                notifyUploadError('Waktu Upload Habis', 'Pengiriman foto terlalu lama sehingga koneksi diputus oleh browser. Periksa kestabilan jaringan Anda.');
+                notifyUploadError('Waktu Upload Habis', 'Pengiriman berkas terlalu lama sehingga koneksi diputus oleh browser. Periksa kestabilan jaringan Anda.');
             });
         }
 
