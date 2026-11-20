@@ -1360,15 +1360,14 @@ class SystemBackupService
         }
 
         $psqlBinary = $this->resolveDatabaseBinary('psql', (string) ($dbConfig['dump']['dump_binary_path'] ?? ''));
+        $hasPgTrgmExtension = $this->hasPostgresExtension($connectionName, 'pg_trgm');
 
-        $escapedSqlPath = str_replace("'", "''", str_replace('\\', '/', $sqlFilePath));
+        $sanitizedSqlPath = $stagingDir.DIRECTORY_SEPARATOR.'pg_sanitized_restore.sql';
+        $this->sanitizePostgresDumpFile($sqlFilePath, $sanitizedSqlPath, $hasPgTrgmExtension);
+
+        $escapedSqlPath = str_replace("'", "''", str_replace('\\', '/', $sanitizedSqlPath));
         $wrapperPath = $stagingDir.DIRECTORY_SEPARATOR.'pg_atomic_restore.sql';
-        $wrapperContent = implode(PHP_EOL, [
-            'DROP SCHEMA IF EXISTS public CASCADE;',
-            'CREATE SCHEMA public;',
-            "\\i '{$escapedSqlPath}'",
-        ]).PHP_EOL;
-        File::put($wrapperPath, $wrapperContent);
+        File::put($wrapperPath, $this->buildPostgresAtomicWrapperSql($escapedSqlPath));
 
         $database = (string) ($dbConfig['database'] ?? '');
         $username = (string) ($dbConfig['username'] ?? 'postgres');
@@ -1379,7 +1378,7 @@ class SystemBackupService
         DB::disconnect($connectionName);
 
         try {
-            // Gunakan transaksi tunggal (-1) agar jika ada kegagalan di tengah impor, DROP SCHEMA ikut di-rollback
+            // Gunakan transaksi tunggal (-1) agar pembersihan objek & impor di-commit atomik atau di-rollback penuh jika gagal
             $process = new Process(
                 [
                     $psqlBinary,
@@ -1394,6 +1393,7 @@ class SystemBackupService
                 null,
                 array_filter([
                     'PGPASSWORD' => $password,
+                    'PGCLIENTENCODING' => 'UTF8',
                     'SystemRoot' => getenv('SystemRoot') ?: null,
                     'TEMP' => sys_get_temp_dir(),
                     'TMP' => sys_get_temp_dir(),
@@ -1405,14 +1405,257 @@ class SystemBackupService
             $process->run();
 
             if (! $process->isSuccessful()) {
-                $err = trim($process->getErrorOutput() ?: $process->getOutput());
-                throw new RuntimeException('Pemulihan PostgreSQL gagal (database dipertahankan pada kondisi sebelumnya): '.Str::limit($err, 600));
+                $err = $this->extractConciseDatabaseError($process->getErrorOutput(), $process->getOutput());
+                throw new RuntimeException('Pemulihan PostgreSQL gagal (database dipertahankan pada kondisi sebelumnya): '.$err);
             }
         } finally {
             @unlink($wrapperPath);
+            @unlink($sanitizedSqlPath);
             DB::purge($connectionName);
             DB::reconnect($connectionName);
         }
+    }
+
+    /**
+     * Periksa apakah ekstensi PostgreSQL tertentu sudah terpasang pada database target.
+     */
+    protected function hasPostgresExtension(string $connectionName, string $extensionName): bool
+    {
+        try {
+            $row = DB::connection($connectionName)->selectOne(
+                'SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname = ?) AS installed',
+                [$extensionName]
+            );
+
+            return (bool) ($row->installed ?? false);
+        } catch (Throwable) {
+            return false;
+        }
+    }
+
+    /**
+     * Susun skrip pembungkus `psql` yang membersihkan objek aplikasi di schema `public`
+     * tanpa menjatuhkan ekstensi terpasang (seperti `pg_trgm`) ataupun membutuhkan hak superuser.
+     */
+    protected function buildPostgresAtomicWrapperSql(string $escapedSqlPath): string
+    {
+        return implode(PHP_EOL, [
+            'DO $$',
+            'DECLARE',
+            '    rec RECORD;',
+            "    pub_oid OID := 'public'::regnamespace;",
+            'BEGIN',
+            '    FOR rec IN',
+            '        SELECT c.relkind, c.relname',
+            '        FROM pg_class c',
+            '        WHERE c.relnamespace = pub_oid',
+            "          AND c.relkind IN ('m', 'v', 'f', 'p', 'r')",
+            '          AND NOT EXISTS (',
+            '              SELECT 1 FROM pg_depend d',
+            "              WHERE d.classid = 'pg_class'::regclass",
+            '                AND d.objid = c.oid',
+            "                AND d.deptype = 'e'",
+            '          )',
+            '    LOOP',
+            "        IF rec.relkind = 'm' THEN",
+            "            EXECUTE format('DROP MATERIALIZED VIEW IF EXISTS public.%I CASCADE', rec.relname);",
+            "        ELSIF rec.relkind = 'v' THEN",
+            "            EXECUTE format('DROP VIEW IF EXISTS public.%I CASCADE', rec.relname);",
+            "        ELSIF rec.relkind = 'f' THEN",
+            "            EXECUTE format('DROP FOREIGN TABLE IF EXISTS public.%I CASCADE', rec.relname);",
+            '        ELSE',
+            "            EXECUTE format('DROP TABLE IF EXISTS public.%I CASCADE', rec.relname);",
+            '        END IF;',
+            '    END LOOP;',
+            '',
+            '    FOR rec IN',
+            '        SELECT c.relname',
+            '        FROM pg_class c',
+            '        WHERE c.relnamespace = pub_oid',
+            "          AND c.relkind = 'S'",
+            '          AND NOT EXISTS (',
+            '              SELECT 1 FROM pg_depend d',
+            "              WHERE d.classid = 'pg_class'::regclass",
+            '                AND d.objid = c.oid',
+            "                AND d.deptype = 'e'",
+            '          )',
+            '    LOOP',
+            "        EXECUTE format('DROP SEQUENCE IF EXISTS public.%I CASCADE', rec.relname);",
+            '    END LOOP;',
+            '',
+            '    FOR rec IN',
+            '        SELECT p.proname, p.prokind, pg_get_function_identity_arguments(p.oid) AS args',
+            '        FROM pg_proc p',
+            '        WHERE p.pronamespace = pub_oid',
+            '          AND NOT EXISTS (',
+            '              SELECT 1 FROM pg_depend d',
+            "              WHERE d.classid = 'pg_proc'::regclass",
+            '                AND d.objid = p.oid',
+            "                AND d.deptype = 'e'",
+            '          )',
+            '    LOOP',
+            "        IF rec.prokind = 'a' THEN",
+            "            EXECUTE format('DROP AGGREGATE IF EXISTS public.%I(%s) CASCADE', rec.proname, rec.args);",
+            "        ELSIF rec.prokind = 'p' THEN",
+            "            EXECUTE format('DROP PROCEDURE IF EXISTS public.%I(%s) CASCADE', rec.proname, rec.args);",
+            '        ELSE',
+            "            EXECUTE format('DROP FUNCTION IF EXISTS public.%I(%s) CASCADE', rec.proname, rec.args);",
+            '        END IF;',
+            '    END LOOP;',
+            '',
+            '    FOR rec IN',
+            '        SELECT t.typname, t.typtype',
+            '        FROM pg_type t',
+            '        WHERE t.typnamespace = pub_oid',
+            "          AND t.typtype IN ('e', 'd', 'r', 'm', 'c')",
+            '          AND NOT EXISTS (',
+            '              SELECT 1 FROM pg_depend d',
+            "              WHERE d.classid = 'pg_type'::regclass",
+            '                AND d.objid = t.oid',
+            "                AND d.deptype = 'e'",
+            '          )',
+            '    LOOP',
+            "        IF rec.typtype = 'd' THEN",
+            "            EXECUTE format('DROP DOMAIN IF EXISTS public.%I CASCADE', rec.typname);",
+            '        ELSE',
+            "            EXECUTE format('DROP TYPE IF EXISTS public.%I CASCADE', rec.typname);",
+            '        END IF;',
+            '    END LOOP;',
+            'END $$;',
+            "\\i '{$escapedSqlPath}'",
+        ]).PHP_EOL;
+    }
+
+    /**
+     * Saring pernyataan `pg_dump` yang tidak portabel lintas versi PostgreSQL atau role non-superuser
+     * sambil menjaga seluruh blok data `COPY ... FROM stdin;` tetap utuh apa adanya.
+     */
+    protected function sanitizePostgresDumpFile(string $sourcePath, string $destPath, bool $hasPgTrgmExtension): void
+    {
+        $readHandle = fopen($sourcePath, 'rb');
+        if ($readHandle === false) {
+            throw new RuntimeException('Gagal membuka berkas dump PostgreSQL untuk disanitasi.');
+        }
+
+        $writeHandle = fopen($destPath, 'wb');
+        if ($writeHandle === false) {
+            fclose($readHandle);
+            throw new RuntimeException('Gagal menyiapkan berkas sementara sanitasi PostgreSQL.');
+        }
+
+        $inCopyBlock = false;
+
+        try {
+            while (($line = fgets($readHandle)) !== false) {
+                if ($inCopyBlock) {
+                    fwrite($writeHandle, $line);
+
+                    if (rtrim($line, "\r\n") === '\.') {
+                        $inCopyBlock = false;
+                    }
+
+                    continue;
+                }
+
+                $trimmedLine = trim($line);
+
+                if (preg_match('/^COPY\s+.+\s+FROM\s+stdin;$/i', $trimmedLine) === 1) {
+                    $inCopyBlock = true;
+                    fwrite($writeHandle, $line);
+
+                    continue;
+                }
+
+                if ($this->shouldStripPostgresDumpStatement($trimmedLine, $hasPgTrgmExtension)) {
+                    continue;
+                }
+
+                fwrite($writeHandle, $line);
+            }
+        } finally {
+            fclose($readHandle);
+            fclose($writeHandle);
+        }
+    }
+
+    /**
+     * Tentukan apakah baris DDL/meta pada dump PostgreSQL harus dilewati demi kompatibilitas versi & non-superuser.
+     */
+    protected function shouldStripPostgresDumpStatement(string $trimmedLine, bool $hasPgTrgmExtension): bool
+    {
+        if ($trimmedLine === '' || str_starts_with($trimmedLine, '--')) {
+            return false;
+        }
+
+        if (preg_match('/^\\\\(?:restrict|unrestrict)\b/i', $trimmedLine) === 1) {
+            return true;
+        }
+
+        if (preg_match('/^SET\s+transaction_timeout\s*=/i', $trimmedLine) === 1) {
+            return true;
+        }
+
+        if (preg_match('/^DROP\s+EXTENSION\s+(?:IF\s+EXISTS\s+)?(?:"?public"?\.)?"?pg_trgm"?(?:\s+CASCADE|\s+RESTRICT)?\s*;$/i', $trimmedLine) === 1) {
+            return true;
+        }
+
+        if ($hasPgTrgmExtension && preg_match('/^CREATE\s+EXTENSION\s+(?:IF\s+NOT\s+EXISTS\s+)?"?pg_trgm"?\b.*;$/i', $trimmedLine) === 1) {
+            return true;
+        }
+
+        if (preg_match('/^COMMENT\s+ON\s+EXTENSION\s+"?pg_trgm"?\b.*;$/i', $trimmedLine) === 1) {
+            return true;
+        }
+
+        if (preg_match('/^(?:ALTER\s+SCHEMA\s+"?public"?\s+OWNER\s+TO|COMMENT\s+ON\s+SCHEMA\s+"?public"?\s+IS|(?:REVOKE|GRANT)\s+.+\s+ON\s+SCHEMA\s+"?public"?\b).*;$/i', $trimmedLine) === 1) {
+            return true;
+        }
+
+        if (preg_match('/^ALTER\s+(?:FOREIGN\s+TABLE|TABLE|SEQUENCE|VIEW|MATERIALIZED\s+VIEW|FUNCTION|PROCEDURE|AGGREGATE|TYPE|DOMAIN)\s+.+\s+OWNER\s+TO\s+[^;]+;$/i', $trimmedLine) === 1) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Ekstrak baris `ERROR:` / `FATAL:` utama beserta `DETAIL:` agar tidak tertutup rentetan `NOTICE:` di log.
+     */
+    protected function extractConciseDatabaseError(string $errorOutput, string $stdOutput = ''): string
+    {
+        $errorOutput = trim($errorOutput);
+        $stdOutput = trim($stdOutput);
+
+        $combined = match (true) {
+            $errorOutput !== '' && $stdOutput !== '' && $errorOutput !== $stdOutput => $errorOutput.PHP_EOL.$stdOutput,
+            $errorOutput !== '' => $errorOutput,
+            default => $stdOutput,
+        };
+
+        if ($combined === '') {
+            return 'Proses database berhenti dengan kode keluar non-nol tanpa pesan tambahan.';
+        }
+
+        $lines = preg_split('/\R/', $combined) ?: [];
+        foreach ($lines as $index => $line) {
+            if (preg_match('/(?:^|\b)(?:ERROR|FATAL|PANIC)\s*[:\d]/i', $line) !== 1) {
+                continue;
+            }
+
+            $relevantLines = array_slice($lines, $index, 8);
+            $extracted = trim(implode(PHP_EOL, array_filter(
+                $relevantLines,
+                fn (string $item): bool => trim($item) !== ''
+            )));
+
+            return Str::limit($extracted, 900);
+        }
+
+        if (mb_strlen($combined) > 900) {
+            return '...'.ltrim(mb_substr($combined, -900));
+        }
+
+        return $combined;
     }
 
     /**
@@ -1465,8 +1708,8 @@ class SystemBackupService
             $process->run();
 
             if (! $process->isSuccessful()) {
-                $err = trim($process->getErrorOutput() ?: $process->getOutput());
-                throw new RuntimeException('Pemulihan MySQL/MariaDB gagal: '.Str::limit($err, 600));
+                $err = $this->extractConciseDatabaseError($process->getErrorOutput(), $process->getOutput());
+                throw new RuntimeException('Pemulihan MySQL/MariaDB gagal: '.$err);
             }
         } finally {
             if (is_resource($sqlStream)) {

@@ -109,7 +109,7 @@ return [
                 'dump_binary_path' => env('DB_DUMP_BINARY_PATH', collect(['18', '17', '16', '15'])
                     ->map(static fn (string $ver): string => "C:/Program Files/PostgreSQL/{$ver}/bin")
                     ->first(static fn (string $dir): bool => is_file("{$dir}/pg_dump.exe")) ?? ''),
-                'add_extra_option' => '--clean --if-exists',
+                'add_extra_option' => '--clean --if-exists --no-owner --no-privileges',
             ],
         ],
 

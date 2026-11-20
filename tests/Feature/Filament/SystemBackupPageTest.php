@@ -698,6 +698,131 @@ class SystemBackupPageTest extends TestCase
             ->assertNotified('Proses Restore Dijadwalkan ke Latar Belakang');
     }
 
+    public function test_postgres_restore_sanitizer_preserves_copy_data_and_strips_non_portable_ddl(): void
+    {
+        $service = $this->makeExposedPostgresBackupService();
+        $tempDir = storage_path('app/backup-temp/test-pg-sanitizer-'.uniqid('', true));
+        File::ensureDirectoryExists($tempDir);
+
+        $sourceSql = $tempDir.DIRECTORY_SEPARATOR.'source.sql';
+        $destSql = $tempDir.DIRECTORY_SEPARATOR.'sanitized.sql';
+
+        $rawDump = implode("\n", [
+            '-- PostgreSQL database dump',
+            '\restrict abc123randomtoken',
+            'SET statement_timeout = 0;',
+            'SET transaction_timeout = 0;',
+            "SELECT pg_catalog.set_config('search_path', '', false);",
+            'DROP EXTENSION IF EXISTS pg_trgm;',
+            'ALTER SCHEMA public OWNER TO postgres;',
+            "COMMENT ON SCHEMA public IS '';",
+            'CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA public;',
+            "COMMENT ON EXTENSION pg_trgm IS 'text similarity measurement';",
+            'CREATE TABLE public.documents (id bigint NOT NULL, title text NOT NULL);',
+            'ALTER TABLE public.documents OWNER TO postgres;',
+            'CREATE INDEX documents_title_trgm_idx ON public.documents USING gin (title public.gin_trgm_ops);',
+            'COPY public.documents (id, title) FROM stdin;',
+            "1\tALTER TABLE public.documents OWNER TO postgres;",
+            "2\tSET transaction_timeout = 0; \\restrict fake_inside_copy",
+            '\.',
+            'REVOKE USAGE ON SCHEMA public FROM PUBLIC;',
+            'GRANT ALL ON SCHEMA public TO postgres;',
+            '\unrestrict abc123randomtoken',
+            '',
+        ]);
+        File::put($sourceSql, $rawDump);
+
+        try {
+            $service->exposeSanitizePostgresDumpFile($sourceSql, $destSql, true);
+            $sanitized = (string) File::get($destSql);
+
+            $this->assertStringNotContainsString('\restrict abc123randomtoken', $sanitized);
+            $this->assertStringNotContainsString('\unrestrict abc123randomtoken', $sanitized);
+            $this->assertStringNotContainsString("SET transaction_timeout = 0;\n", $sanitized);
+            $this->assertStringNotContainsString('DROP EXTENSION IF EXISTS pg_trgm;', $sanitized);
+            $this->assertStringNotContainsString('CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA public;', $sanitized);
+            $this->assertStringNotContainsString('COMMENT ON EXTENSION pg_trgm', $sanitized);
+            $this->assertStringNotContainsString('ALTER SCHEMA public OWNER TO postgres;', $sanitized);
+            $this->assertStringNotContainsString("\nALTER TABLE public.documents OWNER TO postgres;", $sanitized);
+            $this->assertStringNotContainsString('REVOKE USAGE ON SCHEMA public FROM PUBLIC;', $sanitized);
+            $this->assertStringNotContainsString('GRANT ALL ON SCHEMA public TO postgres;', $sanitized);
+
+            // DDL & data di dalam COPY ... FROM stdin harus tetap utuh 100%
+            $this->assertStringContainsString('CREATE TABLE public.documents (id bigint NOT NULL, title text NOT NULL);', $sanitized);
+            $this->assertStringContainsString('documents_title_trgm_idx', $sanitized);
+            $this->assertStringContainsString("1\tALTER TABLE public.documents OWNER TO postgres;", $sanitized);
+            $this->assertStringContainsString("2\tSET transaction_timeout = 0; \\restrict fake_inside_copy", $sanitized);
+
+            $wrapper = $service->exposeBuildPostgresAtomicWrapperSql('/tmp/pg_sanitized_restore.sql');
+            $this->assertStringNotContainsString('DROP SCHEMA IF EXISTS public CASCADE;', $wrapper);
+            $this->assertStringContainsString("d.deptype = 'e'", $wrapper);
+            $this->assertStringContainsString("\\i '/tmp/pg_sanitized_restore.sql'", $wrapper);
+        } finally {
+            File::deleteDirectory($tempDir);
+        }
+    }
+
+    public function test_postgres_restore_sanitizer_keeps_missing_extension_and_extracts_error_past_long_notices(): void
+    {
+        $service = $this->makeExposedPostgresBackupService();
+        $tempDir = storage_path('app/backup-temp/test-pg-errors-'.uniqid('', true));
+        File::ensureDirectoryExists($tempDir);
+
+        $sourceSql = $tempDir.DIRECTORY_SEPARATOR.'source.sql';
+        $destSql = $tempDir.DIRECTORY_SEPARATOR.'sanitized.sql';
+
+        File::put($sourceSql, implode("\n", [
+            'DROP EXTENSION IF EXISTS pg_trgm;',
+            'CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA public;',
+            "COMMENT ON EXTENSION pg_trgm IS 'trigram';",
+            'ALTER TABLE public.users OWNER TO postgres;',
+        ]));
+
+        try {
+            $service->exposeSanitizePostgresDumpFile($sourceSql, $destSql, false);
+            $sanitized = (string) File::get($destSql);
+
+            $this->assertStringContainsString('CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA public;', $sanitized);
+            $this->assertStringNotContainsString('DROP EXTENSION IF EXISTS pg_trgm;', $sanitized);
+            $this->assertStringNotContainsString('ALTER TABLE public.users OWNER TO postgres;', $sanitized);
+        } finally {
+            File::deleteDirectory($tempDir);
+        }
+
+        $longNotice = "psql:/tmp/pg_atomic_restore.sql:1: NOTICE:  drop cascades to 38 other objects\n"
+            ."DETAIL:  drop cascades to extension pg_trgm\n"
+            .str_repeat("drop cascades to table some_long_application_table_name\n", 30)
+            ."psql:/tmp/pg_sanitized_restore.sql:412: ERROR:  permission denied for schema public\n"
+            ."DETAIL:  Role appuser does not have CREATE privilege on schema public.\n";
+
+        $extracted = $service->exposeExtractConciseDatabaseError($longNotice, '');
+
+        $this->assertStringContainsString('ERROR:  permission denied for schema public', $extracted);
+        $this->assertStringContainsString('DETAIL:  Role appuser does not have CREATE privilege on schema public.', $extracted);
+        $this->assertStringNotContainsString('NOTICE:  drop cascades to 38 other objects', $extracted);
+    }
+
+    protected function makeExposedPostgresBackupService(): SystemBackupService
+    {
+        return new class extends SystemBackupService
+        {
+            public function exposeSanitizePostgresDumpFile(string $sourcePath, string $destPath, bool $hasPgTrgmExtension): void
+            {
+                $this->sanitizePostgresDumpFile($sourcePath, $destPath, $hasPgTrgmExtension);
+            }
+
+            public function exposeBuildPostgresAtomicWrapperSql(string $escapedSqlPath): string
+            {
+                return $this->buildPostgresAtomicWrapperSql($escapedSqlPath);
+            }
+
+            public function exposeExtractConciseDatabaseError(string $errorOutput, string $stdOutput = ''): string
+            {
+                return $this->extractConciseDatabaseError($errorOutput, $stdOutput);
+            }
+        };
+    }
+
     protected function makeUserWithRole(string $role): User
     {
         $unit = Unit::first();
