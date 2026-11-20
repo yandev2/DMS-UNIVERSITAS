@@ -639,23 +639,22 @@ class SystemBackupPageTest extends TestCase
         $this->assertFalse($aligned['is_restricted_by_server']);
         $this->assertSame(524288, $aligned['max_kb']);
 
-        // Buat arsip .zip backup berukuran > 2 MB menggunakan data acak tak terkompresi untuk uji batas unggah
+        // 1. Uji end-to-end arsip .zip sah (< 2 MB agar independen dari php.ini default runner) lewat uploadAndRestore
         $superAdmin = $this->makeUserWithRole('super_admin');
-        File::put(storage_path('app/private/documents/2026/11/upload-check.pdf'), random_bytes(2_500_000));
-        $backup = $service->runFullBackup($superAdmin, 'manual');
-        $zipAbsolutePath = (string) $service->resolveBackupFileOnDisk($backup['file_name']);
-        $this->assertGreaterThan(2 * 1024 * 1024, filesize($zipAbsolutePath));
+        File::put(storage_path('app/private/documents/2026/11/upload-check.pdf'), random_bytes(300_000));
+        $smallBackup = $service->runFullBackup($superAdmin, 'manual');
+        $smallZipPath = (string) $service->resolveBackupFileOnDisk($smallBackup['file_name']);
 
-        $uploadedFile = UploadedFile::fake()->createWithContent(
-            $backup['file_name'],
-            (string) file_get_contents($zipAbsolutePath)
+        $uploadedSmall = UploadedFile::fake()->createWithContent(
+            $smallBackup['file_name'],
+            (string) file_get_contents($smallZipPath)
         );
 
         $this->actingAs($superAdmin);
 
         Livewire::test(SystemBackup::class)
             ->callAction('uploadAndRestore', data: [
-                'archive' => $uploadedFile,
+                'archive' => $uploadedSmall,
                 'mode' => 'full',
                 'storage_strategy' => 'merge',
                 'execution_mode' => 'queue',
@@ -670,6 +669,33 @@ class SystemBackupPageTest extends TestCase
                 && $job->sourceType === 'uploaded_path'
                 && $job->mode === 'full';
         });
+
+        // 2. Uji arsip > 2 MB (2.5 MB) saat server menyediakan limit 512 MB (independen dari php.ini CI runner)
+        File::put(storage_path('app/private/documents/2026/11/upload-large.pdf'), random_bytes(2_500_000));
+        $largeBackup = $service->runFullBackup($superAdmin, 'manual');
+        $largeZipPath = (string) $service->resolveBackupFileOnDisk($largeBackup['file_name']);
+        $this->assertGreaterThan(2 * 1024 * 1024, filesize($largeZipPath));
+
+        $mockService = $this->partialMock(SystemBackupService::class);
+        $mockService->shouldReceive('getEffectiveBrowserUploadLimits')
+            ->andReturn($aligned);
+
+        $uploadedLarge = UploadedFile::fake()->createWithContent(
+            $largeBackup['file_name'],
+            (string) file_get_contents($largeZipPath)
+        );
+
+        Livewire::test(SystemBackup::class)
+            ->callAction('uploadAndRestore', data: [
+                'archive' => $uploadedLarge,
+                'mode' => 'full',
+                'storage_strategy' => 'merge',
+                'execution_mode' => 'queue',
+                'create_safety_backup' => false,
+                'current_password' => 'password',
+            ])
+            ->assertHasNoActionErrors()
+            ->assertNotified('Proses Restore Dijadwalkan ke Latar Belakang');
     }
 
     protected function makeUserWithRole(string $role): User
