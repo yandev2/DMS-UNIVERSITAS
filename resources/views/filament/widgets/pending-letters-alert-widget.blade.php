@@ -1,12 +1,10 @@
-@include('filament.widgets.dashboard-styles')
-
 @php
     $hasIncoming = $incomingCount > 0;
     $hasOutgoing = $outgoingHumasCount > 0;
 @endphp
 
-@if($hasIncoming || $hasOutgoing)
 <x-filament-widgets::widget class="fi-dashboard-letters-alert">
+    @if($hasIncoming || $hasOutgoing)
     <div class="db-letters-alert-card">
         {{-- Section: Surat Masuk yang Menunggu Ditinjau / Dibaca --}}
         @if($hasIncoming)
@@ -101,5 +99,5 @@
             </div>
         @endif
     </div>
+    @endif
 </x-filament-widgets::widget>
-@endif

@@ -1,5 +1,3 @@
-@include('filament.widgets.dashboard-styles')
-
 <x-filament-widgets::widget class="fi-dashboard-welcome-banner db-welcome-banner">
     <div
         x-data="{
@@ -112,6 +110,62 @@
                     </div>
                 </div>
             </div>
+
+            {{-- BAGIAN BAWAH CARD WELCOME: DAFTAR PINTASAN WEB PRIBADI (MINI-CARD TILE NON-PILL) --}}
+            @php
+                $shortcutItems = $shortcuts ?? collect();
+            @endphp
+            @if($shortcutItems->isNotEmpty())
+                <div class="db-shortcuts-section">
+                    <div class="db-shortcuts-header">
+                        <div class="db-shortcuts-heading-wrap">
+                            <span class="db-shortcuts-heading-icon">
+                                <svg style="width: 13px; height: 13px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                </svg>
+                            </span>
+                            <span class="db-shortcuts-heading-text">Pintasan Web Saya</span>
+                            <span class="db-shortcuts-count-tag">{{ $shortcutItems->count() }}/{{ \App\Models\UserShortcut::MAX_PER_USER }}</span>
+                        </div>
+
+                        @if(!empty($manageShortcutsUrl))
+                            <a href="{{ $manageShortcutsUrl }}" class="db-shortcuts-manage-link">
+                                <span>Kelola Pintasan</span>
+                                <svg style="width: 13px; height: 13px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </a>
+                        @endif
+                    </div>
+
+                    <div class="db-shortcuts-grid">
+                        @foreach($shortcutItems as $shortcut)
+                            <a
+                                href="{{ $shortcut->url }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="db-shortcut-tile"
+                                title="{{ $shortcut->title }} ({{ $shortcut->url }})"
+                            >
+                                <div class="db-shortcut-icon-box">
+                                    <span>{{ $shortcut->getInitial() }}</span>
+                                </div>
+
+                                <div class="db-shortcut-content">
+                                    <div class="db-shortcut-title">{{ $shortcut->title }}</div>
+                                    <div class="db-shortcut-domain">{{ $shortcut->getHostDomain() }}</div>
+                                </div>
+
+                                <div class="db-shortcut-arrow">
+                                    <svg style="width: 14px; height: 14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 17L17 7M17 7H8M17 7V16" />
+                                    </svg>
+                                </div>
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
         </div>
 
         {{-- MODAL KONFIRMASI LOGOUT --}}

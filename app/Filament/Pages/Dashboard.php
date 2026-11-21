@@ -59,6 +59,7 @@ class Dashboard extends BaseDashboard
                                 $this->filters = DashboardPeriodFilter::defaults();
                                 $this->getFiltersForm()->fill($this->filters);
                                 $this->updatedFilters();
+                                $this->forceRender();
                             }),
 
                         Action::make('currentYear')
@@ -75,6 +76,7 @@ class Dashboard extends BaseDashboard
                                 ];
                                 $this->getFiltersForm()->fill($this->filters);
                                 $this->updatedFilters();
+                                $this->forceRender();
                             }),
                     ])
                     ->columns([
@@ -117,6 +119,18 @@ class Dashboard extends BaseDashboard
             ]);
     }
 
+    public function updatedFilters(): void
+    {
+        if ($this->persistsFiltersInSession()) {
+            session()->put(
+                $this->getFiltersSessionKey(),
+                $this->filters,
+            );
+        }
+
+        $this->forceRender();
+    }
+
     public function content(Schema $schema): Schema
     {
         $allWidgets = $this->getWidgets();
@@ -136,9 +150,11 @@ class Dashboard extends BaseDashboard
         return $schema
             ->components([
                 Grid::make($this->getColumns())
+                    ->key('topWidgetsGrid')
                     ->schema(fn (): array => $this->getWidgetsSchemaComponents($topWidgets)),
                 $this->getFiltersFormContentComponent(),
                 Grid::make($this->getColumns())
+                    ->key('analyticalWidgetsGrid')
                     ->schema(fn (): array => $this->getWidgetsSchemaComponents($analyticalWidgets)),
             ]);
     }

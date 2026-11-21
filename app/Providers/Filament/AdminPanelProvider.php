@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\Pages\Auth\EditProfile;
 use App\Filament\Pages\Auth\Login;
 use App\Filament\Pages\Dashboard;
+use App\Filament\Resources\UserShortcuts\UserShortcutResource;
 use App\Filament\Widgets\AnnualPublishedDocumentChartWidget;
 use App\Filament\Widgets\DashboardQuickActionsWidget;
 use App\Filament\Widgets\DashboardWelcomeBannerWidget;
@@ -19,6 +20,7 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\MenuItem;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -69,6 +71,12 @@ class AdminPanelProvider extends PanelProvider
             ->databaseNotifications()
             ->login(Login::class)
             ->profile(EditProfile::class, isSimple: false)
+            ->userMenuItems([
+                'user_shortcuts' => MenuItem::make()
+                    ->label('Pintasan Web Saya')
+                    ->url(fn (): string => UserShortcutResource::getUrl('index'))
+                    ->icon('heroicon-o-link'),
+            ])
             ->colors([
                 'primary' => Color::Blue,
                 'blue' => Color::Blue,
@@ -120,6 +128,10 @@ class AdminPanelProvider extends PanelProvider
 
                     return $html;
                 },
+            )
+            ->renderHook(
+                PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
+                fn (): View => view('filament.components.topbar-shortcut-button'),
             )
             ->renderHook(
                 PanelsRenderHook::FOOTER,

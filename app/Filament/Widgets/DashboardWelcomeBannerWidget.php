@@ -2,8 +2,10 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Resources\UserShortcuts\UserShortcutResource;
 use App\Models\LandingPageSetting;
 use App\Models\User;
+use App\Models\UserShortcut;
 use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\Auth;
@@ -63,6 +65,10 @@ class DashboardWelcomeBannerWidget extends Widget
         $settings = LandingPageSetting::current();
         $logoUrl = $settings?->getLogoUrl();
 
+        $shortcuts = $user
+            ? $user->shortcuts()->limit(UserShortcut::MAX_PER_USER)->get()
+            : collect();
+
         return [
             'user' => $user,
             'userName' => $user?->name ?? 'Pengguna',
@@ -76,6 +82,8 @@ class DashboardWelcomeBannerWidget extends Widget
             'logoUrl' => $logoUrl,
             'logoutUrl' => filament()->getLogoutUrl(),
             'initials' => $user ? Str::of($user->name)->explode(' ')->take(2)->map(fn ($p) => mb_substr($p, 0, 1))->implode('') : 'U',
+            'shortcuts' => $shortcuts,
+            'manageShortcutsUrl' => UserShortcutResource::getUrl('index'),
         ];
     }
 }
