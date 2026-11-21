@@ -1,7 +1,3 @@
-@once('dashboard-custom-css')
-    @include('filament.widgets.dashboard-styles')
-@endonce
-
 <x-filament-widgets::widget class="db-annual-chart-widget">
     <div class="db-chart-container">
         <!-- 1. Header Card & Ringkasan Metrik Cepat -->

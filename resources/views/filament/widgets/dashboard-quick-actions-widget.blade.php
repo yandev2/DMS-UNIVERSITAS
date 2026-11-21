@@ -1,5 +1,3 @@
-@include('filament.widgets.dashboard-styles')
-
 <x-filament-widgets::widget class="fi-dashboard-quick-actions db-quick-actions-widget">
     @if(!empty($actions))
         <div class="db-quick-actions-panel">

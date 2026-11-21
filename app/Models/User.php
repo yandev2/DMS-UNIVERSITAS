@@ -147,6 +147,11 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
         return $this->hasMany(Document::class, 'uploaded_by');
     }
 
+    public function shortcuts(): HasMany
+    {
+        return $this->hasMany(UserShortcut::class)->orderBy('sort_order')->orderBy('id');
+    }
+
     public function finalApprovedDocuments(): HasMany
     {
         return $this->hasMany(Document::class, 'final_approved_by');

@@ -1,7 +1,3 @@
-@once('dashboard-custom-css')
-    @include('filament.widgets.dashboard-styles')
-@endonce
-
 <x-filament-widgets::widget class="fi-document-lifecycle-stats-widget">
     <div class="db-stats-grid">
         @foreach($stats as $stat)

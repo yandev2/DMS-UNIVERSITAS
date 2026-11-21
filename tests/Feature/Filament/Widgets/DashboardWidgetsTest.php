@@ -1318,5 +1318,33 @@ class DashboardWidgetsTest extends TestCase
         $postStats = $postWidgetFiltered->viewData('stats');
         $this->assertSame(1, $postStats[0]['value']);
         $this->assertSame(1, $postStats[3]['value']);
+
+        // Pastikan seluruh widget anak di Dashboard selalu memiliki root tag 'div' (bukan 'style')
+        // dan tetap utuh ketika filter diubah berulang kali
+        Permission::findOrCreate('view:dashboard_welcome_banner_widget', 'web');
+        Permission::findOrCreate('view:dashboard_quick_actions_widget', 'web');
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
+        $liveDashboard = Livewire::test(Dashboard::class);
+        $initialChildren = $liveDashboard->snapshot['memo']['children'] ?? [];
+        $this->assertNotEmpty($initialChildren);
+
+        foreach ($initialChildren as $childKey => [$tagName, $childId]) {
+            $this->assertSame('div', $tagName, "Widget child [{$childKey}] must have a 'div' root tag, got '{$tagName}'.");
+            $this->assertNotEmpty($childId);
+        }
+
+        $liveDashboard
+            ->set('filters.start_month', 5)
+            ->set('filters.end_month', 12)
+            ->assertSee('Mei – Des '.now()->year);
+
+        $afterFilterChildren = $liveDashboard->snapshot['memo']['children'] ?? [];
+        $this->assertSame(array_keys($initialChildren), array_keys($afterFilterChildren));
+
+        foreach ($afterFilterChildren as $childKey => [$tagName, $childId]) {
+            $this->assertSame('div', $tagName);
+            $this->assertSame($initialChildren[$childKey][1], $childId);
+        }
     }
 }
