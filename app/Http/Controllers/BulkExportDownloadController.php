@@ -31,6 +31,12 @@ class BulkExportDownloadController extends Controller
         $export = BulkExport::where('uuid', $uuid)->firstOrFail();
 
         $isAuthorized = match ($export->module_type) {
+            'documents_excel' => ((int) $export->user_id === (int) $user->id || $user->hasRole('super_admin'))
+                && ($user->can('document.export_excel') || $user->hasRole('super_admin')),
+            'incoming_letters_excel' => ((int) $export->user_id === (int) $user->id || $user->hasRole('super_admin'))
+                && ($user->can('incoming_letter.export_excel') || $user->hasRole('super_admin')),
+            'outgoing_letters_excel' => ((int) $export->user_id === (int) $user->id || $user->hasRole('super_admin'))
+                && ($user->can('outgoing_letter.export_excel') || $user->hasRole('super_admin')),
             'borang_excel' => ((int) $export->user_id === (int) $user->id || $user->hasRole('super_admin'))
                 && ($user->can('borang.export_excel') || $user->hasRole('super_admin')),
             'borang_zip' => ((int) $export->user_id === (int) $user->id || $user->hasRole('super_admin'))
@@ -60,6 +66,8 @@ class BulkExportDownloadController extends Controller
 
         // Catat pengunduhan berkas ke log audit sistem
         $auditChannel = match ($export->module_type) {
+            'documents_excel' => 'document_export',
+            'incoming_letters_excel', 'outgoing_letters_excel' => 'letter_export',
             'borang_excel', 'borang_zip' => 'borang_export',
             'posts_excel' => 'cms_export',
             default => 'bulk_zip_export',

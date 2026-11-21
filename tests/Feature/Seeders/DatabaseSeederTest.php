@@ -127,7 +127,7 @@ class DatabaseSeederTest extends TestCase
         $this->assertSame(19, Unit::count());
         $this->assertSame(9, Unit::where('type', UnitType::Prodi)->count());
         $this->assertSame(12, Role::count());
-        $this->assertSame(158, Permission::count());
+        $this->assertSame(161, Permission::count());
         $this->assertSame(27, AccreditationCriterion::count());
         $this->assertSame(5, AcademicYear::count());
         $this->assertSame(4, Setting::count());
