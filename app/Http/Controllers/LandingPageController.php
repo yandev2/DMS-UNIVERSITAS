@@ -66,13 +66,16 @@ class LandingPageController extends Controller
         // 3. Query Maksimal 5 Warta/Berita Kampus Terbaru
         $maxNews = max(1, min(5, (int) ($settings->news_max_items ?? 5)));
         $latestPosts = Post::published()
-            ->with(['category', 'unit', 'author'])
+            ->with(['category', 'unit', 'author', 'academicYear'])
             ->orderByDesc('is_pinned')
             ->orderByDesc('published_at')
             ->limit($maxNews)
             ->get();
 
-        // 4. Ringkasan Statistik Cepat (Quick Glance Metrics)
+        // 4. Data Akreditasi Unit & Program Studi (Ter-cache & hanya unit aktif yang memiliki peringkat)
+        $accreditationShowcase = Unit::getPublicAccreditationShowcaseData();
+
+        // 5. Ringkasan Statistik Cepat (Quick Glance Metrics)
         $stats = [
             'total_public_docs' => Document::query()
                 ->where('visibility', VisibilityLevel::Public)
@@ -88,6 +91,7 @@ class LandingPageController extends Controller
             'documents' => $documents,
             'categories' => $categories,
             'latestPosts' => $latestPosts,
+            'accreditationShowcase' => $accreditationShowcase,
             'searchQuery' => $searchQuery,
             'selectedCategory' => $selectedCategory,
             'stats' => $stats,

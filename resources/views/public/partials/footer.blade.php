@@ -3,6 +3,9 @@
     $footerLogoUrl = $footerSettings->getLogoUrl();
     $currentRouteName = request()->route() ? request()->route()->getName() : '';
     $isHome = request()->is('/') || $currentRouteName === 'landing.home';
+    $hasAccreditationFooterLink = isset($accreditationShowcase)
+        ? (($accreditationShowcase['total_count'] ?? 0) > 0)
+        : \App\Models\Unit::hasPublicAccreditedUnits();
 @endphp
 
 <!-- Footer Institusi & Developer Resmi (Lengkap, Seragam & Terstruktur) -->
@@ -83,6 +86,13 @@
                             Daftar Dokumen Publik
                         </a>
                     </li>
+                    @if ($hasAccreditationFooterLink)
+                        <li>
+                            <a href="{{ $isHome ? '#status-akreditasi' : route('landing.home') . '#status-akreditasi' }}" class="hover:text-white transition-colors">
+                                Status Akreditasi
+                            </a>
+                        </li>
+                    @endif
                     <li>
                         <a href="{{ route('public.posts.index') }}" class="hover:text-white transition-colors">
                             Warta & Dokumentasi Kegiatan

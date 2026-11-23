@@ -4,6 +4,9 @@
     $currentRouteName = request()->route() ? request()->route()->getName() : '';
     $isHome = request()->is('/') || $currentRouteName === 'landing.home';
     $isPosts = request()->is('warta*') || request()->is('berita*') || str_starts_with($currentRouteName, 'public.posts.');
+    $hasAccreditationMenu = isset($accreditationShowcase)
+        ? (($accreditationShowcase['total_count'] ?? 0) > 0)
+        : \App\Models\Unit::hasPublicAccreditedUnits();
 @endphp
 
 <!-- Header Institusi Resmi (Seragam & Terstruktur) -->
@@ -36,6 +39,11 @@
             <a href="{{ $isHome ? '#dokumen-publik' : route('landing.home') . '#dokumen-publik' }}" class="px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                 Dokumen Publik
             </a>
+            @if ($hasAccreditationMenu)
+                <a href="{{ $isHome ? '#status-akreditasi' : route('landing.home') . '#status-akreditasi' }}" class="px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    Akreditasi
+                </a>
+            @endif
             <a href="{{ route('public.posts.index') }}" class="px-3 py-1.5 rounded-lg transition-colors {{ $isPosts ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 font-bold' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800' }}">
                 Warta & Acara
             </a>
@@ -93,6 +101,11 @@
         <a href="{{ $isHome ? '#dokumen-publik' : route('landing.home') . '#dokumen-publik' }}" @if($isHome) onclick="toggleMobileMenu()" @endif class="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">
             Daftar Dokumen Publik
         </a>
+        @if ($hasAccreditationMenu)
+            <a href="{{ $isHome ? '#status-akreditasi' : route('landing.home') . '#status-akreditasi' }}" @if($isHome) onclick="toggleMobileMenu()" @endif class="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800">
+                Status Akreditasi
+            </a>
+        @endif
         <a href="{{ route('public.posts.index') }}" class="block px-3 py-2 rounded-lg text-sm font-medium {{ $isPosts ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 font-semibold' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800' }}">
             Warta & Dokumentasi Kegiatan
         </a>

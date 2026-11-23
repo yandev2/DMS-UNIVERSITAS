@@ -128,55 +128,133 @@
                 </div>
             </div>
 
-            <!-- Bar Ringkasan Metrik Cepat (Ukuran Card Kompak & Padat dengan Efek Hover Zoom & Glow) -->
+            <!-- Bar Ringkasan Metrik Cepat (Clean KPI Tile dengan Soft Icon Badge & Efek Frosted Glass) -->
             <div
-                class="mt-8 sm:mt-10 grid grid-cols-2 sm:grid-cols-4 gap-3 border-t border-slate-200/80 dark:border-slate-800/80 pt-6 transition-colors">
-                <!-- Card 1: Dokumen Sah Terbuka -->
-                <div
-                    class="p-3 sm:p-3.5 rounded-lg bg-white/80 dark:bg-slate-900/60 border border-slate-200/90 dark:border-slate-800/80 backdrop-blur-xs shadow-2xs dark:shadow-none transition-all duration-300 hover:scale-[1.03] hover:-translate-y-0.5 hover:bg-white dark:hover:bg-slate-900/90 hover:border-blue-400/80 dark:hover:border-blue-500/60 hover:shadow-lg hover:shadow-blue-500/15 dark:hover:shadow-blue-500/20 cursor-default group">
-                    <span
-                        class="block text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                        {{ number_format($stats['total_public_docs']) }}+
-                    </span>
-                    <span class="block text-[11px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
-                        Dokumen Sah Terbuka
-                    </span>
-                </div>
+                class="mt-8 sm:mt-10 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 border-t border-slate-200/80 dark:border-slate-800/80 pt-6 transition-colors">
+                <!-- Card 1: Dokumen Sah Terbuka (Interaktif ke Tabel Dokumen) -->
+                <a href="#dokumen-publik"
+                    class="p-3.5 sm:p-4 rounded-xl bg-white/80 dark:bg-slate-900/60 border border-slate-200/90 dark:border-slate-800/80 ring-1 ring-white/60 dark:ring-white/5 backdrop-blur-md shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/95 dark:hover:bg-slate-900/90 hover:border-blue-400/80 dark:hover:border-blue-500/60 hover:shadow-md hover:shadow-blue-500/10 group flex flex-col justify-between gap-2.5">
+                    <div class="flex items-start justify-between gap-2.5">
+                        <div class="min-w-0">
+                            <span
+                                class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 leading-snug">
+                                Dokumen Sah Terbuka
+                            </span>
+                            <span
+                                class="mt-1 block text-2xl sm:text-[26px] font-extrabold tracking-tight tabular-nums text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-none">
+                                {{ $stats['total_public_docs'] > 0 ? number_format($stats['total_public_docs']) . '+' : '0' }}
+                            </span>
+                        </div>
+                        <span
+                            class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-50 dark:bg-blue-950/70 border border-blue-200/70 dark:border-blue-800/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div
+                        class="flex items-center justify-between gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                        <span class="truncate">Naskah resmi terbuka</span>
+                        <svg class="w-3.5 h-3.5 shrink-0 text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 5l7 7-7 7" />
+                        </svg>
+                    </div>
+                </a>
 
-                <!-- Card 2: Warta & Acara Kampus -->
-                <div
-                    class="p-3 sm:p-3.5 rounded-lg bg-white/80 dark:bg-slate-900/60 border border-slate-200/90 dark:border-slate-800/80 backdrop-blur-xs shadow-2xs dark:shadow-none transition-all duration-300 hover:scale-[1.03] hover:-translate-y-0.5 hover:bg-white dark:hover:bg-slate-900/90 hover:border-blue-400/80 dark:hover:border-blue-500/60 hover:shadow-lg hover:shadow-blue-500/15 dark:hover:shadow-blue-500/20 cursor-default group">
-                    <span
-                        class="block text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                        {{ number_format($stats['total_published_posts']) }}
-                    </span>
-                    <span class="block text-[11px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
-                        Warta & Acara Kampus
-                    </span>
-                </div>
+                <!-- Card 2: Warta & Acara Kampus (Interaktif ke Portal Berita) -->
+                <a href="{{ route('public.posts.index') }}"
+                    class="p-3.5 sm:p-4 rounded-xl bg-white/80 dark:bg-slate-900/60 border border-slate-200/90 dark:border-slate-800/80 ring-1 ring-white/60 dark:ring-white/5 backdrop-blur-md shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/95 dark:hover:bg-slate-900/90 hover:border-indigo-400/80 dark:hover:border-indigo-500/60 hover:shadow-md hover:shadow-indigo-500/10 group flex flex-col justify-between gap-2.5">
+                    <div class="flex items-start justify-between gap-2.5">
+                        <div class="min-w-0">
+                            <span
+                                class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 leading-snug">
+                                Warta &amp; Acara Kampus
+                            </span>
+                            <span
+                                class="mt-1 block text-2xl sm:text-[26px] font-extrabold tracking-tight tabular-nums text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors leading-none">
+                                {{ number_format($stats['total_published_posts']) }}
+                            </span>
+                        </div>
+                        <span
+                            class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200/70 dark:border-indigo-800/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                                    d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div
+                        class="flex items-center justify-between gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                        <span class="truncate">Liputan resmi terbit</span>
+                        <svg class="w-3.5 h-3.5 shrink-0 text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-all"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 5l7 7-7 7" />
+                        </svg>
+                    </div>
+                </a>
 
                 <!-- Card 3: Unit Kerja & Fakultas -->
                 <div
-                    class="p-3 sm:p-3.5 rounded-lg bg-white/80 dark:bg-slate-900/60 border border-slate-200/90 dark:border-slate-800/80 backdrop-blur-xs shadow-2xs dark:shadow-none transition-all duration-300 hover:scale-[1.03] hover:-translate-y-0.5 hover:bg-white dark:hover:bg-slate-900/90 hover:border-blue-400/80 dark:hover:border-blue-500/60 hover:shadow-lg hover:shadow-blue-500/15 dark:hover:shadow-blue-500/20 cursor-default group">
-                    <span
-                        class="block text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                        {{ number_format($stats['total_units']) }}
-                    </span>
-                    <span class="block text-[11px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
-                        Unit Kerja & Fakultas
-                    </span>
+                    class="p-3.5 sm:p-4 rounded-xl bg-white/80 dark:bg-slate-900/60 border border-slate-200/90 dark:border-slate-800/80 ring-1 ring-white/60 dark:ring-white/5 backdrop-blur-md shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/95 dark:hover:bg-slate-900/90 hover:border-sky-400/80 dark:hover:border-sky-500/60 hover:shadow-md hover:shadow-sky-500/10 cursor-default group flex flex-col justify-between gap-2.5">
+                    <div class="flex items-start justify-between gap-2.5">
+                        <div class="min-w-0">
+                            <span
+                                class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 leading-snug">
+                                Unit Kerja &amp; Fakultas
+                            </span>
+                            <span
+                                class="mt-1 block text-2xl sm:text-[26px] font-extrabold tracking-tight tabular-nums text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors leading-none">
+                                {{ number_format($stats['total_units']) }}
+                            </span>
+                        </div>
+                        <span
+                            class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-sky-50 dark:bg-sky-950/70 border border-sky-200/70 dark:border-sky-800/60 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
+                        Unit aktif terhubung
+                    </div>
                 </div>
 
                 <!-- Card 4: Keabsahan QR Terdaftar -->
                 <div
-                    class="p-3 sm:p-3.5 rounded-lg bg-white/80 dark:bg-slate-900/60 border border-slate-200/90 dark:border-slate-800/80 backdrop-blur-xs shadow-2xs dark:shadow-none transition-all duration-300 hover:scale-[1.03] hover:-translate-y-0.5 hover:bg-white dark:hover:bg-slate-900/90 hover:border-emerald-400/80 dark:hover:border-emerald-500/60 hover:shadow-lg hover:shadow-emerald-500/15 dark:hover:shadow-emerald-500/20 cursor-default group">
-                    <span
-                        class="block text-xl sm:text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform">
-                        100%
-                    </span>
-                    <span class="block text-[11px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">
-                        Keabsahan QR Terdaftar
-                    </span>
+                    class="p-3.5 sm:p-4 rounded-xl bg-white/80 dark:bg-slate-900/60 border border-slate-200/90 dark:border-slate-800/80 ring-1 ring-white/60 dark:ring-white/5 backdrop-blur-md shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/95 dark:hover:bg-slate-900/90 hover:border-emerald-400/80 dark:hover:border-emerald-500/60 hover:shadow-md hover:shadow-emerald-500/10 cursor-default group flex flex-col justify-between gap-2.5">
+                    <div class="flex items-start justify-between gap-2.5">
+                        <div class="min-w-0">
+                            <span
+                                class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 leading-snug">
+                                Keabsahan QR Terdaftar
+                            </span>
+                            <span
+                                class="mt-1 block text-2xl sm:text-[26px] font-extrabold tracking-tight tabular-nums text-emerald-600 dark:text-emerald-400 leading-none">
+                                100%
+                            </span>
+                        </div>
+                        <span
+                            class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200/70 dark:border-emerald-800/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div
+                        class="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                        <span class="truncate">Tervalidasi QR digital</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -483,7 +561,12 @@
         @endif
     </section>
 
-    <!-- 4. Seksi Warta & Dokumentasi Kegiatan Kampus Terbaru (Maksimal 5 Berita) -->
+    <!-- 4. Seksi Status Akreditasi Institusi & Program Studi (Kondisional) -->
+    @include('public.partials.landing-accreditation-section', [
+        'accreditationShowcase' => $accreditationShowcase,
+    ])
+
+    <!-- 5. Seksi Warta & Dokumentasi Kegiatan Kampus Terbaru (Maksimal 5 Berita) -->
     <section
         class="py-16 sm:py-20 bg-slate-100/70 dark:bg-slate-900/40 border-t border-slate-200/80 dark:border-slate-800/80">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -502,12 +585,13 @@
                     </p>
                 </div>
 
-                <!-- Tombol Navigasi Lihat Semua Berita (Atas) -->
-                <div class="shrink-0">
+                <!-- Tombol Navigasi Lihat Semua Berita (Atas - Desktop) -->
+                <div class="hidden md:block shrink-0">
                     <a href="{{ route('public.posts.index') }}"
                         class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-all hover:scale-[1.02]">
                         <span>{{ $settings->news_view_all_label ?: 'Lihat Semua Warta Kampus' }}</span>
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M17 8l4 4m0 0l-4 4m4-4H3" />
                         </svg>
@@ -517,466 +601,88 @@
 
             @if ($latestPosts->count() > 0)
                 @php
+                    $postCount = $latestPosts->count();
                     $primaryPost = $latestPosts->first();
                     $sidePosts = $latestPosts->slice(1, 2);
                     $extraPosts = $latestPosts->slice(3);
                 @endphp
 
-                <!-- Layout Utama: 1 Card Utama di Kiri & 2 Card Kecil di Kanan -->
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-                    <!-- Kolom Kiri: 1 Card Berita Utama (Featured / Headline) -->
-                    <div class="{{ $sidePosts->count() > 0 ? 'lg:col-span-7' : 'lg:col-span-12' }} flex">
-                        <article
-                            class="w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-300 dark:border-slate-800 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col group overflow-hidden">
-                            <!-- Thumbnail Foto dengan Bantalan Inset Framing -->
-                            <div class="p-3.5 pb-0">
-                                <a href="{{ route('public.posts.show', $primaryPost->slug) }}"
-                                    class="block relative aspect-[16/9] w-full rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80">
-                                    @if ($thumb = $primaryPost->getThumbnailUrl())
-                                        <img src="{{ $thumb }}" alt="{{ $primaryPost->title }}"
-                                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-                                    @else
-                                        <div
-                                            class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-navy-900 to-slate-900 text-white p-4 text-center">
-                                            <span
-                                                class="text-xs font-bold uppercase tracking-wider text-blue-400">{{ $settings->university_acronym ?: 'UNIVBI' }}
-                                                Warta</span>
-                                            <span
-                                                class="text-sm font-semibold mt-1 line-clamp-2">{{ $primaryPost->title }}</span>
-                                        </div>
-                                    @endif
+                @if ($postCount === 1)
+                    <!-- Layout 1 Berita: Spotlight Split Card Seimbang -->
+                    @include('public.partials.landing-post-card-spotlight', [
+                        'post' => $primaryPost,
+                        'settings' => $settings,
+                    ])
+                @elseif ($postCount === 2)
+                    <!-- Layout 2 Berita: 2 Kolom Sejajar Identik (50% : 50%) -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+                        @foreach ($latestPosts as $post)
+                            @include('public.partials.landing-post-card-vertical', [
+                                'post' => $post,
+                                'settings' => $settings,
+                                'variant' => 'equal',
+                            ])
+                        @endforeach
+                    </div>
+                @elseif ($postCount === 4)
+                    <!-- Layout 4 Berita: 1 Spotlight Atas + 3 Grid Sejajar Bawah -->
+                    <div class="space-y-6">
+                        @include('public.partials.landing-post-card-spotlight', [
+                            'post' => $primaryPost,
+                            'settings' => $settings,
+                        ])
 
-                                    <!-- Badges di atas Thumbnail -->
-                                    <div class="absolute top-2.5 left-2.5 flex flex-wrap gap-1">
-                                        @if ($primaryPost->is_pinned)
-                                            <span
-                                                class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider bg-amber-500 text-white shadow-2xs">
-                                                PINNED
-                                            </span>
-                                        @elseif($primaryPost->is_featured)
-                                            <span
-                                                class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider bg-rose-600 text-white shadow-2xs">
-                                                ★ BERITA UTAMA
-                                            </span>
-                                        @endif
-                                        @if ($primaryPost->category)
-                                            <span
-                                                class="px-2 py-0.5 rounded text-[10px] font-bold bg-navy-900/90 text-white backdrop-blur-xs shadow-2xs">
-                                                {{ $primaryPost->category->name }}
-                                            </span>
-                                        @endif
-                                        @if ($primaryPost->period)
-                                            <span
-                                                class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-600/90 text-white backdrop-blur-xs shadow-2xs">
-                                                {{ $primaryPost->period->getShortLabel() }}
-                                            </span>
-                                        @endif
-                                    </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
+                            @foreach ($latestPosts->slice(1, 3) as $gridPost)
+                                @include('public.partials.landing-post-card-vertical', [
+                                    'post' => $gridPost,
+                                    'settings' => $settings,
+                                    'variant' => 'grid',
+                                ])
+                            @endforeach
+                        </div>
+                    </div>
+                @else
+                    <!-- Layout 3 atau 5 Berita: 1 Card Utama di Kiri & 2 Card Kecil Bertumpuk di Kanan -->
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+                        <div class="lg:col-span-7 flex">
+                            @include('public.partials.landing-post-card-vertical', [
+                                'post' => $primaryPost,
+                                'settings' => $settings,
+                                'variant' => 'primary',
+                            ])
+                        </div>
 
-                                    @if ($primaryPost->photos_count > 1)
-                                        <div
-                                            class="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded text-[10px] font-bold bg-black/75 text-white backdrop-blur-xs flex items-center gap-1 shadow-2xs">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                            </svg>
-                                            {{ $primaryPost->photos_count }} Foto
-                                        </div>
-                                    @endif
-                                </a>
-                            </div>
-
-                            <!-- Konten Teks Berita Utama -->
-                            <div class="p-4 sm:p-5 flex-1 flex flex-col justify-between">
-                                <div>
-                                    <!-- Tanggal & Lokasi Acara -->
-                                    <div
-                                        class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-2">
-                                        <span>{{ $primaryPost->published_at?->translatedFormat('d M Y') ?? $primaryPost->created_at->translatedFormat('d M Y') }}</span>
-                                        @if ($primaryPost->event_location)
-                                            <span>•</span>
-                                            <span
-                                                class="truncate max-w-[200px]">{{ $primaryPost->event_location }}</span>
-                                        @endif
-                                    </div>
-
-                                    <!-- Judul Berita -->
-                                    <h3
-                                        class="text-base sm:text-lg font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-snug line-clamp-2">
-                                        <a href="{{ route('public.posts.show', $primaryPost->slug) }}">
-                                            {{ $primaryPost->title }}
-                                        </a>
-                                    </h3>
-
-                                    <!-- Ringkasan / Excerpt -->
-                                    <p
-                                        class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-2 line-clamp-2 sm:line-clamp-3 leading-relaxed">
-                                        {{ $primaryPost->excerpt ?: Str::limit(strip_tags($primaryPost->content ?? ''), 140) }}
-                                    </p>
-
-                                    <!-- Data Tambahan Terkait Postingan Utama (Kaya Informasi) -->
-                                    <div
-                                        class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-600 dark:text-slate-400">
-                                        @if ($primaryPost->event_location)
-                                            <div class="inline-flex items-center gap-1.5 truncate max-w-[260px]"
-                                                title="Lokasi: {{ $primaryPost->event_location }}">
-                                                <svg class="w-3.5 h-3.5 text-rose-500 shrink-0" fill="none"
-                                                    stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                </svg>
-                                                <span class="truncate">{{ $primaryPost->event_location }}</span>
-                                            </div>
-                                        @endif
-
-                                        @if ($primaryPost->event_date)
-                                            <div class="inline-flex items-center gap-1.5"
-                                                title="Waktu Pelaksanaan Acara">
-                                                <svg class="w-3.5 h-3.5 text-blue-500 shrink-0" fill="none"
-                                                    stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                </svg>
-                                                <span>Acara:
-                                                    {{ $primaryPost->event_date->translatedFormat('d M Y') }}</span>
-                                            </div>
-                                        @endif
-
-                                        <div class="inline-flex items-center gap-1.5" title="Jumlah Pembaca">
-                                            <svg class="w-3.5 h-3.5 text-amber-500 shrink-0" fill="none"
-                                                stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                            </svg>
-                                            <span>{{ number_format($primaryPost->views_count) }}x Dibaca</span>
-                                        </div>
-
-                                        @if ($primaryPost->photos_count > 0)
-                                            <div class="inline-flex items-center gap-1.5"
-                                                title="Galeri Foto Dokumentasi">
-                                                <svg class="w-3.5 h-3.5 text-emerald-500 shrink-0" fill="none"
-                                                    stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                </svg>
-                                                <span>{{ $primaryPost->photos_count }} Foto Arsip</span>
-                                            </div>
-                                        @endif
-                                    </div>
-                                </div>
-
-                                <!-- Footer Kartu -->
-                                <div
-                                    class="mt-4 pt-3 border-t border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                                    <span class="font-medium truncate max-w-[200px] text-xs">
-                                        {{ $primaryPost->unit?->name ?? 'Universitas Bina Insan' }}
-                                    </span>
-                                    <a href="{{ route('public.posts.show', $primaryPost->slug) }}"
-                                        class="font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 shrink-0 text-xs">
-                                        Baca Selengkapnya
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M9 5l7 7-7 7" />
-                                        </svg>
-                                    </a>
-                                </div>
-                            </div>
-                        </article>
+                        <div class="lg:col-span-5 flex flex-col gap-5 justify-between">
+                            @foreach ($sidePosts as $sidePost)
+                                @include('public.partials.landing-post-card-horizontal', [
+                                    'post' => $sidePost,
+                                    'settings' => $settings,
+                                ])
+                            @endforeach
+                        </div>
                     </div>
 
-                    @if ($sidePosts->count() > 0)
-                        <!-- Kolom Kanan: 2 Card Kecil (Tersusun Vertikal Berimbang & Gambar Full Height) -->
-                        <div class="lg:col-span-5 flex flex-col gap-4 justify-between">
-                            @foreach ($sidePosts as $sidePost)
-                                <article
-                                    class="bg-white dark:bg-slate-900 rounded-xl border border-slate-300 dark:border-slate-800 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col sm:flex-row group overflow-hidden flex-1">
-                                    <!-- Thumbnail Foto Card Kecil: TINGGI GAMBAR FULL CARD -->
-                                    <div
-                                        class="w-full sm:w-44 md:w-52 shrink-0 relative overflow-hidden self-stretch bg-slate-100 dark:bg-slate-800 min-h-[170px] sm:min-h-full">
-                                        <a href="{{ route('public.posts.show', $sidePost->slug) }}"
-                                            class="block w-full h-full relative">
-                                            @if ($thumb = $sidePost->getThumbnailUrl())
-                                                <img src="{{ $thumb }}" alt="{{ $sidePost->title }}"
-                                                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-                                            @else
-                                                <div
-                                                    class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-navy-900 to-slate-900 text-white p-3 text-center">
-                                                    <span
-                                                        class="text-xs font-bold uppercase tracking-wider text-blue-400">{{ $settings->university_acronym ?: 'UNIVBI' }}</span>
-                                                </div>
-                                            @endif
-
-                                            <!-- Badges di atas Foto Full Height -->
-                                            <div class="absolute top-2.5 left-2.5 flex flex-wrap gap-1">
-                                                @if ($sidePost->category)
-                                                    <span
-                                                        class="px-2 py-0.5 rounded text-[9px] font-bold bg-navy-900/90 text-white backdrop-blur-xs shadow-2xs">
-                                                        {{ $sidePost->category->name }}
-                                                    </span>
-                                                @endif
-                                                @if ($sidePost->period)
-                                                    <span
-                                                        class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-600/90 text-white backdrop-blur-xs shadow-2xs">
-                                                        {{ $sidePost->period->getShortLabel() }}
-                                                    </span>
-                                                @endif
-                                                @if ($sidePost->is_featured)
-                                                    <span
-                                                        class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-rose-600 text-white shadow-2xs">
-                                                        ★
-                                                    </span>
-                                                @endif
-                                            </div>
-
-                                            @if ($sidePost->photos_count > 1)
-                                                <div
-                                                    class="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded text-[9px] font-bold bg-black/75 text-white backdrop-blur-xs flex items-center gap-1 shadow-2xs">
-                                                    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor"
-                                                        viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                    </svg>
-                                                    {{ $sidePost->photos_count }} Foto
-                                                </div>
-                                            @endif
-                                        </a>
-                                    </div>
-
-                                    <!-- Konten Teks Card Kecil -->
-                                    <div class="p-4 sm:p-5 flex-1 flex flex-col justify-between min-w-0">
-                                        <div>
-                                            <!-- Tanggal Terbit -->
-                                            <div
-                                                class="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mb-1.5">
-                                                <span
-                                                    class="font-medium">{{ $sidePost->published_at?->translatedFormat('d M Y') ?? $sidePost->created_at->translatedFormat('d M Y') }}</span>
-                                                @if ($sidePost->academicYear)
-                                                    <span>•</span>
-                                                    <span class="truncate max-w-[140px]">TA
-                                                        {{ $sidePost->academicYear->name }}</span>
-                                                @endif
-                                            </div>
-
-                                            <!-- Judul Card Kecil -->
-                                            <h4
-                                                class="text-sm sm:text-base font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-snug line-clamp-2">
-                                                <a href="{{ route('public.posts.show', $sidePost->slug) }}">
-                                                    {{ $sidePost->title }}
-                                                </a>
-                                            </h4>
-
-                                            <!-- Excerpt Ringkas -->
-                                            <p
-                                                class="text-xs text-slate-600 dark:text-slate-400 mt-1.5 line-clamp-2 leading-relaxed">
-                                                {{ $sidePost->excerpt ?: Str::limit(strip_tags($sidePost->content ?? ''), 95) }}
-                                            </p>
-
-                                            <!-- Data Tambahan Terkait Postingan (Menghilangkan Ruang Kosong) -->
-                                            <div
-                                                class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-[11px] text-slate-600 dark:text-slate-400">
-                                                @if ($sidePost->event_location)
-                                                    <div class="inline-flex items-center gap-1.5 truncate max-w-[210px]"
-                                                        title="Lokasi: {{ $sidePost->event_location }}">
-                                                        <svg class="w-3.5 h-3.5 text-rose-500 shrink-0" fill="none"
-                                                            stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                        </svg>
-                                                        <span class="truncate">{{ $sidePost->event_location }}</span>
-                                                    </div>
-                                                @endif
-
-                                                @if ($sidePost->event_date)
-                                                    <div class="inline-flex items-center gap-1.5"
-                                                        title="Waktu Pelaksanaan Acara">
-                                                        <svg class="w-3.5 h-3.5 text-blue-500 shrink-0" fill="none"
-                                                            stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                        </svg>
-                                                        <span>Acara:
-                                                            {{ $sidePost->event_date->translatedFormat('d M Y') }}</span>
-                                                    </div>
-                                                @endif
-
-                                                <div class="inline-flex items-center gap-1.5" title="Jumlah Pembaca">
-                                                    <svg class="w-3.5 h-3.5 text-amber-500 shrink-0" fill="none"
-                                                        stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                    </svg>
-                                                    <span>{{ number_format($sidePost->views_count) }}x Dibaca</span>
-                                                </div>
-
-                                                @if ($sidePost->photos_count > 0)
-                                                    <div class="inline-flex items-center gap-1.5"
-                                                        title="Galeri Foto Dokumentasi">
-                                                        <svg class="w-3.5 h-3.5 text-emerald-500 shrink-0"
-                                                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                        </svg>
-                                                        <span>{{ $sidePost->photos_count }} Foto Arsip</span>
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        </div>
-
-                                        <!-- Footer Mini: Unit Kerja & Link Baca -->
-                                        <div
-                                            class="mt-3.5 pt-2.5 border-t border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                                            <span class="font-medium truncate max-w-[170px]">
-                                                {{ $sidePost->unit?->name ?? 'Universitas Bina Insan' }}
-                                            </span>
-                                            <a href="{{ route('public.posts.show', $sidePost->slug) }}"
-                                                class="font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 shrink-0">
-                                                Baca Selengkapnya
-                                                <svg class="w-3 h-3" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2" d="M9 5l7 7-7 7" />
-                                                </svg>
-                                            </a>
-                                        </div>
-                                    </div>
-                                </article>
+                    @if ($extraPosts->count() > 0)
+                        <!-- Baris Tambahan: Berita Ke-4 & Ke-5 -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5 items-stretch">
+                            @foreach ($extraPosts as $extraPost)
+                                @include('public.partials.landing-post-card-horizontal', [
+                                    'post' => $extraPost,
+                                    'settings' => $settings,
+                                ])
                             @endforeach
                         </div>
                     @endif
-                </div>
-
-                @if ($extraPosts->count() > 0)
-                    <!-- Baris Tambahan: Berita Ke-4 & Ke-5 (Jika Ada) -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
-                        @foreach ($extraPosts as $extraPost)
-                            <article
-                                class="bg-white dark:bg-slate-900 rounded-xl border border-slate-300 dark:border-slate-800 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col sm:flex-row group overflow-hidden">
-                                <!-- Thumbnail Foto Card Ekstra: TINGGI GAMBAR FULL CARD -->
-                                <div
-                                    class="w-full sm:w-44 md:w-52 shrink-0 relative overflow-hidden self-stretch bg-slate-100 dark:bg-slate-800 min-h-[170px] sm:min-h-full">
-                                    <a href="{{ route('public.posts.show', $extraPost->slug) }}"
-                                        class="block w-full h-full relative">
-                                        @if ($thumb = $extraPost->getThumbnailUrl())
-                                            <img src="{{ $thumb }}" alt="{{ $extraPost->title }}"
-                                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-                                        @else
-                                            <div
-                                                class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-navy-900 to-slate-900 text-white p-3 text-center">
-                                                <span
-                                                    class="text-xs font-bold uppercase tracking-wider text-blue-400">{{ $settings->university_acronym ?: 'UNIVBI' }}</span>
-                                            </div>
-                                        @endif
-
-                                        <div class="absolute top-2.5 left-2.5 flex flex-wrap gap-1">
-                                            @if ($extraPost->category)
-                                                <span
-                                                    class="px-2 py-0.5 rounded text-[9px] font-bold bg-navy-900/90 text-white backdrop-blur-xs shadow-2xs">
-                                                    {{ $extraPost->category->name }}
-                                                </span>
-                                            @endif
-                                            @if ($extraPost->period)
-                                                <span
-                                                    class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-600/90 text-white backdrop-blur-xs shadow-2xs">
-                                                    {{ $extraPost->period->getShortLabel() }}
-                                                </span>
-                                            @endif
-                                        </div>
-                                    </a>
-                                </div>
-
-                                <!-- Konten Teks -->
-                                <div class="p-4 sm:p-5 flex-1 flex flex-col justify-between min-w-0">
-                                    <div>
-                                        <div class="text-[11px] text-slate-500 dark:text-slate-400 mb-1">
-                                            {{ $extraPost->published_at?->translatedFormat('d M Y') ?? $extraPost->created_at->translatedFormat('d M Y') }}
-                                        </div>
-                                        <h4
-                                            class="text-sm sm:text-base font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-snug line-clamp-2">
-                                            <a href="{{ route('public.posts.show', $extraPost->slug) }}">
-                                                {{ $extraPost->title }}
-                                            </a>
-                                        </h4>
-                                        <p
-                                            class="text-xs text-slate-600 dark:text-slate-400 mt-1.5 line-clamp-2 leading-relaxed">
-                                            {{ $extraPost->excerpt ?: Str::limit(strip_tags($extraPost->content ?? ''), 95) }}
-                                        </p>
-
-                                        <!-- Data Tambahan -->
-                                        <div
-                                            class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-[11px] text-slate-600 dark:text-slate-400">
-                                            @if ($extraPost->event_location)
-                                                <div class="inline-flex items-center gap-1.5 truncate max-w-[210px]">
-                                                    <svg class="w-3.5 h-3.5 text-rose-500 shrink-0" fill="none"
-                                                        stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                    </svg>
-                                                    <span class="truncate">{{ $extraPost->event_location }}</span>
-                                                </div>
-                                            @endif
-                                            <div class="inline-flex items-center gap-1.5">
-                                                <svg class="w-3.5 h-3.5 text-amber-500 shrink-0" fill="none"
-                                                    stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                </svg>
-                                                <span>{{ number_format($extraPost->views_count) }}x Dibaca</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div
-                                        class="mt-3.5 pt-2.5 border-t border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                                        <span class="truncate max-w-[150px]">
-                                            {{ $extraPost->unit?->name ?? 'Universitas Bina Insan' }}
-                                        </span>
-                                        <a href="{{ route('public.posts.show', $extraPost->slug) }}"
-                                            class="font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-0.5 shrink-0">
-                                            Baca Selengkapnya
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M9 5l7 7-7 7" />
-                                            </svg>
-                                        </a>
-                                    </div>
-                                </div>
-                            </article>
-                        @endforeach
-                    </div>
                 @endif
 
-                <!-- Tombol Bawah: Lihat Semua Berita -->
-                <div class="mt-8 sm:mt-10 text-center">
+                <!-- Tombol Bawah: Lihat Semua Berita (Khusus Mobile; Desktop sudah ada di Header) -->
+                <div class="mt-8 text-center md:hidden">
                     <a href="{{ route('public.posts.index') }}"
                         class="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-xs sm:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-all hover:scale-[1.02]">
                         <span>{{ $settings->news_view_all_label ?: 'Lihat Semua Warta Kampus' }}</span>
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M17 8l4 4m0 0l-4 4m4-4H3" />
                         </svg>
@@ -1056,6 +762,33 @@
                 menu.classList.add('hidden');
                 if (chevron) chevron.classList.remove('rotate-180');
             }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterButtons = document.querySelectorAll('.js-acc-filter-btn');
+            const cards = document.querySelectorAll('[data-acc-card]');
+            if (!filterButtons.length || !cards.length) return;
+
+            const activeClasses = ['bg-slate-900', 'dark:bg-blue-600', 'text-white', 'font-semibold', 'shadow-2xs'];
+            const inactiveClasses = ['bg-slate-100', 'dark:bg-slate-900', 'text-slate-700', 'dark:text-slate-300', 'border', 'border-slate-200', 'dark:border-slate-800', 'font-medium'];
+
+            filterButtons.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const target = btn.getAttribute('data-acc-filter') || 'all';
+
+                    filterButtons.forEach(function(other) {
+                        const isCurrent = other === btn;
+                        other.classList.remove(...(isCurrent ? inactiveClasses : activeClasses));
+                        other.classList.add(...(isCurrent ? activeClasses : inactiveClasses));
+                    });
+
+                    cards.forEach(function(card) {
+                        const group = card.getAttribute('data-acc-group');
+                        const shouldShow = target === 'all' || group === target;
+                        card.classList.toggle('hidden', !shouldShow);
+                    });
+                });
+            });
         });
     </script>
 </body>

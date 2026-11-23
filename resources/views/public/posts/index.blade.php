@@ -72,7 +72,7 @@
     @include('public.partials.header')
 
     <!-- Hero Section / Search Bar -->
-    <section class="bg-gradient-to-b from-white via-slate-50 to-slate-100/70 dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-950 border-b border-slate-200 dark:border-slate-800/80 py-8 sm:py-10 transition-colors">
+    <section class="bg-gradient-to-b from-white via-slate-50 to-slate-100/70 dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-950 border-b border-slate-200 dark:border-slate-800/80 pt-6 pb-5 sm:py-10 transition-colors">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Breadcrumb Navigation (Membungkus Rapi ke Bawah jika Layar Sempit) -->
             <nav aria-label="Breadcrumb" class="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
@@ -115,7 +115,7 @@
                 </p>
 
                 <!-- Search Input Form (Terpadu & Modern) -->
-                <form action="{{ route('public.posts.index') }}" method="GET" class="mt-6 max-w-xl">
+                <form action="{{ route('public.posts.index') }}" method="GET" class="mt-5 max-w-xl">
                     @if($selectedCategorySlug)
                         <input type="hidden" name="kategori" value="{{ $selectedCategorySlug }}">
                     @endif
@@ -123,22 +123,22 @@
                         <input type="hidden" name="edisi" value="{{ $selectedPeriod->value }}">
                     @endif
                     <div class="relative flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-1.5 shadow-xs focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
-                        <div class="pl-3 pr-2 text-slate-400">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="pl-3 pr-2 text-slate-400 shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                         </div>
-                        <input type="text" 
-                            name="q" 
-                            value="{{ $searchQuery }}" 
-                            placeholder="Cari liputan kegiatan, lokasi acara, kata kunci..." 
-                            class="w-full bg-transparent border-0 border-none outline-none focus:outline-none focus:ring-0 text-sm text-slate-900 dark:text-white placeholder-slate-400">
+                        <input type="text"
+                            name="q"
+                            value="{{ $searchQuery }}"
+                            placeholder="Cari berita, acara, atau lokasi..."
+                            class="w-full min-w-0 flex-1 pr-2 bg-transparent border-0 border-none outline-none focus:outline-none focus:ring-0 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 truncate">
                         @if(!empty($searchQuery) || !empty($selectedCategorySlug) || $selectedPeriod !== null)
-                            <a href="{{ route('public.posts.index') }}" class="mr-1.5 px-2.5 py-1.5 text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-medium transition-colors" title="Reset pencarian">
+                            <a href="{{ route('public.posts.index') }}" class="mr-1.5 px-2.5 py-1.5 text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-medium transition-colors shrink-0 whitespace-nowrap" title="Reset pencarian">
                                 Reset
                             </a>
                         @endif
-                        <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs hover:shadow-sm transition-all shrink-0">
+                        <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs hover:shadow-sm transition-all shrink-0 cursor-pointer">
                             Cari
                         </button>
                     </div>
@@ -148,34 +148,188 @@
     </section>
 
     <!-- Main Content Area -->
-    <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-        <!-- Category & Period Filter Pills (Sedikit Mengotak & Tanpa Scrollbar Kaku) -->
-        <div class="space-y-3 mb-8">
-            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
-                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 shrink-0 mr-1">Edisi:</span>
-                <a href="{{ route('public.posts.index', array_filter(['kategori' => $selectedCategorySlug, 'q' => $searchQuery])) }}"
-                    class="px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-all shrink-0 {{ $selectedPeriod === null ? 'bg-slate-900 dark:bg-blue-600 text-white font-semibold shadow-xs' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800/80 font-medium' }}">
-                    Semua Edisi
-                </a>
-                @foreach($periods as $periodCase)
-                    <a href="{{ route('public.posts.index', array_filter(['edisi' => $periodCase->value, 'kategori' => $selectedCategorySlug, 'q' => $searchQuery])) }}"
-                        class="px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-all shrink-0 {{ $selectedPeriod === $periodCase ? 'bg-slate-900 dark:bg-blue-600 text-white font-semibold shadow-xs' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800/80 font-medium' }}">
-                        {{ $periodCase->getShortLabel() }}
-                    </a>
-                @endforeach
+    <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8 sm:py-8 w-full">
+        <!-- Filter Edisi & Kategori: Custom Styled Dropdown di Mobile, Pill Berwarna di Desktop -->
+        @php
+            $periodPillStyles = [
+                \App\Enums\PostPeriod::Daily->value => [
+                    'active' => 'bg-rose-600 text-white border-rose-600 font-semibold shadow-xs',
+                    'idle' => 'bg-rose-50/80 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/60 hover:bg-rose-100 dark:hover:bg-rose-900/50 font-medium',
+                    'menuActive' => 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 font-bold',
+                    'check' => 'text-rose-600 dark:text-rose-400',
+                    'dot' => 'bg-rose-500',
+                ],
+                \App\Enums\PostPeriod::Weekly->value => [
+                    'active' => 'bg-amber-500 text-white border-amber-500 font-semibold shadow-xs',
+                    'idle' => 'bg-amber-50/80 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/60 hover:bg-amber-100 dark:hover:bg-amber-900/50 font-medium',
+                    'menuActive' => 'bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 font-bold',
+                    'check' => 'text-amber-600 dark:text-amber-400',
+                    'dot' => 'bg-amber-500',
+                ],
+                \App\Enums\PostPeriod::Monthly->value => [
+                    'active' => 'bg-blue-600 text-white border-blue-600 font-semibold shadow-xs',
+                    'idle' => 'bg-blue-50/80 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/60 hover:bg-blue-100 dark:hover:bg-blue-900/50 font-medium',
+                    'menuActive' => 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 font-bold',
+                    'check' => 'text-blue-600 dark:text-blue-400',
+                    'dot' => 'bg-blue-500',
+                ],
+            ];
+            $activePeriodStyle = $selectedPeriod ? ($periodPillStyles[$selectedPeriod->value] ?? null) : null;
+            $activeCategoryObj = $selectedCategorySlug ? $categories->firstWhere('slug', $selectedCategorySlug) : null;
+        @endphp
+
+        <div class="mb-6 sm:mb-8">
+            <!-- Tampilan Mobile (< md): Custom Styled Dropdown (Konsisten dengan Landing Page) -->
+            <div class="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-2.5" id="mobile-custom-filters">
+                <!-- Custom Dropdown Edisi -->
+                <div class="relative" data-mobile-dropdown="edisi">
+                    <button type="button"
+                        id="mobile-filter-edisi"
+                        data-dropdown-trigger="edisi"
+                        aria-haspopup="true"
+                        aria-expanded="false"
+                        aria-controls="mobile-menu-edisi"
+                        class="w-full flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-slate-100 hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs transition-all cursor-pointer">
+                        <span class="flex items-center gap-2 min-w-0">
+                            <span class="w-2 h-2 rounded-full shrink-0 {{ $activePeriodStyle['dot'] ?? 'bg-slate-400 dark:bg-slate-500' }}"></span>
+                            <span class="truncate">
+                                {{ $selectedPeriod ? 'Edisi: ' . $selectedPeriod->getShortLabel() : 'Semua Edisi' }}
+                            </span>
+                        </span>
+                        <svg data-dropdown-chevron class="w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+
+                    <div id="mobile-menu-edisi"
+                        data-dropdown-menu="edisi"
+                        class="hidden absolute z-30 left-0 right-0 mt-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-1.5 shadow-xl space-y-0.5">
+                        <a href="{{ route('public.posts.index', array_filter(['kategori' => $selectedCategorySlug, 'q' => $searchQuery])) }}"
+                            class="flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-xs transition-colors {{ $selectedPeriod === null ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 font-medium' }}">
+                            <span class="flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-slate-400 dark:bg-slate-500 shrink-0"></span>
+                                <span>Semua Edisi</span>
+                            </span>
+                            @if($selectedPeriod === null)
+                                <svg class="w-4 h-4 text-slate-700 dark:text-slate-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                            @endif
+                        </a>
+
+                        <div class="my-1 border-t border-slate-100 dark:border-slate-800"></div>
+
+                        @foreach($periods as $periodCase)
+                            @php
+                                $style = $periodPillStyles[$periodCase->value] ?? $periodPillStyles[\App\Enums\PostPeriod::Monthly->value];
+                                $isPeriodActive = $selectedPeriod === $periodCase;
+                            @endphp
+                            <a href="{{ route('public.posts.index', array_filter(['edisi' => $periodCase->value, 'kategori' => $selectedCategorySlug, 'q' => $searchQuery])) }}"
+                                class="flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-xs transition-colors {{ $isPeriodActive ? $style['menuActive'] : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 font-medium' }}">
+                                <span class="flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full {{ $style['dot'] }} shrink-0"></span>
+                                    <span>{{ $periodCase->getShortLabel() }}</span>
+                                </span>
+                                @if($isPeriodActive)
+                                    <svg class="w-4 h-4 {{ $style['check'] }} shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                @endif
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+
+                <!-- Custom Dropdown Kategori -->
+                <div class="relative" data-mobile-dropdown="kategori">
+                    <button type="button"
+                        id="mobile-filter-kategori"
+                        data-dropdown-trigger="kategori"
+                        aria-haspopup="true"
+                        aria-expanded="false"
+                        aria-controls="mobile-menu-kategori"
+                        class="w-full flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-slate-100 hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs transition-all cursor-pointer">
+                        <span class="flex items-center gap-2 min-w-0">
+                            <svg class="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                            </svg>
+                            <span class="truncate">
+                                {{ $activeCategoryObj?->name ?? 'Semua Kategori' }}
+                            </span>
+                        </span>
+                        <svg data-dropdown-chevron class="w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+
+                    <div id="mobile-menu-kategori"
+                        data-dropdown-menu="kategori"
+                        class="hidden absolute z-30 left-0 right-0 mt-1.5 max-h-72 overflow-y-auto no-scrollbar rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-1.5 shadow-xl space-y-0.5">
+                        <a href="{{ route('public.posts.index', array_filter(['edisi' => $selectedPeriod?->value, 'q' => $searchQuery])) }}"
+                            class="flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-xs transition-colors {{ empty($selectedCategorySlug) ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 font-bold' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 font-medium' }}">
+                            <span class="flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full {{ empty($selectedCategorySlug) ? 'bg-blue-600 dark:bg-blue-400' : 'bg-slate-300 dark:bg-slate-600' }} shrink-0"></span>
+                                <span>Semua Kategori</span>
+                            </span>
+                            @if(empty($selectedCategorySlug))
+                                <svg class="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                            @endif
+                        </a>
+
+                        <div class="my-1 border-t border-slate-100 dark:border-slate-800"></div>
+
+                        @foreach($categories as $category)
+                            @php $isCatSelected = $selectedCategorySlug === $category->slug; @endphp
+                            <a href="{{ route('public.posts.index', array_filter(['kategori' => $category->slug, 'edisi' => $selectedPeriod?->value, 'q' => $searchQuery])) }}"
+                                class="flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-xs transition-colors {{ $isCatSelected ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 font-bold' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 font-medium' }}">
+                                <span class="truncate">{{ $category->name }}</span>
+                                @if($isCatSelected)
+                                    <svg class="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                @endif
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
             </div>
 
-            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
-                <a href="{{ route('public.posts.index', array_filter(['edisi' => $selectedPeriod?->value, 'q' => $searchQuery])) }}" 
-                    class="px-3.5 py-2 rounded-lg text-xs whitespace-nowrap transition-all shrink-0 {{ empty($selectedCategorySlug) ? 'bg-blue-600 text-white font-semibold shadow-xs' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800/80 font-medium' }}">
-                    Semua Kategori
-                </a>
-                @foreach($categories as $category)
-                    <a href="{{ route('public.posts.index', array_filter(['kategori' => $category->slug, 'edisi' => $selectedPeriod?->value, 'q' => $searchQuery])) }}" 
-                        class="px-3.5 py-2 rounded-lg text-xs whitespace-nowrap transition-all shrink-0 {{ $selectedCategorySlug === $category->slug ? 'bg-blue-600 text-white font-semibold shadow-xs' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800/80 font-medium' }}">
-                        {{ $category->name }}
+            <!-- Tampilan Desktop (>= md): Pill Berwarna Merah/Kuning/Biru untuk Edisi & Pill Kategori -->
+            <div class="hidden md:block space-y-3">
+                <div class="flex flex-wrap items-center gap-2 py-0.5">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 shrink-0 mr-1">Edisi:</span>
+                    <a href="{{ route('public.posts.index', array_filter(['kategori' => $selectedCategorySlug, 'q' => $searchQuery])) }}"
+                        class="px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-all shrink-0 border {{ $selectedPeriod === null ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white font-semibold shadow-xs' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800/80 font-medium' }}">
+                        Semua Edisi
                     </a>
-                @endforeach
+                    @foreach($periods as $periodCase)
+                        @php
+                            $style = $periodPillStyles[$periodCase->value] ?? $periodPillStyles[\App\Enums\PostPeriod::Monthly->value];
+                            $isPeriodActive = $selectedPeriod === $periodCase;
+                        @endphp
+                        <a href="{{ route('public.posts.index', array_filter(['edisi' => $periodCase->value, 'kategori' => $selectedCategorySlug, 'q' => $searchQuery])) }}"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-all shrink-0 border {{ $isPeriodActive ? $style['active'] : $style['idle'] }}">
+                            <span class="w-1.5 h-1.5 rounded-full shrink-0 {{ $isPeriodActive ? 'bg-white' : $style['dot'] }}"></span>
+                            <span>{{ $periodCase->getShortLabel() }}</span>
+                        </a>
+                    @endforeach
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2 py-0.5">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 shrink-0 mr-1">Kategori:</span>
+                    <a href="{{ route('public.posts.index', array_filter(['edisi' => $selectedPeriod?->value, 'q' => $searchQuery])) }}" 
+                        class="px-3.5 py-2 rounded-lg text-xs whitespace-nowrap transition-all shrink-0 {{ empty($selectedCategorySlug) ? 'bg-blue-600 text-white font-semibold shadow-xs' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800/80 font-medium' }}">
+                        Semua Kategori
+                    </a>
+                    @foreach($categories as $category)
+                        <a href="{{ route('public.posts.index', array_filter(['kategori' => $category->slug, 'edisi' => $selectedPeriod?->value, 'q' => $searchQuery])) }}" 
+                            class="px-3.5 py-2 rounded-lg text-xs whitespace-nowrap transition-all shrink-0 {{ $selectedCategorySlug === $category->slug ? 'bg-blue-600 text-white font-semibold shadow-xs' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800/80 font-medium' }}">
+                            {{ $category->name }}
+                        </a>
+                    @endforeach
+                </div>
             </div>
         </div>
 
@@ -205,9 +359,9 @@
                             <img src="{{ $featuredPost->getThumbnailUrl() }}"
                                 alt="{{ $featuredPost->title }}"
                                 fetchpriority="high"
-                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                                class="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500">
                         @else
-                            <div class="w-full h-full flex items-center justify-center bg-slate-800 text-slate-400">
+                            <div class="absolute inset-0 w-full h-full flex items-center justify-center bg-slate-800 text-slate-400">
                                 <svg class="w-16 h-16 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
@@ -215,7 +369,7 @@
                         @endif
 
                         <!-- Badge Foto & Headline -->
-                        <div class="absolute top-3.5 left-3.5 flex flex-wrap items-center gap-2">
+                        <div class="absolute top-3.5 left-3.5 z-10 flex flex-wrap items-center gap-2">
                             <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-rose-600 text-white shadow-xs">
                                 ★ Berita Utama
                             </span>
@@ -387,7 +541,7 @@
                         Kumpulan liputan resmi dan dokumentasi kegiatan Universitas Bina Insan
                     </p>
                 </div>
-                <span class="text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                <span class="text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 shrink-0 whitespace-nowrap">
                     {{ $posts->total() }} Artikel
                 </span>
             </div>
@@ -402,9 +556,9 @@
                                 <img src="{{ $post->getThumbnailUrl() }}" 
                                     alt="{{ $post->title }}" 
                                     loading="lazy"
-                                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                    class="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300">
                             @else
-                                <div class="w-full h-full flex items-center justify-center bg-slate-800 text-slate-400">
+                                <div class="absolute inset-0 w-full h-full flex items-center justify-center bg-slate-800 text-slate-400">
                                     <svg class="w-12 h-12 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                     </svg>
@@ -412,7 +566,7 @@
                             @endif
 
                             <!-- Badges Foto Sampul (Sedikit Mengotak) -->
-                            <div class="absolute top-2.5 left-2.5 flex flex-wrap items-center gap-1.5">
+                            <div class="absolute top-2.5 left-2.5 z-10 flex flex-wrap items-center gap-1.5">
                                 @if($post->is_pinned)
                                     <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500 text-white shadow-xs">
                                         PINNED
@@ -492,7 +646,7 @@
                 <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
                     Belum ada publikasi yang cocok dengan kata kunci atau kategori yang Anda pilih saat ini.
                 </p>
-                @if(!empty($searchQuery) || !empty($selectedCategorySlug))
+                @if(!empty($searchQuery) || !empty($selectedCategorySlug) || $selectedPeriod !== null)
                     <a href="{{ route('public.posts.index') }}" class="mt-5 inline-flex items-center px-4 py-2 rounded-lg text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-xs">
                         Tampilkan Semua Berita
                     </a>
@@ -514,6 +668,59 @@
                 localStorage.theme = 'dark';
             }
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.getElementById('mobile-custom-filters');
+            if (!container) return;
+
+            const dropdowns = container.querySelectorAll('[data-mobile-dropdown]');
+
+            const closeAll = function(exceptKey = null) {
+                dropdowns.forEach(function(wrapper) {
+                    const key = wrapper.getAttribute('data-mobile-dropdown');
+                    if (exceptKey && key === exceptKey) return;
+
+                    const trigger = wrapper.querySelector('[data-dropdown-trigger]');
+                    const menu = wrapper.querySelector('[data-dropdown-menu]');
+                    const chevron = wrapper.querySelector('[data-dropdown-chevron]');
+
+                    if (menu) menu.classList.add('hidden');
+                    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+                    if (chevron) chevron.classList.remove('rotate-180');
+                });
+            };
+
+            dropdowns.forEach(function(wrapper) {
+                const key = wrapper.getAttribute('data-mobile-dropdown');
+                const trigger = wrapper.querySelector('[data-dropdown-trigger]');
+                const menu = wrapper.querySelector('[data-dropdown-menu]');
+                const chevron = wrapper.querySelector('[data-dropdown-chevron]');
+
+                if (!trigger || !menu) return;
+
+                trigger.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                    const isOpening = menu.classList.contains('hidden');
+                    closeAll(isOpening ? key : null);
+
+                    menu.classList.toggle('hidden', !isOpening);
+                    trigger.setAttribute('aria-expanded', isOpening ? 'true' : 'false');
+                    if (chevron) chevron.classList.toggle('rotate-180', isOpening);
+                });
+            });
+
+            document.addEventListener('click', function(event) {
+                if (!container.contains(event.target)) {
+                    closeAll();
+                }
+            });
+
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    closeAll();
+                }
+            });
+        });
     </script>
 </body>
 </html>

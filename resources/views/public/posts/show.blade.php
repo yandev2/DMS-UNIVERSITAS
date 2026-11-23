@@ -317,7 +317,7 @@
                                 <img src="{{ $post->getThumbnailUrl() }}"
                                     alt="{{ $post->title }}"
                                     fetchpriority="high"
-                                    class="w-full max-h-[480px] object-cover mx-auto">
+                                    class="w-full max-h-[500px] object-contain mx-auto">
                                 @if($post->thumbnail_caption)
                                     <figcaption class="px-4 py-2.5 bg-slate-900/90 text-slate-300 text-xs italic text-center border-t border-slate-800">
                                         {{ $post->thumbnail_caption }}
@@ -377,7 +377,7 @@
                                             <img src="{{ $photo->getThumbnailUrl() }}"
                                                 alt="{{ $photo->caption ?: $post->title }}"
                                                 loading="lazy"
-                                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                                class="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300">
                                             <div class="absolute inset-0 bg-slate-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                 <div class="p-2.5 rounded-full bg-white/90 dark:bg-slate-900/90 text-slate-900 dark:text-white shadow-lg">
                                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -579,9 +579,9 @@
                                             <img src="{{ $related->getThumbnailUrl() }}"
                                                 alt="{{ $related->title }}"
                                                 loading="lazy"
-                                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                                class="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300">
                                         @else
-                                            <div class="w-full h-full flex items-center justify-center bg-slate-800 text-slate-500">
+                                            <div class="absolute inset-0 w-full h-full flex items-center justify-center bg-slate-800 text-slate-500">
                                                 <svg class="w-9 h-9 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                 </svg>

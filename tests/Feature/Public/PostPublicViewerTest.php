@@ -587,4 +587,59 @@ class PostPublicViewerTest extends TestCase
             ->assertSee('Budi Santoso')
             ->assertSee('B');
     }
+
+    public function test_public_posts_index_and_show_bound_portrait_cover_image_heights(): void
+    {
+        $coverPath = 'posts/covers/poster-portrait.jpg';
+        Storage::disk('public')->put($coverPath, 'fake-poster-bytes');
+
+        $featured = Post::create([
+            'title' => 'Poster Prestasi Lomba Nasional',
+            'slug' => 'poster-prestasi-lomba-nasional',
+            'post_category_id' => $this->catPrestasi->id,
+            'unit_id' => $this->unit->id,
+            'author_id' => $this->author->id,
+            'thumbnail_url' => $coverPath,
+            'is_featured' => true,
+            'content' => '<p>Konten berita utama dengan poster portrait.</p>',
+            'status' => PostStatus::Published,
+            'published_at' => now()->subHour(),
+        ]);
+
+        $gridPost = Post::create([
+            'title' => 'Poster Pengumuman Akademik Portrait',
+            'slug' => 'poster-pengumuman-akademik-portrait',
+            'post_category_id' => $this->catBerita->id,
+            'unit_id' => $this->unit->id,
+            'author_id' => $this->author->id,
+            'thumbnail_url' => $coverPath,
+            'content' => '<p>Konten kartu grid dengan poster portrait.</p>',
+            'status' => PostStatus::Published,
+            'published_at' => now()->subMinutes(10),
+        ]);
+
+        $indexResponse = $this->get(route('public.posts.index'));
+        $indexResponse->assertOk()
+            ->assertSee('absolute inset-0 w-full h-full object-cover object-center', false);
+
+        $showResponse = $this->get(route('public.posts.show', $featured->slug));
+        $showResponse->assertOk()
+            ->assertSee('w-full max-h-[500px] object-contain mx-auto', false)
+            ->assertSee($gridPost->title);
+    }
+
+    public function test_posts_index_renders_concise_search_placeholder_mobile_dropdowns_and_colored_desktop_periods(): void
+    {
+        $response = $this->get(route('public.posts.index'));
+
+        $response->assertOk()
+            ->assertSee('placeholder="Cari berita, acara, atau lokasi..."', false)
+            ->assertSee('id="mobile-filter-edisi"', false)
+            ->assertSee('id="mobile-menu-edisi"', false)
+            ->assertSee('id="mobile-filter-kategori"', false)
+            ->assertSee('id="mobile-menu-kategori"', false)
+            ->assertSee('bg-rose-500', false)
+            ->assertSee('bg-amber-500', false)
+            ->assertSee('bg-blue-500', false);
+    }
 }

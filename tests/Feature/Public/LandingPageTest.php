@@ -358,5 +358,184 @@ class LandingPageTest extends TestCase
         $response->assertSee('text-slate-900', false);
         $response->assertSee('dark:via-slate-950', false);
         $response->assertSee('bg-white/80 dark:bg-slate-900/60', false);
+        $response->assertSee('Naskah resmi terbuka');
+        $response->assertSee('Liputan resmi terbit');
+        $response->assertSee('Tervalidasi QR digital');
+        $response->assertDontSee('>0+<', false);
+    }
+
+    public function test_landing_page_uses_balanced_adaptive_news_layouts_for_one_to_five_posts(): void
+    {
+        $createPost = function (int $index): Post {
+            return Post::create([
+                'title' => "Berita Uji Adaptif Ke-{$index}",
+                'slug' => "berita-uji-adaptif-ke-{$index}",
+                'post_category_id' => $this->postCategory->id,
+                'unit_id' => $this->unit->id,
+                'academic_year_id' => $this->academicYear->id,
+                'author_id' => $this->user->id,
+                'content' => "Konten liputan uji tata letak adaptif berita ke-{$index}.",
+                'event_location' => 'Kampus Utama UNIVBI',
+                'status' => PostStatus::Published,
+                'published_at' => now()->subMinutes(10 * $index),
+            ]);
+        };
+
+        // 1 Berita: Spotlight Split Card (bukan full-width col-span-12 vertical raksasa)
+        $createPost(1);
+        $res1 = $this->get(route('landing.home'));
+        $res1->assertOk();
+        $res1->assertSee('Berita Uji Adaptif Ke-1');
+        $res1->assertSee('grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-7', false);
+        $res1->assertDontSee('grid-cols-1 md:grid-cols-2 gap-6 items-stretch', false);
+        $res1->assertSee('mt-8 text-center md:hidden', false);
+
+        // 2 Berita: 2 Kolom Sejajar Identik (mencegah card kanan melar ekstrem)
+        $createPost(2);
+        $res2 = $this->get(route('landing.home'));
+        $res2->assertOk();
+        $res2->assertSee('Berita Uji Adaptif Ke-1');
+        $res2->assertSee('Berita Uji Adaptif Ke-2');
+        $res2->assertSee('grid-cols-1 md:grid-cols-2 gap-6 items-stretch', false);
+        $res2->assertDontSee('lg:col-span-5 flex flex-col gap-5', false);
+        $res2->assertSee('truncate min-w-0 flex-1', false);
+        $res2->assertSee('aspect-[16/10] w-full rounded-lg overflow-hidden', false);
+        $res2->assertSee('absolute inset-0 w-full h-full flex flex-col', false);
+
+        // 3 Berita: Layout Editorial 1 Kiri Utama + 2 Stack Kanan
+        $createPost(3);
+        $res3 = $this->get(route('landing.home'));
+        $res3->assertOk();
+        $res3->assertSee('lg:col-span-7 flex', false);
+        $res3->assertSee('lg:col-span-5 flex flex-col gap-5', false);
+        $res3->assertSee('TA 2026/2027 Ganjil');
+
+        // 4 Berita: 1 Spotlight Atas + 3 Grid Sejajar Bawah (tanpa slot kosong separuh baris)
+        $createPost(4);
+        $res4 = $this->get(route('landing.home'));
+        $res4->assertOk();
+        $res4->assertSee('grid-cols-1 md:grid-cols-3 gap-5 items-stretch', false);
+        $res4->assertSee('Berita Uji Adaptif Ke-4');
+
+        // 5 Berita: Layout Editorial 1 Kiri + 2 Stack Kanan + 2 Baris Tambahan
+        $createPost(5);
+        $res5 = $this->get(route('landing.home'));
+        $res5->assertOk();
+        $res5->assertSee('lg:col-span-7 flex', false);
+        $res5->assertSee('lg:col-span-5 flex flex-col gap-5', false);
+        $res5->assertSee('grid-cols-1 md:grid-cols-2 gap-5 mt-5 items-stretch', false);
+        $res5->assertSee('Berita Uji Adaptif Ke-5');
+    }
+
+    public function test_landing_page_hides_accreditation_section_when_no_active_unit_has_accreditation(): void
+    {
+        // Unit bawaan pada setUp memiliki accreditation_grade = 'Unggul', kosongkan terlebih dahulu
+        $this->unit->update(['accreditation_grade' => null]);
+
+        // Unit non-aktif dengan akreditasi tetap tidak boleh tampil di publik
+        Unit::create([
+            'code' => 'NONAKTIF',
+            'name' => 'Program Studi Nonaktif',
+            'type' => UnitType::Prodi,
+            'degree_level' => DegreeLevel::S1,
+            'accreditation_grade' => 'Unggul',
+            'is_active' => false,
+        ]);
+
+        $response = $this->get(route('landing.home'));
+
+        $response->assertOk();
+        $response->assertDontSee('Status Akreditasi Institusi &amp; Program Studi', false);
+        $response->assertDontSee('Program Studi Nonaktif');
+        $response->assertDontSee('#status-akreditasi', false);
+
+        // Pastikan halaman publik lain (misal portal berita) juga tidak menampilkan menu Akreditasi
+        $postsResponse = $this->get(route('public.posts.index'));
+        $postsResponse->assertOk();
+        $postsResponse->assertDontSee('#status-akreditasi', false);
+    }
+
+    public function test_landing_page_renders_accredited_units_with_status_badges_security_and_cache_invalidation(): void
+    {
+        $privateDoc = Document::create([
+            'title' => 'SK Akreditasi Internal Rahasia',
+            'unit_id' => $this->unit->id,
+            'document_category_id' => $this->docCategory->id,
+            'academic_year_id' => $this->academicYear->id,
+            'document_number' => 'PRIV/2026/001',
+            'visibility' => VisibilityLevel::Internal,
+            'status' => DocumentStatus::Approved,
+            'issued_date' => now()->toDateString(),
+            'uploaded_by' => $this->user->id,
+            'approved_at' => now(),
+        ]);
+
+        $publicDoc = Document::create([
+            'title' => 'SK Akreditasi Prodi Terbuka',
+            'unit_id' => $this->unit->id,
+            'document_category_id' => $this->docCategory->id,
+            'academic_year_id' => $this->academicYear->id,
+            'document_number' => 'PUB/2026/009',
+            'visibility' => VisibilityLevel::Public,
+            'status' => DocumentStatus::Approved,
+            'issued_date' => now()->toDateString(),
+            'uploaded_by' => $this->user->id,
+            'approved_at' => now(),
+        ]);
+
+        // 1. Unit Institusi (Rektorat) berstatus Aktif, bertaut ke dokumen Internal (tautan SK tidak boleh bocor)
+        Unit::create([
+            'code' => 'UNIVBI-PT',
+            'name' => 'Universitas Bina Insan (Institusi)',
+            'type' => UnitType::Rektorat,
+            'accreditation_grade' => 'Unggul',
+            'accreditation_body' => 'BAN-PT',
+            'accreditation_sk_number' => '100/SK/BAN-PT/Akred/PT/XI/2026',
+            'accreditation_expired_date' => now()->addYears(3),
+            'accreditation_document_id' => $privateDoc->id,
+            'is_assessor_access_active' => true,
+            'assessor_passcode' => 'RAHASIA-ASESOR-999',
+            'assessor_notes' => 'Catatan Rahasia Internal Asesor',
+            'is_active' => true,
+        ]);
+
+        // 2. Unit Prodi dengan masa berlaku lewat -> wajib memunculkan badge "Masa Perpanjangan" & link SK Publik
+        $this->unit->update([
+            'accreditation_grade' => 'Baik Sekali',
+            'accreditation_body' => 'LAM INFOKOM',
+            'accreditation_sk_number' => '205/SK/LAM-INFOKOM/XI/2021',
+            'accreditation_expired_date' => now()->subDays(10),
+            'accreditation_document_id' => $publicDoc->id,
+        ]);
+
+        $response = $this->get(route('landing.home'));
+
+        $response->assertOk();
+        $response->assertSee('Status Akreditasi Institusi &amp; Program Studi', false);
+        $response->assertSee('Akreditasi Perguruan Tinggi');
+        $response->assertSee('Universitas Bina Insan (Institusi)');
+        $response->assertSee('100/SK/BAN-PT/Akred/PT/XI/2026');
+        $response->assertSee('205/SK/LAM-INFOKOM/XI/2021');
+        $response->assertSee('LAM INFOKOM');
+        $response->assertSee('Aktif');
+        $response->assertSee('Masa Perpanjangan');
+        $response->assertSee(route('document.verify.stream', $publicDoc->uuid), false);
+        $response->assertSee('href="#status-akreditasi"', false);
+
+        // Pastikan menu Akreditasi pada halaman /berita mengarah kembali ke beranda + anchor #status-akreditasi
+        $postsResponse = $this->get(route('public.posts.index'));
+        $postsResponse->assertOk();
+        $postsResponse->assertSee('href="'.route('landing.home').'#status-akreditasi"', false);
+
+        // Keamanan: dilarang membocorkan dokumen non-publik maupun passcode/notes asesor
+        $response->assertDontSee($privateDoc->uuid);
+        $response->assertDontSee('RAHASIA-ASESOR-999');
+        $response->assertDontSee('Catatan Rahasia Internal Asesor');
+
+        // Verifikasi invalidasi cache otomatis ketika unit diubah
+        $this->unit->update(['accreditation_grade' => 'A']);
+        $responseAfterUpdate = $this->get(route('landing.home'));
+        $responseAfterUpdate->assertOk();
+        $responseAfterUpdate->assertSee('2 Peringkat Unggul / A');
     }
 }
