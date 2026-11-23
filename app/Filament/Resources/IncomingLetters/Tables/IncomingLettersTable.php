@@ -178,7 +178,7 @@ class IncomingLettersTable
             ])
             ->bulkActions([
                 BulkAction::make('downloadZip')
-                    ->label('Unduh Paket ZIP (Latar Belakang)')
+                    ->label('Unduh Paket ZIP')
                     ->icon('heroicon-o-archive-box-arrow-down')
                     ->color('info')
                     ->requiresConfirmation()
