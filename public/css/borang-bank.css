@@ -1,20 +1,73 @@
 /* ==========================================================================
    E-Arsip UNIVBI: Modul Bank Data Borang Akreditasi (BAN-PT / LAM)
-   Interactive Mini Column / Bar Distribution Chart + Readiness Overview
-   Ultra-Compact, Responsive (Mobile & Desktop), Dark & Light Mode Native
-   SOLID HIGH-CONTRAST DESIGN (NO GLOW, NO BLUR, NO WASHED-OUT BADGES)
+   Diselaraskan dengan Sistem Desain Panel Admin (Clean Flat-Glass Cards,
+   Soft-Tinted Badges, Non-Solid Active States, Light & Dark Mode Native)
    ========================================================================== */
 
-/* 1. Header Guidance Banner (Adaptive Light & Dark Mode, Solid Non-Pill Style) */
+/* 0. Page Header Action Buttons (.borang-action-*) */
+.fi-btn.borang-action-configure {
+    background-color: #ffffff !important;
+    background-image: none !important;
+    border: 1px solid #e2e8f0 !important;
+    --tw-ring-shadow: 0 0 #0000 !important;
+    box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.04) !important;
+    border-radius: 0.625rem !important;
+    min-height: 2.5rem;
+    padding-inline: 1.0625rem;
+    color: #1e293b !important;
+    font-weight: 600 !important;
+    transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.fi-btn.borang-action-configure .fi-btn-label {
+    color: #1e293b !important;
+    font-weight: 600 !important;
+}
+
+.fi-btn.borang-action-configure .fi-icon,
+.fi-btn.borang-action-configure svg {
+    color: #d97706 !important;
+}
+
+.fi-btn.borang-action-configure:hover {
+    background-color: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+}
+
+.dark .fi-btn.borang-action-configure {
+    background-color: #0f172a !important;
+    border-color: rgba(148, 163, 184, 0.24) !important;
+    color: #f1f5f9 !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark .fi-btn.borang-action-configure .fi-btn-label {
+    color: #f1f5f9 !important;
+}
+
+.dark .fi-btn.borang-action-configure .fi-icon,
+.dark .fi-btn.borang-action-configure svg {
+    color: #fbbf24 !important;
+}
+
+.dark .fi-btn.borang-action-configure:hover {
+    background-color: rgba(30, 41, 59, 0.85) !important;
+    border-color: rgba(148, 163, 184, 0.38) !important;
+}
+
+/* 1. Header Guidance Banner (Clean Surface matching .fi-ta-ctn) */
 .borang-banner {
     position: relative;
     overflow: hidden;
-    border-radius: 1rem;
-    padding: 1.5rem 1.75rem;
-    margin-bottom: 1.75rem;
+    border-radius: 0.9375rem;
+    padding: 1.375rem 1.5rem;
+    margin-bottom: 1.25rem;
     background-color: #ffffff;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+    border: 1.5px solid var(--ui-modal-border, #e2e8f0);
+    box-shadow:
+        0 14px 34px -10px rgba(15, 23, 42, 0.08),
+        0 0 0 1px rgba(203, 213, 225, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.96);
     color: #0f172a;
     transition: background-color 0.2s ease, border-color 0.2s ease;
 }
@@ -22,7 +75,7 @@
 .borang-banner-content {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 1.125rem;
 }
 
 @media (min-width: 1024px) {
@@ -37,103 +90,109 @@
 .borang-banner-left {
     display: flex;
     align-items: flex-start;
-    gap: 1.25rem;
+    gap: 1rem;
     flex: 1;
 }
 
 .borang-banner-icon {
-    width: 3.25rem;
-    height: 3.25rem;
-    border-radius: 0.875rem;
-    background-color: #2563eb;
+    width: 2.875rem;
+    height: 2.875rem;
+    border-radius: 0.75rem;
+    background-color: #eff6ff;
+    border: 1px solid #bfdbfe;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #ffffff;
+    color: #2563eb;
     flex-shrink: 0;
-    box-shadow: 0 2px 4px 0 rgba(37, 99, 235, 0.25);
 }
 
 .borang-banner-icon svg {
-    width: 1.75rem;
-    height: 1.75rem;
+    width: 1.5rem;
+    height: 1.5rem;
 }
 
 .borang-banner-title-row {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 0.75rem;
+    gap: 0.625rem;
     margin-bottom: 0.35rem;
 }
 
 .borang-banner-title {
-    font-size: 1.1875rem;
-    font-weight: 800;
+    font-size: 1.125rem;
+    font-weight: 700;
     line-height: 1.35;
     color: #0f172a;
     margin: 0;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
 }
 
-/* SOLID NON-PILL BADGE (Replaces the pill shape) */
+/* Soft Emerald Standard Badge */
 .borang-banner-badge {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    padding: 0.25rem 0.65rem;
-    border-radius: 0.375rem; /* Clean rectangular tag with subtle radius */
+    padding: 0.22rem 0.625rem;
+    border-radius: 0.5rem;
     font-size: 0.75rem;
-    font-weight: 700;
-    background-color: #047857; /* Solid Emerald */
-    color: #ffffff;
-    border: 1px solid #065f46;
+    font-weight: 600;
+    background-color: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
     letter-spacing: 0.01em;
 }
 
 .borang-banner-badge-dot {
-    width: 0.45rem;
-    height: 0.45rem;
+    width: 0.4375rem;
+    height: 0.4375rem;
     border-radius: 9999px;
-    background-color: #6ee7b7;
+    background-color: #10b981;
 }
 
 .borang-banner-desc {
-    margin: 0.5rem 0 0 0;
-    font-size: 0.875rem;
+    margin: 0.4rem 0 0 0;
+    font-size: 0.84375rem;
     color: #475569;
-    line-height: 1.6;
-    max-width: 56rem;
+    line-height: 1.55;
+    max-width: 54rem;
 }
 
 .borang-banner-right {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 0.625rem;
+    gap: 0.5rem;
     padding-top: 0.75rem;
     border-top: 1px solid #e2e8f0;
 }
 
 @media (min-width: 1024px) {
     .borang-banner-right {
-        padding-top: 0.25rem;
+        padding-top: 0.15rem;
         border-top: none;
         flex-shrink: 0;
     }
 }
 
+.borang-filter-caption {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
 .borang-filter-pill {
     display: inline-flex;
     align-items: center;
-    gap: 0.45rem;
-    padding: 0.35rem 0.75rem;
-    border-radius: 0.45rem;
+    gap: 0.375rem;
+    padding: 0.3125rem 0.6875rem;
+    border-radius: 0.5rem;
     font-size: 0.75rem;
     font-weight: 600;
-    background-color: #f1f5f9;
+    background-color: #f8fafc;
     color: #334155;
-    border: 1px solid #cbd5e1;
+    border: 1px solid #e2e8f0;
     white-space: nowrap;
 }
 
@@ -143,42 +202,52 @@
     color: #64748b;
 }
 
-.borang-filter-pill-criteria {
-    background-color: #047857;
-    color: #ffffff;
-    border-color: #065f46;
-    font-weight: 700;
+.borang-filter-pill-instrument {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
 }
 
-/* 1.1 Integrated Assessor Access Status Bar (Within the Banner Widget - Minimalist & Solid) */
+.borang-filter-pill-instrument svg {
+    color: #2563eb;
+}
+
+.borang-filter-pill-criteria {
+    background-color: #ecfdf5;
+    color: #047857;
+    border-color: #a7f3d0;
+    font-weight: 600;
+}
+
+/* 1.1 Integrated Assessor Access Status Bar */
 .borang-banner-assessor-bar {
-    margin-top: 1.5rem;
-    padding-top: 1.25rem;
+    margin-top: 1.25rem;
+    padding-top: 1.125rem;
     border-top: 1px solid #e2e8f0;
     display: flex;
     flex-direction: column;
-    gap: 0.875rem;
+    gap: 0.75rem;
 }
 
 .borang-assessor-status-header {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 0.625rem;
-    margin-bottom: 0.25rem;
+    gap: 0.5rem;
+    margin-bottom: 0.15rem;
 }
 
 .borang-assessor-pulse-dot {
-    width: 0.5625rem;
-    height: 0.5625rem;
+    width: 0.5rem;
+    height: 0.5rem;
     border-radius: 9999px;
-    background-color: #d97706;
+    background-color: #f59e0b;
     flex-shrink: 0;
 }
 
 .borang-assessor-status-title {
-    font-size: 0.875rem;
-    font-weight: 700;
+    font-size: 0.84375rem;
+    font-weight: 600;
     color: #0f172a;
     letter-spacing: -0.01em;
 }
@@ -191,21 +260,20 @@
 .borang-assessor-list {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.625rem;
     width: 100%;
 }
 
 .borang-assessor-item {
     display: flex;
     flex-direction: column;
-    gap: 0.875rem;
+    gap: 0.75rem;
     justify-content: space-between;
     padding: 0.875rem 1.125rem;
-    border-radius: 0.625rem;
+    border-radius: 0.75rem;
     background-color: #f8fafc;
     border: 1px solid #e2e8f0;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
-    transition: all 0.15s ease;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
 @media (min-width: 640px) {
@@ -219,7 +287,7 @@
 .borang-assessor-item-left {
     display: flex;
     flex-direction: column;
-    gap: 0.45rem;
+    gap: 0.375rem;
     min-width: 0;
 }
 
@@ -227,34 +295,34 @@
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 0.75rem;
+    gap: 0.625rem;
 }
 
 .borang-assessor-item-meta-row {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 0.75rem;
+    gap: 0.625rem;
 }
 
 .borang-assessor-status-pill {
     display: inline-flex;
     align-items: center;
-    padding: 0.2rem 0.55rem;
+    padding: 0.1875rem 0.5rem;
     border-radius: 0.375rem;
     font-size: 0.6875rem;
-    font-weight: 800;
-    background-color: #fef3c7;
-    color: #92400e;
+    font-weight: 700;
+    background-color: #fffbeb;
+    color: #b45309;
     border: 1px solid #fde68a;
     text-transform: uppercase;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.03em;
     flex-shrink: 0;
 }
 
 .borang-assessor-unit-name {
     font-size: 0.9375rem;
-    font-weight: 700;
+    font-weight: 600;
     color: #0f172a;
     line-height: 1.4;
 }
@@ -270,42 +338,13 @@
 }
 
 .borang-assessor-pin {
-    font-size: 0.8125rem;
+    font-size: 0.78125rem;
     font-weight: 600;
     color: #475569;
-    background-color: #f1f5f9;
+    background-color: #ffffff;
     padding: 0.125rem 0.5rem;
-    border-radius: 0.35rem;
+    border-radius: 0.375rem;
     border: 1px solid #e2e8f0;
-}
-
-.borang-assessor-btn-close {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.45rem 0.85rem;
-    border-radius: 0.45rem;
-    font-size: 0.75rem;
-    font-weight: 700;
-    background-color: #fee2e2;
-    color: #991b1b;
-    border: 1px solid #fca5a5;
-    cursor: pointer;
-    white-space: nowrap;
-    flex-shrink: 0;
-    transition: all 0.15s ease;
-}
-
-.borang-assessor-btn-close:hover {
-    background-color: #dc2626;
-    color: #ffffff;
-    border-color: #dc2626;
-}
-
-.borang-assessor-btn-close svg {
-    width: 0.875rem !important;
-    height: 0.875rem !important;
-    color: inherit;
 }
 
 .borang-assessor-item-actions {
@@ -315,58 +354,62 @@
     flex-shrink: 0;
 }
 
-.borang-assessor-btn-copy {
+.borang-assessor-btn-copy,
+.borang-assessor-btn-preview,
+.borang-assessor-btn-close {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    padding: 0.45rem 0.85rem;
-    border-radius: 0.45rem;
+    gap: 0.375rem;
+    min-height: 2.125rem;
+    padding: 0.375rem 0.8125rem;
+    border-radius: 0.5rem;
     font-size: 0.75rem;
-    font-weight: 700;
-    background-color: #eff6ff;
-    color: #1d4ed8;
-    border: 1px solid #bfdbfe;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: all 0.15s ease;
-}
-
-.borang-assessor-btn-copy:hover {
-    background-color: #2563eb;
-    color: #ffffff;
-    border-color: #2563eb;
-}
-
-.borang-assessor-btn-copy svg {
-    width: 0.875rem !important;
-    height: 0.875rem !important;
-    color: inherit;
-}
-
-.borang-assessor-btn-preview {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.45rem 0.85rem;
-    border-radius: 0.45rem;
-    font-size: 0.75rem;
-    font-weight: 700;
-    background-color: #f1f5f9;
-    color: #334155;
-    border: 1px solid #cbd5e1;
+    font-weight: 600;
     cursor: pointer;
     white-space: nowrap;
     text-decoration: none;
-    transition: all 0.15s ease;
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.borang-assessor-btn-copy {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+}
+
+.borang-assessor-btn-copy:hover {
+    background-color: #dbeafe;
+    border-color: #93c5fd;
+    color: #1e40af;
+}
+
+.borang-assessor-btn-preview {
+    background-color: #ffffff;
+    color: #334155;
+    border: 1px solid #e2e8f0;
 }
 
 .borang-assessor-btn-preview:hover {
-    background-color: #e2e8f0;
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
     color: #0f172a;
-    border-color: #94a3b8;
 }
 
-.borang-assessor-btn-preview svg {
+.borang-assessor-btn-close {
+    background-color: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+.borang-assessor-btn-close:hover {
+    background-color: #fee2e2;
+    border-color: #fca5a5;
+    color: #991b1b;
+}
+
+.borang-assessor-btn-copy svg,
+.borang-assessor-btn-preview svg,
+.borang-assessor-btn-close svg {
     width: 0.875rem !important;
     height: 0.875rem !important;
     color: inherit;
@@ -396,11 +439,14 @@
 /* 2. Main Unified Analytics Panel */
 .borang-analytics-panel {
     background-color: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 1rem;
+    border: 1.5px solid var(--ui-modal-border, #e2e8f0);
+    border-radius: 0.9375rem;
     padding: 1.25rem;
     margin-bottom: 1.25rem;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+    box-shadow:
+        0 14px 34px -10px rgba(15, 23, 42, 0.08),
+        0 0 0 1px rgba(203, 213, 225, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.96);
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
@@ -418,8 +464,8 @@
 .borang-readiness-card {
     background-color: #f8fafc;
     border: 1px solid #e2e8f0;
-    border-radius: 0.875rem;
-    padding: 1.25rem;
+    border-radius: 0.75rem;
+    padding: 1.125rem 1.25rem;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -428,7 +474,7 @@
 
 @media (min-width: 1024px) {
     .borang-readiness-card {
-        width: 290px;
+        width: 288px;
         flex-shrink: 0;
     }
 }
@@ -441,27 +487,26 @@
 }
 
 .borang-readiness-title {
-    font-size: 0.6875rem;
-    font-weight: 800;
+    font-size: 0.71875rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #475569;
+    letter-spacing: 0.055em;
+    color: #64748b;
     margin: 0;
 }
 
 .borang-readiness-badge {
     display: inline-flex;
     align-items: center;
-    padding: 0.2rem 0.55rem;
-    border-radius: 0.375rem; /* Solid rectangular badge with clean micro-radius (not rounded pill) */
-    font-size: 0.6875rem;
-    font-weight: 700;
-    background-color: #0f172a; /* Solid Dark Slate */
-    color: #ffffff;
-    border: 1px solid #0f172a;
-    letter-spacing: 0.02em;
+    padding: 0.1875rem 0.5625rem;
+    border-radius: 0.4375rem;
+    font-size: 0.71875rem;
+    font-weight: 600;
+    background-color: #ffffff;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+    letter-spacing: 0.01em;
     white-space: nowrap;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
 .borang-readiness-metric-box {
@@ -473,12 +518,12 @@
     font-weight: 800;
     line-height: 1;
     color: #0f172a;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.025em;
 }
 
 .borang-readiness-unit {
     font-size: 0.875rem;
-    font-weight: 700;
+    font-weight: 600;
     color: #334155;
     margin-left: 0.35rem;
 }
@@ -508,8 +553,8 @@
 
 .borang-readiness-progress-percent {
     font-size: 0.8125rem;
-    font-weight: 800;
-    color: #047857;
+    font-weight: 700;
+    color: #059669;
 }
 
 .borang-readiness-track {
@@ -522,9 +567,14 @@
 
 .borang-readiness-fill {
     height: 100%;
-    background-color: #059669;
+    background-color: #10b981;
     border-radius: 9999px;
     transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.borang-readiness-caption {
+    font-size: 0.6875rem;
+    color: #64748b;
 }
 
 .borang-readiness-footer {
@@ -538,35 +588,35 @@
     align-items: center;
     justify-content: center;
     gap: 0.4rem;
-    padding: 0.5rem 0.875rem;
-    border-radius: 0.5rem;
-    font-size: 0.75rem;
-    font-weight: 700;
+    min-height: 2.375rem;
+    padding: 0.45rem 0.875rem;
+    border-radius: 0.625rem;
+    font-size: 0.78125rem;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.15s ease;
-    border: none;
+    border: 1px solid transparent;
     text-align: center;
 }
 
 .borang-all-btn-active {
-    background-color: #f1f5f9;
-    color: #334155;
-    border: 1px solid #cbd5e1;
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
     cursor: default;
 }
 
 .borang-all-btn-reset {
-    background-color: #2563eb;
+    background-color: #1d4ed8;
     color: #ffffff;
-    border: 1px solid #1d4ed8;
-    box-shadow: 0 1px 2px 0 rgba(37, 99, 235, 0.25);
+    border-color: #1d4ed8;
+    box-shadow: 0 1px 2px 0 rgba(29, 78, 216, 0.2);
 }
 
 .borang-all-btn-reset:hover {
-    background-color: #1d4ed8;
+    background-color: #1e40af;
+    border-color: #1e40af;
     color: #ffffff;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px 0 rgba(37, 99, 235, 0.35);
 }
 
 /* 4. Right Sub-Card: Interactive 9-Column Bar Distribution Chart */
@@ -616,7 +666,7 @@
     margin: 0.15rem 0 0 0;
 }
 
-/* SOLID HIGH-CONTRAST FILTER CHIP (FIXES THE "TIDAK SOLID" ISSUE) */
+/* Soft-Tinted Filter Chip */
 .borang-active-filter-wrap {
     display: inline-flex;
     align-items: center;
@@ -627,32 +677,29 @@
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.35rem 0.65rem;
+    padding: 0.3125rem 0.625rem;
     border-radius: 0.5rem;
-    background-color: #047857; /* Solid Emerald 700 */
-    border: 1px solid #065f46;
-    color: #ffffff;
+    background-color: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
     font-size: 0.75rem;
     font-weight: 600;
     white-space: nowrap;
     cursor: pointer;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.08);
-    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background-color 150ms ease, border-color 150ms ease;
     outline: none;
 }
 
 .borang-active-filter-pill:hover {
-    background-color: #065f46;
-    border-color: #022c22;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.12);
+    background-color: #dbeafe;
+    border-color: #93c5fd;
 }
 
 .borang-active-filter-dot {
-    width: 0.45rem;
-    height: 0.45rem;
+    width: 0.4375rem;
+    height: 0.4375rem;
     border-radius: 9999px;
-    background-color: #6ee7b7;
+    background-color: #2563eb;
     flex-shrink: 0;
 }
 
@@ -660,31 +707,30 @@
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
-    color: #ffffff;
+    color: #1d4ed8;
     font-size: 0.75rem;
-    letter-spacing: 0.01em;
 }
 
 .borang-active-filter-text strong {
-    font-weight: 800;
-    color: #ffffff;
+    font-weight: 700;
+    color: #1e40af;
 }
 
 .borang-active-filter-reset {
     display: inline-flex;
     align-items: center;
     gap: 0.2rem;
-    background-color: rgba(255, 255, 255, 0.22);
-    padding: 0.15rem 0.45rem;
-    border-radius: 0.25rem;
+    background-color: #dbeafe;
+    padding: 0.125rem 0.4375rem;
+    border-radius: 0.375rem;
     font-size: 0.6875rem;
-    font-weight: 700;
-    color: #ffffff;
+    font-weight: 600;
+    color: #1d4ed8;
     transition: background-color 0.15s ease;
 }
 
 .borang-active-filter-pill:hover .borang-active-filter-reset {
-    background-color: rgba(255, 255, 255, 0.32);
+    background-color: #bfdbfe;
 }
 
 .borang-reset-icon {
@@ -709,7 +755,7 @@
 }
 
 .borang-chart-scroll::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
+    background: rgba(148, 163, 184, 0.45);
     border-radius: 9999px;
 }
 
@@ -717,7 +763,7 @@
     background: #475569;
 }
 
-/* TALLER DYNAMIC COLUMN VISUALIZER (FIXES THE "KURANG TINGGI" ISSUE) */
+/* Vertical Bar Chart Grid */
 .borang-chart-grid {
     display: flex;
     align-items: flex-end;
@@ -725,13 +771,13 @@
     gap: 0.625rem;
     width: 100%;
     min-width: max-content;
-    height: 200px; /* Increased from 135px */
+    height: 200px;
     padding-top: 1.25rem;
 }
 
 .borang-chart-col {
     flex: 1 1 0;
-    min-width: 70px; /* Slightly wider so single-line labels fit comfortably */
+    min-width: 70px;
     max-width: 96px;
     display: flex;
     flex-direction: column;
@@ -751,53 +797,49 @@
     transform: translateY(-2px);
 }
 
-/* SOLID COUNT BADGE ABOVE BAR */
+/* Clean Count Badge Above Bar */
 .borang-col-count {
     font-size: 0.75rem;
-    font-weight: 800;
+    font-weight: 700;
     min-width: 1.5rem;
-    height: 1.35rem;
+    height: 1.375rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0 0.35rem;
-    border-radius: 0.375rem;
+    padding: 0 0.4rem;
+    border-radius: 0.4375rem;
     margin-bottom: 0.5rem;
     transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
     line-height: 1;
 }
 
-/* Filled / Has Files: Solid Dark Slate Badge */
 .borang-col-count-active {
-    background-color: #0f172a;
-    color: #ffffff;
-    border: 1px solid #0f172a;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.08);
+    background-color: #ffffff;
+    color: #0f172a;
+    border: 1px solid #cbd5e1;
+    box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
 }
 
-/* Empty: Neutral Gray Badge */
 .borang-col-count-empty {
-    background-color: #f1f5f9;
+    background-color: #f8fafc;
     color: #94a3b8;
     border: 1px solid #e2e8f0;
     font-weight: 600;
 }
 
-/* Selected Column Count Badge: Electric Blue */
 .borang-chart-col-selected .borang-col-count-active,
 .borang-chart-col-selected .borang-col-count-empty {
     background-color: #2563eb;
     color: #ffffff;
-    border-color: #1d4ed8;
-    box-shadow: 0 1px 3px 0 rgba(37, 99, 235, 0.3);
+    border-color: #2563eb;
 }
 
-/* TALLER VERTICAL BAR TRACK (120px vs 65px) */
+/* Vertical Bar Track */
 .borang-col-track {
     width: 100%;
     max-width: 50px;
-    height: 120px; /* Increased from 65px for commanding vertical presence */
-    background-color: #f1f5f9;
+    height: 120px;
+    background-color: #f8fafc;
     border-radius: 0.5rem;
     position: relative;
     overflow: hidden;
@@ -808,12 +850,12 @@
 }
 
 .borang-chart-col:hover .borang-col-track {
-    background-color: #e2e8f0;
+    background-color: #f1f5f9;
     border-color: #cbd5e1;
 }
 
 .borang-chart-col-selected .borang-col-track {
-    box-shadow: 0 0 0 2px #2563eb;
+    box-shadow: 0 0 0 2px #3b82f6;
     background-color: #eff6ff;
     border-color: #bfdbfe;
 }
@@ -833,11 +875,10 @@
 }
 
 .borang-chart-col:hover .borang-col-fill {
-    opacity: 0.92;
-    filter: brightness(1.06);
+    opacity: 0.9;
 }
 
-/* Bottom Labels with clean multi-word support */
+/* Bottom Labels */
 .borang-col-labels {
     margin-top: 0.5rem;
     display: flex;
@@ -848,14 +889,14 @@
 
 .borang-col-code {
     font-size: 0.8125rem;
-    font-weight: 800;
+    font-weight: 700;
     color: #0f172a;
     line-height: 1.1;
     transition: color 0.15s ease;
 }
 
 .borang-chart-col-selected .borang-col-code {
-    color: #2563eb;
+    color: #1d4ed8;
 }
 
 .borang-col-sub {
@@ -873,16 +914,25 @@
     display: block;
 }
 
-/* 5. Dark Mode Styling (Crisp, High Contrast, Solid) */
+/* 5. Dark Mode Styling (Unified #0f172a Surface matching Table & Sidebar) */
 .dark .borang-banner {
-    background-color: #1e293b;
-    border-color: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2);
-    color: #ffffff;
+    background-color: #0f172a;
+    border-color: rgba(148, 163, 184, 0.16);
+    box-shadow:
+        0 16px 38px -10px rgba(0, 0, 0, 0.52),
+        0 0 0 1px rgba(148, 163, 184, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    color: #f8fafc;
+}
+
+.dark .borang-banner-icon {
+    background-color: rgba(37, 99, 235, 0.16);
+    border-color: rgba(96, 165, 250, 0.35);
+    color: #60a5fa;
 }
 
 .dark .borang-banner-title {
-    color: #ffffff;
+    color: #f8fafc;
 }
 
 .dark .borang-banner-desc {
@@ -890,37 +940,51 @@
 }
 
 .dark .borang-banner-badge {
-    background-color: #065f46;
-    color: #ffffff;
-    border-color: #059669;
+    background-color: rgba(16, 185, 129, 0.14);
+    color: #34d399;
+    border-color: rgba(52, 211, 153, 0.28);
 }
 
 .dark .borang-banner-right {
-    border-top-color: rgba(255, 255, 255, 0.08);
+    border-top-color: rgba(148, 163, 184, 0.14);
+}
+
+.dark .borang-filter-caption {
+    color: #94a3b8;
 }
 
 .dark .borang-filter-pill {
-    background-color: rgba(255, 255, 255, 0.08);
+    background-color: rgba(30, 41, 59, 0.72);
     color: #e2e8f0;
-    border-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(148, 163, 184, 0.22);
 }
 
 .dark .borang-filter-pill svg {
     color: #94a3b8;
 }
 
+.dark .borang-filter-pill-instrument {
+    background-color: rgba(37, 99, 235, 0.16);
+    color: #93c5fd;
+    border-color: rgba(96, 165, 250, 0.32);
+}
+
+.dark .borang-filter-pill-instrument svg {
+    color: #60a5fa;
+}
+
 .dark .borang-filter-pill-criteria {
-    background-color: #065f46;
-    color: #ffffff;
-    border-color: #059669;
+    background-color: rgba(16, 185, 129, 0.16);
+    color: #34d399;
+    border-color: rgba(52, 211, 153, 0.3);
 }
 
 .dark .borang-banner-assessor-bar {
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid rgba(148, 163, 184, 0.14);
 }
 
 .dark .borang-assessor-status-title {
-    color: #ffffff;
+    color: #f8fafc;
 }
 
 .dark .borang-assessor-status-hint {
@@ -928,23 +992,22 @@
 }
 
 .dark .borang-assessor-item {
-    background-color: rgba(255, 255, 255, 0.04);
-    border-color: rgba(255, 255, 255, 0.09);
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.25);
+    background-color: rgba(30, 41, 59, 0.48);
+    border-color: rgba(148, 163, 184, 0.16);
 }
 
 .dark .borang-assessor-status-pill {
-    background-color: rgba(217, 119, 6, 0.2);
-    color: #fde68a;
-    border-color: rgba(217, 119, 6, 0.3);
+    background-color: rgba(245, 158, 11, 0.16);
+    color: #fbbf24;
+    border-color: rgba(251, 191, 36, 0.3);
 }
 
 .dark .borang-assessor-unit-name {
-    color: #ffffff;
+    color: #f8fafc;
 }
 
 .dark .borang-assessor-sep {
-    color: rgba(255, 255, 255, 0.15);
+    color: rgba(148, 163, 184, 0.28);
 }
 
 .dark .borang-assessor-date {
@@ -953,47 +1016,48 @@
 
 .dark .borang-assessor-pin {
     color: #cbd5e1;
-    background-color: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.1);
-}
-
-.dark .borang-assessor-btn-close {
-    background-color: rgba(239, 68, 68, 0.2);
-    color: #fca5a5;
-    border-color: rgba(239, 68, 68, 0.35);
-}
-
-.dark .borang-assessor-btn-close:hover {
-    background-color: #dc2626;
-    color: #ffffff;
-    border-color: #dc2626;
+    background-color: rgba(15, 23, 42, 0.65);
+    border-color: rgba(148, 163, 184, 0.2);
 }
 
 .dark .borang-assessor-btn-copy {
-    background-color: rgba(37, 99, 235, 0.2);
+    background-color: rgba(37, 99, 235, 0.16);
     color: #93c5fd;
-    border-color: rgba(37, 99, 235, 0.35);
+    border-color: rgba(96, 165, 250, 0.35);
 }
 
 .dark .borang-assessor-btn-copy:hover {
-    background-color: #2563eb;
-    color: #ffffff;
-    border-color: #2563eb;
+    background-color: rgba(37, 99, 235, 0.28);
+    border-color: rgba(96, 165, 250, 0.5);
+    color: #bfdbfe;
 }
 
 .dark .borang-assessor-btn-preview {
-    background-color: rgba(255, 255, 255, 0.06);
-    color: #cbd5e1;
-    border-color: rgba(255, 255, 255, 0.12);
+    background-color: rgba(30, 41, 59, 0.8);
+    color: #e2e8f0;
+    border-color: rgba(148, 163, 184, 0.22);
 }
 
 .dark .borang-assessor-btn-preview:hover {
-    background-color: rgba(255, 255, 255, 0.12);
+    background-color: rgba(51, 65, 85, 0.85);
     color: #ffffff;
-    border-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(148, 163, 184, 0.35);
 }
 
-.dark .borang-assessor-closed-row {
+.dark .borang-assessor-btn-close {
+    background-color: rgba(239, 68, 68, 0.16);
+    color: #fca5a5;
+    border-color: rgba(248, 113, 113, 0.3);
+}
+
+.dark .borang-assessor-btn-close:hover {
+    background-color: rgba(239, 68, 68, 0.28);
+    color: #fecaca;
+    border-color: rgba(248, 113, 113, 0.45);
+}
+
+.dark .borang-assessor-closed-row,
+.dark .borang-assessor-closed-text {
     color: #94a3b8;
 }
 
@@ -1001,34 +1065,34 @@
     color: #34d399;
 }
 
-.dark .borang-assessor-closed-text {
-    color: #94a3b8;
-}
-
 .dark .borang-analytics-panel {
-    background-color: #1e293b;
-    border-color: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2);
+    background-color: #0f172a;
+    border-color: rgba(148, 163, 184, 0.16);
+    box-shadow:
+        0 16px 38px -10px rgba(0, 0, 0, 0.52),
+        0 0 0 1px rgba(148, 163, 184, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .dark .borang-readiness-card {
-    background-color: rgba(15, 23, 42, 0.6);
-    border-color: rgba(255, 255, 255, 0.08);
+    background-color: rgba(30, 41, 59, 0.48);
+    border-color: rgba(148, 163, 184, 0.16);
 }
 
-.dark .borang-readiness-title {
+.dark .borang-readiness-title,
+.dark .borang-readiness-caption {
     color: #94a3b8;
 }
 
 .dark .borang-readiness-badge {
-    background-color: #334155;
-    color: #ffffff;
-    border: 1px solid #475569;
+    background-color: rgba(15, 23, 42, 0.72);
+    color: #e2e8f0;
+    border-color: rgba(148, 163, 184, 0.22);
 }
 
 .dark .borang-readiness-value,
 .dark .borang-readiness-unit {
-    color: #ffffff;
+    color: #f8fafc;
 }
 
 .dark .borang-readiness-sub {
@@ -1044,17 +1108,17 @@
 }
 
 .dark .borang-readiness-track {
-    background-color: rgba(255, 255, 255, 0.08);
+    background-color: rgba(148, 163, 184, 0.14);
 }
 
 .dark .borang-readiness-footer {
-    border-top-color: rgba(255, 255, 255, 0.08);
+    border-top-color: rgba(148, 163, 184, 0.14);
 }
 
 .dark .borang-all-btn-active {
-    background-color: rgba(255, 255, 255, 0.08);
-    color: #e2e8f0;
-    border-color: rgba(255, 255, 255, 0.15);
+    background-color: rgba(37, 99, 235, 0.16);
+    color: #60a5fa;
+    border-color: rgba(96, 165, 250, 0.35);
 }
 
 .dark .borang-all-btn-reset {
@@ -1064,11 +1128,11 @@
 }
 
 .dark .borang-all-btn-reset:hover {
-    background-color: #1d4ed8;
+    background-color: #3b82f6;
 }
 
 .dark .borang-chart-title {
-    color: #ffffff;
+    color: #f8fafc;
 }
 
 .dark .borang-chart-title svg {
@@ -1079,65 +1143,64 @@
     color: #94a3b8;
 }
 
-/* Dark Mode Active Filter Pill */
 .dark .borang-active-filter-pill {
-    background-color: #065f46;
-    border-color: #059669;
-    color: #ffffff;
+    background-color: rgba(37, 99, 235, 0.16);
+    border-color: rgba(96, 165, 250, 0.35);
+    color: #93c5fd;
 }
 
 .dark .borang-active-filter-pill:hover {
-    background-color: #047857;
-    border-color: #34d399;
+    background-color: rgba(37, 99, 235, 0.26);
+    border-color: rgba(96, 165, 250, 0.5);
+}
+
+.dark .borang-active-filter-text,
+.dark .borang-active-filter-text strong {
+    color: #93c5fd;
 }
 
 .dark .borang-active-filter-reset {
-    background-color: rgba(0, 0, 0, 0.25);
+    background-color: rgba(37, 99, 235, 0.28);
+    color: #bfdbfe;
 }
 
-.dark .borang-active-filter-pill:hover .borang-active-filter-reset {
-    background-color: rgba(0, 0, 0, 0.4);
-}
-
-/* Dark Mode Column Tracks & Badges */
 .dark .borang-col-track {
-    background-color: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.08);
+    background-color: rgba(30, 41, 59, 0.55);
+    border-color: rgba(148, 163, 184, 0.14);
 }
 
 .dark .borang-col-empty-line {
-    background-color: rgba(255, 255, 255, 0.15);
+    background-color: rgba(148, 163, 184, 0.22);
 }
 
 .dark .borang-chart-col:hover .borang-col-track {
-    background-color: rgba(255, 255, 255, 0.09);
-    border-color: rgba(255, 255, 255, 0.15);
+    background-color: rgba(30, 41, 59, 0.85);
+    border-color: rgba(148, 163, 184, 0.28);
 }
 
 .dark .borang-chart-col-selected .borang-col-track {
     box-shadow: 0 0 0 2px #3b82f6;
-    background-color: rgba(59, 130, 246, 0.15);
-    border-color: rgba(59, 130, 246, 0.4);
+    background-color: rgba(37, 99, 235, 0.16);
+    border-color: rgba(96, 165, 250, 0.45);
 }
 
 .dark .borang-col-count-active {
-    background-color: #334155;
-    color: #ffffff;
-    border-color: #475569;
+    background-color: rgba(30, 41, 59, 0.9);
+    color: #f8fafc;
+    border-color: rgba(148, 163, 184, 0.24);
 }
 
 .dark .borang-col-count-empty {
-    background-color: rgba(255, 255, 255, 0.04);
+    background-color: rgba(15, 23, 42, 0.6);
     color: #64748b;
-    border-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(148, 163, 184, 0.14);
 }
 
 .dark .borang-chart-col-selected .borang-col-count-active,
 .dark .borang-chart-col-selected .borang-col-count-empty {
-    background-color: #3b82f6;
+    background-color: #2563eb;
     color: #ffffff;
-    border-color: #60a5fa;
-    box-shadow: 0 1px 3px 0 rgba(59, 130, 246, 0.3);
+    border-color: #3b82f6;
 }
 
 .dark .borang-col-code {
@@ -1154,16 +1217,8 @@
 
 /* ==========================================================================
    6. Comprehensive Mobile Responsiveness Overrides (@media max-width: 639px)
-   Ultra-polished for mobile smartphones (< 640px)
-   - Header actions: compact 2-row grid (no overflow, no clipping under topbar)
-   - Banner: compact padding, smaller icon & title
-   - Assessor open unit cards: 2-column actions grid (Salin Tautan spans 2 cols,
-     Pratinjau & Tutup Akses 50% each - ZERO horizontal overflow)
-   - Readiness card & 9-column chart: streamlined height & touch scrolling
-   - Table: smooth horizontal touch swipe inside card boundary
    ========================================================================== */
 @media (max-width: 639px) {
-    /* --- Page Container & Filament Header Actions --- */
     .fi-page {
         max-width: 100vw;
         overflow-x: hidden;
@@ -1192,25 +1247,23 @@
         width: 100% !important;
     }
 
-    /* Configure Assessor Access spans full width on row 1 */
     .fi-page-header-main-ctn .fi-header-actions-ctn .borang-action-configure,
     .fi-page-header-main-ctn .fi-header-actions-ctn .fi-ac > *:first-child {
         grid-column: span 2 !important;
         width: 100% !important;
     }
 
-    /* Compact button styling on mobile */
     .fi-page-header-main-ctn .fi-header-actions-ctn .fi-btn {
         padding: 0.45rem 0.625rem !important;
         font-size: 0.75rem !important;
         justify-content: center !important;
         min-height: 2.25rem !important;
-        border-radius: 0.5rem !important;
+        border-radius: 0.625rem !important;
     }
 
     .fi-page-header-main-ctn .fi-header-actions-ctn .fi-btn .fi-btn-label {
         font-size: 0.75rem !important;
-        font-weight: 700 !important;
+        font-weight: 600 !important;
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
@@ -1222,7 +1275,6 @@
         flex-shrink: 0 !important;
     }
 
-    /* --- 1. Guidance Banner on Mobile --- */
     .borang-banner {
         padding: 0.875rem !important;
         border-radius: 0.75rem !important;
@@ -1243,7 +1295,7 @@
     .borang-banner-icon {
         width: 2.25rem !important;
         height: 2.25rem !important;
-        border-radius: 0.5rem !important;
+        border-radius: 0.5625rem !important;
     }
 
     .borang-banner-icon svg {
@@ -1258,13 +1310,13 @@
     .borang-banner-title {
         font-size: 0.9375rem !important;
         line-height: 1.3 !important;
-        font-weight: 800 !important;
+        font-weight: 700 !important;
     }
 
     .borang-banner-badge {
         font-size: 0.625rem !important;
         padding: 0.15rem 0.45rem !important;
-        border-radius: 0.25rem !important;
+        border-radius: 0.375rem !important;
     }
 
     .borang-banner-desc {
@@ -1281,10 +1333,9 @@
     .borang-filter-pill {
         font-size: 0.6875rem !important;
         padding: 0.2rem 0.45rem !important;
-        border-radius: 0.25rem !important;
+        border-radius: 0.375rem !important;
     }
 
-    /* --- 1.1 Assessor Portal Bar on Mobile --- */
     .borang-banner-assessor-bar {
         margin-top: 0.75rem !important;
         padding-top: 0.625rem !important;
@@ -1305,11 +1356,11 @@
     }
 
     .borang-assessor-item {
-        padding: 0.625rem 0.625rem !important;
+        padding: 0.625rem !important;
         gap: 0.5rem !important;
         width: 100% !important;
         box-sizing: border-box !important;
-        border-radius: 0.5rem !important;
+        border-radius: 0.625rem !important;
     }
 
     .borang-assessor-item-left {
@@ -1329,7 +1380,7 @@
 
     .borang-assessor-unit-name {
         font-size: 0.8125rem !important;
-        font-weight: 700 !important;
+        font-weight: 600 !important;
         word-break: break-word !important;
         overflow-wrap: break-word !important;
     }
@@ -1349,7 +1400,6 @@
         padding: 0.05rem 0.3rem !important;
     }
 
-    /* ZERO HORIZONTAL OVERFLOW: 2-column actions grid */
     .borang-assessor-item-actions {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
@@ -1364,26 +1414,18 @@
         justify-content: center !important;
         padding: 0.45rem 0.6rem !important;
         font-size: 0.75rem !important;
-        border-radius: 0.375rem !important;
+        border-radius: 0.5rem !important;
     }
 
-    .borang-assessor-btn-preview {
-        width: 100% !important;
-        justify-content: center !important;
-        padding: 0.45rem 0.4rem !important;
-        font-size: 0.6875rem !important;
-        border-radius: 0.375rem !important;
-    }
-
+    .borang-assessor-btn-preview,
     .borang-assessor-btn-close {
         width: 100% !important;
         justify-content: center !important;
         padding: 0.45rem 0.4rem !important;
         font-size: 0.6875rem !important;
-        border-radius: 0.375rem !important;
+        border-radius: 0.5rem !important;
     }
 
-    /* --- 2. Analytics Panel on Mobile --- */
     .borang-analytics-panel {
         padding: 0.75rem !important;
         gap: 0.75rem !important;
@@ -1391,7 +1433,6 @@
         margin-bottom: 0.875rem !important;
     }
 
-    /* --- 3. Readiness Card on Mobile --- */
     .borang-readiness-card {
         padding: 0.75rem !important;
         gap: 0.625rem !important;
@@ -1451,7 +1492,6 @@
         font-size: 0.75rem !important;
     }
 
-    /* --- 4. Chart Card & Columns on Mobile --- */
     .borang-chart-card {
         gap: 0.5rem !important;
     }
@@ -1517,7 +1557,7 @@
         min-width: 1.35rem !important;
         height: 1.2rem !important;
         margin-bottom: 0.35rem !important;
-        border-radius: 0.25rem !important;
+        border-radius: 0.375rem !important;
     }
 
     .borang-col-code {
@@ -1530,7 +1570,6 @@
         margin-top: 0.15rem !important;
     }
 
-    /* --- 5. Filament Table on Mobile --- */
     .fi-ta-ctn {
         border-radius: 0.75rem !important;
         overflow: hidden !important;

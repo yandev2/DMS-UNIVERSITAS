@@ -24,6 +24,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Support\Enums\Width;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 
 class ListDocuments extends ListRecords
@@ -43,8 +44,9 @@ class ListDocuments extends ListRecords
     {
         return Action::make('exportExcel')
             ->label('Ekspor Excel')
-            ->icon('heroicon-o-arrow-down-tray')
-            ->color('success')
+            ->icon(new HtmlString('<svg class="fi-icon fi-size-md" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h2"/><path d="M14 13h2"/><path d="M8 17h2"/><path d="M14 17h2"/></svg>'))
+            ->color('gray')
+            ->extraAttributes(['class' => 'ui-header-action-export'])
             ->modalHeading('Ekspor Data Dokumen Arsip ke Excel (.xlsx)')
             ->modalDescription('Tentukan rentang tanggal terbit (wajib) dan filter opsional di bawah ini. Proses penyusunan Excel dijalankan di latar belakang dan tautan unduhan akan dikirim ke notifikasi lonceng Anda.')
             ->modalSubmitActionLabel('Ekspor di Latar Belakang')
@@ -203,6 +205,9 @@ class ListDocuments extends ListRecords
     {
         $user = auth()->user();
         $approvalService = app(DocumentApprovalService::class);
+        $totalCount = $user
+            ? DocumentResource::getEloquentQuery()->count()
+            : 0;
         $pendingCount = $user ? $approvalService->countPendingApprovalsForUser($user) : 0;
         $waitingSignatureCount = $user
             ? DocumentResource::getEloquentQuery()
@@ -211,10 +216,11 @@ class ListDocuments extends ListRecords
             : 0;
 
         return [
-            'all' => Tab::make('Semua Dokumen')
-                ->icon('heroicon-o-document-text'),
+            'all' => Tab::make('Semua')
+                ->icon('heroicon-o-square-3-stack-3d')
+                ->badge($totalCount > 0 ? (string) $totalCount : null),
 
-            'my_pending_approval' => Tab::make('Menunggu Persetujuan Saya')
+            'my_pending_approval' => Tab::make('Persetujuan')
                 ->icon('heroicon-o-clock')
                 ->badge($pendingCount > 0 ? (string) $pendingCount : null)
                 ->badgeColor('warning')
@@ -228,7 +234,7 @@ class ListDocuments extends ListRecords
                     return $query->whereIn('documents.id', $pendingSubquery);
                 }),
 
-            'waiting_signature' => Tab::make('Menunggu TTD Basah')
+            'waiting_signature' => Tab::make('TTD Basah')
                 ->icon('heroicon-o-pencil')
                 ->badge($waitingSignatureCount > 0 ? (string) $waitingSignatureCount : null)
                 ->badgeColor('info')
@@ -245,7 +251,7 @@ class ListDocuments extends ListRecords
                     DocumentStatus::Revision,
                 ])),
 
-            'archived_expired' => Tab::make('Arsip Pasif & Kedaluwarsa')
+            'archived_expired' => Tab::make('Arsip')
                 ->icon('heroicon-o-archive-box')
                 ->modifyQueryUsing(fn (Builder $query): Builder => $query->whereIn('documents.status', [
                     DocumentStatus::Archived,

@@ -10,6 +10,7 @@ use App\Enums\ReminderInterval;
 use App\Enums\StampingPosition;
 use App\Enums\UnitType;
 use App\Enums\VisibilityLevel;
+use App\Filament\Resources\Documents\DocumentResource;
 use App\Filament\Resources\Documents\Pages\CreateDocument;
 use App\Filament\Resources\Documents\Pages\EditDocument;
 use App\Filament\Resources\Documents\Pages\ListDocuments;
@@ -1215,5 +1216,41 @@ class DocumentResourceTest extends TestCase
         $this->assertNull($doc->document_number);
         $this->assertSame(VisibilityLevel::Public, $doc->visibility);
         $this->assertTrue($doc->requires_wet_signature);
+    }
+
+    public function test_admin_panel_loads_reusable_modal_stylesheet_and_standardized_table_filter_modal(): void
+    {
+        $userRektor = User::factory()->create([
+            'unit_id' => $this->unitA->id,
+            'is_active' => true,
+        ]);
+        $userRektor->assignRole($this->roleRektor);
+
+        $this->actingAs($userRektor);
+
+        $httpResponse = $this->get(DocumentResource::getUrl('index'));
+        $httpResponse->assertOk();
+        $httpResponse->assertSee('/css/modals-custom.css', false);
+
+        $component = Livewire::test(ListDocuments::class)
+            ->assertOk()
+            ->assertSee('Gunakan filter untuk mempersempit data yang ditampilkan')
+            ->assertSee('Terapkan Filter')
+            ->assertSee('Reset')
+            ->assertSee('data-table-filter-action="reset"', false)
+            ->assertSee('data-table-filter-action="apply"', false);
+
+        $html = $component->html();
+        $resetPos = strpos($html, 'data-table-filter-action="reset"');
+        $applyPos = strpos($html, 'data-table-filter-action="apply"');
+        $this->assertNotFalse($resetPos);
+        $this->assertNotFalse($applyPos);
+        $this->assertLessThan($applyPos, $resetPos);
+
+        // Pastikan aksi filter tetap berjalan normal ketika diterapkan dan di-reset
+        $component->set('tableFilters.status.value', DocumentStatus::Draft->value)
+            ->call('applyTableFilters')
+            ->call('resetTableFiltersForm')
+            ->assertHasNoErrors();
     }
 }

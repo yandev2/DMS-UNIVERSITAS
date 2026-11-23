@@ -39,10 +39,12 @@ trait HasSoftDeletesResource
     public static function trashAction(): Action
     {
         return Action::make('trash')
+            ->label('Trash')
             ->button()
             ->icon(Heroicon::OutlinedTrash)
             ->tooltip('Keranjang Sampah')
-            ->color('danger')
+            ->color('gray')
+            ->extraAttributes(['class' => 'ui-header-action-trash'])
             ->visible(fn (): bool => static::canAccessTrash())
             ->url(fn (): string => static::getUrl('trash'));
     }

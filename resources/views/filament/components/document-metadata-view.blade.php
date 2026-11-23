@@ -32,10 +32,10 @@
 
 <div style="display: flex; flex-direction: column; gap: 1.25rem;">
     {{-- Card 1: Identitas Resmi & Klasifikasi Naskah Dinas --}}
-    <div class="doc-card" style="background-color: var(--doc-surface); border: 1px solid var(--doc-border); border-radius: 0.5rem; padding: 1.25rem 1.5rem; box-shadow: var(--doc-shadow-sm); margin-bottom: 0; color: var(--doc-text-primary);">
+    <div class="doc-card" style="margin-bottom: 0; color: var(--doc-text-primary);">
         <div class="doc-card-header" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; padding-bottom: 1rem; border-bottom: 1px solid var(--doc-border); margin-bottom: 1.25rem;">
-            <div style="display: flex; align-items: center; gap: 0.625rem;">
-                <div class="doc-card-title-icon" style="width: 2.25rem; height: 2.25rem; border-radius: 0.375rem; background-color: var(--doc-badge-info-bg); color: var(--doc-badge-info-solid); border: 1px solid var(--doc-badge-info-border); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div class="doc-card-title-icon">
                     <x-heroicon-o-document-text class="doc-icon-md" style="width: 1.25rem; height: 1.25rem;" />
                 </div>
                 <div>
@@ -78,7 +78,7 @@
             <span class="doc-spec-label">
                 Ringkasan / Abstrak Naskah Dinas
             </span>
-            <div class="doc-meta-box" style="margin-top: 0.375rem; background-color: var(--doc-surface-muted); border: 1px solid var(--doc-border); border-left: 3px solid #2563eb; border-radius: 0.375rem; padding: 0.875rem 1rem; font-size: 0.8125rem; color: var(--doc-text-secondary); line-height: 1.4rem;">
+            <div class="doc-meta-box" style="margin-top: 0.375rem; font-size: 0.8125rem; color: var(--doc-text-secondary); line-height: 1.45rem;">
                 @if($document->description)
                     {{ $document->description }}
                 @else
@@ -248,10 +248,10 @@
     </div>
 
     {{-- Card 2: Berkas Fisik Dokumen (Storage Privat) --}}
-    <div class="doc-card" style="background-color: var(--doc-surface); border: 1px solid var(--doc-border); border-radius: 0.5rem; padding: 1.25rem 1.5rem; box-shadow: var(--doc-shadow-sm); margin-bottom: 0; color: var(--doc-text-primary);">
+    <div class="doc-card" style="margin-bottom: 0; color: var(--doc-text-primary);">
         <div class="doc-card-header" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; padding-bottom: 1rem; border-bottom: 1px solid var(--doc-border); margin-bottom: 1.25rem;">
-            <div style="display: flex; align-items: center; gap: 0.625rem;">
-                <div class="doc-card-title-icon" style="width: 2.25rem; height: 2.25rem; border-radius: 0.375rem; background-color: var(--doc-badge-info-bg); color: var(--doc-badge-info-solid); border: 1px solid var(--doc-badge-info-border); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div class="doc-card-title-icon">
                     <x-heroicon-o-arrow-up-tray class="doc-icon-md" style="width: 1.25rem; height: 1.25rem;" />
                 </div>
                 <div>
@@ -280,14 +280,14 @@
         </div>
 
         @if($primaryFile)
-            <div class="doc-file-card" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; padding: 1rem 1.25rem; background-color: var(--doc-surface-muted); border: 1px solid var(--doc-border); border-radius: 0.375rem;">
+            <div class="doc-file-card">
                 <div style="display: flex; align-items: center; gap: 0.875rem; min-width: 0;">
                     @if($isPdf)
-                        <div class="doc-modal-file-icon doc-modal-file-icon-pdf" style="width: 2.75rem; height: 2.75rem; border-radius: 0.375rem;" title="Berkas PDF">
+                        <div class="doc-modal-file-icon doc-modal-file-icon-pdf" style="width: 2.75rem; height: 2.75rem; border-radius: 0.625rem;" title="Berkas PDF">
                             <x-heroicon-s-document-text class="doc-icon-md" style="width: 1.375rem; height: 1.375rem;" />
                         </div>
                     @else
-                        <div class="doc-modal-file-icon doc-modal-file-icon-word" style="width: 2.75rem; height: 2.75rem; border-radius: 0.375rem;" title="Berkas Microsoft Word">
+                        <div class="doc-modal-file-icon doc-modal-file-icon-word" style="width: 2.75rem; height: 2.75rem; border-radius: 0.625rem;" title="Berkas Microsoft Word">
                             <x-heroicon-s-document class="doc-icon-md" style="width: 1.375rem; height: 1.375rem;" />
                         </div>
                     @endif
@@ -319,7 +319,6 @@
                             type="button"
                             wire:click="mountAction('preview')"
                             class="doc-btn doc-btn-primary"
-                            style="display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.4375rem 0.875rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; border: 1px solid #1d4ed8; background-color: #2563eb; color: #ffffff;"
                         >
                             <x-heroicon-m-eye class="doc-icon-xs" style="width: 0.875rem; height: 0.875rem;" />
                             <span>Pratinjau Berkas</span>
@@ -332,7 +331,6 @@
                             target="_blank"
                             rel="noopener noreferrer"
                             class="doc-btn doc-btn-outlined"
-                            style="display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.4375rem 0.875rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; text-decoration: none; border: 1px solid var(--doc-border-strong); background-color: var(--doc-surface); color: var(--doc-text-primary);"
                         >
                             <x-heroicon-m-arrow-top-right-on-square class="doc-icon-xs" style="width: 0.875rem; height: 0.875rem;" />
                             <span>Buka di Tab Baru</span>
@@ -343,7 +341,6 @@
                         <a
                             href="{{ $downloadUrl }}"
                             class="doc-btn doc-btn-outlined"
-                            style="display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.4375rem 0.875rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 600; text-decoration: none; border: 1px solid var(--doc-border-strong); background-color: var(--doc-surface); color: var(--doc-text-primary);"
                         >
                             <x-heroicon-m-arrow-down-tray class="doc-icon-xs" style="width: 0.875rem; height: 0.875rem;" />
                             <span>Unduh Berkas</span>
@@ -358,7 +355,7 @@
                 $isFinalStampedHash = filled($primaryFile->stamped_file_hash_sha256);
             @endphp
             @if($effectiveHash)
-                <div style="margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.375rem; font-size: 0.6875rem; color: var(--doc-text-muted); font-family: ui-monospace, SFMono-Regular, monospace; background-color: var(--doc-surface-muted); padding: 0.5rem 0.75rem; border-radius: 0.375rem; border: 1px solid var(--doc-border);">
+                <div style="margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.375rem; font-size: 0.6875rem; color: var(--doc-text-muted); font-family: ui-monospace, SFMono-Regular, monospace; background-color: var(--doc-surface-muted); padding: 0.625rem 0.875rem; border-radius: 0.625rem; border: 1px solid var(--doc-border);">
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
                         <x-heroicon-m-finger-print class="doc-icon-xs" style="color: var(--doc-text-muted); flex-shrink: 0;" />
                         <span style="font-weight: 700; color: var(--doc-text-primary);">
@@ -385,10 +382,10 @@
     {{-- Grid Kolom Bawah: Borang Akreditasi & Rantai Revisi --}}
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem;">
         {{-- Card 3: Borang Akreditasi --}}
-        <div class="doc-card" style="background-color: var(--doc-surface); border: 1px solid var(--doc-border); border-radius: 0.5rem; padding: 1.25rem 1.5rem; box-shadow: var(--doc-shadow-sm); margin-bottom: 0; color: var(--doc-text-primary);">
+        <div class="doc-card" style="margin-bottom: 0; color: var(--doc-text-primary);">
             <div class="doc-card-header" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; padding-bottom: 1rem; border-bottom: 1px solid var(--doc-border); margin-bottom: 1.25rem;">
-                <div style="display: flex; align-items: center; gap: 0.625rem;">
-                    <div class="doc-card-title-icon" style="width: 2.25rem; height: 2.25rem; border-radius: 0.375rem; background-color: var(--doc-badge-purple-bg); color: var(--doc-badge-purple-solid); border: 1px solid var(--doc-badge-purple-border); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div class="doc-card-title-icon" style="background-color: var(--doc-badge-purple-bg) !important; color: var(--doc-badge-purple-solid) !important; border: 1px solid var(--doc-badge-purple-border);">
                         <x-heroicon-o-academic-cap class="doc-icon-md" style="width: 1.25rem; height: 1.25rem;" />
                     </div>
                     <div>
@@ -440,10 +437,10 @@
         </div>
 
         {{-- Card 4: Rantai Revisi & Penggantian Dokumen --}}
-        <div class="doc-card" style="background-color: var(--doc-surface); border: 1px solid var(--doc-border); border-radius: 0.5rem; padding: 1.25rem 1.5rem; box-shadow: var(--doc-shadow-sm); margin-bottom: 0; color: var(--doc-text-primary);">
+        <div class="doc-card" style="margin-bottom: 0; color: var(--doc-text-primary);">
             <div class="doc-card-header" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; padding-bottom: 1rem; border-bottom: 1px solid var(--doc-border); margin-bottom: 1.25rem;">
-                <div style="display: flex; align-items: center; gap: 0.625rem;">
-                    <div class="doc-card-title-icon" style="width: 2.25rem; height: 2.25rem; border-radius: 0.375rem; background-color: var(--doc-badge-warning-bg); color: var(--doc-badge-warning-solid); border: 1px solid var(--doc-badge-warning-border); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div class="doc-card-title-icon" style="background-color: var(--doc-badge-warning-bg) !important; color: var(--doc-badge-warning-solid) !important; border: 1px solid var(--doc-badge-warning-border);">
                         <x-heroicon-o-arrow-path class="doc-icon-md" style="width: 1.25rem; height: 1.25rem;" />
                     </div>
                     <div>

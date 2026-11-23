@@ -26,13 +26,13 @@ class IncomingLetterResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedInboxArrowDown;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Surat Masuk & Surat Keluar';
+    protected static string|UnitEnum|null $navigationGroup = 'Persuratan';
 
-    protected static ?string $navigationLabel = 'Surat Masuk (Eksternal)';
+    protected static ?string $navigationLabel = 'Surat Masuk';
 
     protected static ?string $modelLabel = 'Surat Masuk';
 
-    protected static ?string $pluralModelLabel = 'Surat Masuk (Eksternal)';
+    protected static ?string $pluralModelLabel = 'Surat Masuk';
 
     protected static ?int $navigationSort = 1;
 

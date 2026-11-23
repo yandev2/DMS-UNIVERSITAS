@@ -31,9 +31,9 @@ class SystemBackup extends Page
 
     protected static string|UnitEnum|null $navigationGroup = 'Keamanan & Audit Trail';
 
-    protected static ?string $navigationLabel = 'Backup & Restore Sistem';
+    protected static ?string $navigationLabel = 'Backup & Restore';
 
-    protected static ?string $title = 'Backup & Restore Sistem Terpadu';
+    protected static ?string $title = 'Backup & Restore Sistem';
 
     protected static ?string $slug = 'system-backup';
 

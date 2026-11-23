@@ -50,6 +50,7 @@ class DocumentsTable
             ->paginated([5, 10, 25, 50])
             ->defaultPaginationPageOption(10)
             ->searchDebounce('500ms')
+            ->searchPlaceholder('Cari nomor surat, judul, unit...')
             ->columns([
                 TextColumn::make('index')
                     ->label('No.')

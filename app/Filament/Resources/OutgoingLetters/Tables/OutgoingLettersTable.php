@@ -23,6 +23,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Support\Enums\Width;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Enums\PaginationMode;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -82,6 +83,11 @@ class OutgoingLettersTable
                     ->grow(false)
                     ->sortable(),
             ])
+            ->filtersFormColumns([
+                'sm' => 2,
+                'lg' => 2,
+            ])
+            ->filtersFormWidth(Width::ExtraLarge)
             ->filters([
                 SelectFilter::make('unit_id')
                     ->label('Unit Pengaju')
@@ -92,7 +98,7 @@ class OutgoingLettersTable
                 SelectFilter::make('status')
                     ->label('Status Penomoran')
                     ->options(OutgoingLetterStatus::class),
-            ])
+            ], layout: FiltersLayout::Modal)
             ->recordActions([
                 ActionGroup::make([
                     ViewAction::make(),

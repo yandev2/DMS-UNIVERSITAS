@@ -27,13 +27,13 @@ class OutgoingLetterResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedPaperAirplane;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Surat Masuk & Surat Keluar';
+    protected static string|UnitEnum|null $navigationGroup = 'Persuratan';
 
-    protected static ?string $navigationLabel = 'Surat Keluar (Humas)';
+    protected static ?string $navigationLabel = 'Surat Keluar';
 
     protected static ?string $modelLabel = 'Surat Keluar';
 
-    protected static ?string $pluralModelLabel = 'Surat Keluar (Humas)';
+    protected static ?string $pluralModelLabel = 'Surat Keluar';
 
     protected static ?int $navigationSort = 2;
 

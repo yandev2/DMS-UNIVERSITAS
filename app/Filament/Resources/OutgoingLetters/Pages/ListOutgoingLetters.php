@@ -21,6 +21,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Support\Enums\Width;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 
 class ListOutgoingLetters extends ListRecords
@@ -41,8 +42,9 @@ class ListOutgoingLetters extends ListRecords
     {
         return Action::make('exportExcel')
             ->label('Ekspor Excel')
-            ->icon('heroicon-o-arrow-down-tray')
-            ->color('success')
+            ->icon(new HtmlString('<svg class="fi-icon fi-size-md" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h2"/><path d="M14 13h2"/><path d="M8 17h2"/><path d="M14 17h2"/></svg>'))
+            ->color('gray')
+            ->extraAttributes(['class' => 'ui-header-action-export'])
             ->modalHeading('Ekspor Data Surat Keluar ke Excel (.xlsx)')
             ->modalDescription('Tentukan rentang tanggal surat (wajib) dan filter opsional di bawah ini. Proses penyusunan Excel dijalankan di latar belakang dan tautan unduhan akan dikirim ke notifikasi lonceng Anda.')
             ->modalSubmitActionLabel('Ekspor di Latar Belakang')
@@ -173,18 +175,23 @@ class ListOutgoingLetters extends ListRecords
     public function getTabs(): array
     {
         return [
-            'all' => Tab::make('Semua Surat Keluar'),
+            'all' => Tab::make('Semua')
+                ->icon('heroicon-o-square-3-stack-3d'),
 
-            'pending_humas' => Tab::make('Menunggu Tinjauan Humas')
+            'pending_humas' => Tab::make('Tinjauan Humas')
+                ->icon('heroicon-o-clock')
                 ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('status', OutgoingLetterStatus::PendingHumas)),
 
-            'waiting_signature' => Tab::make('Menunggu TTD Basah')
+            'waiting_signature' => Tab::make('TTD Basah')
+                ->icon('heroicon-o-pencil')
                 ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('status', OutgoingLetterStatus::WaitingSignature)),
 
-            'published' => Tab::make('Nomor Terbit (Selesai)')
+            'published' => Tab::make('Terbit')
+                ->icon('heroicon-o-check-badge')
                 ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('status', OutgoingLetterStatus::Published)),
 
-            'revision_or_rejected' => Tab::make('Perlu Revisi / Ditolak')
+            'revision_or_rejected' => Tab::make('Revisi & Ditolak')
+                ->icon('heroicon-o-pencil-square')
                 ->modifyQueryUsing(fn (Builder $query): Builder => $query->whereIn('status', [
                     OutgoingLetterStatus::NeedsRevision,
                     OutgoingLetterStatus::Rejected,

@@ -2138,100 +2138,191 @@
     transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
+.fi-sidebar-nav {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+}
+
+.fi-sidebar-nav::-webkit-scrollbar {
+    width: 4px;
+}
+
+.fi-sidebar-nav::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.35);
+    border-radius: 9999px;
+}
+
 .fi-topbar-collapse-sidebar-btn-ctn {
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-/* 4.1 Solid High-Contrast Active Sidebar Navigation Item (Selected State) */
+/* Group Section Labels (Uppercase Tracking ala Referensi) */
+.fi-sidebar-group-label {
+    text-transform: uppercase !important;
+    font-size: 0.71875rem !important;
+    letter-spacing: 0.055em !important;
+    font-weight: 700 !important;
+    color: #94a3b8 !important;
+}
+
+.dark .fi-sidebar-group-label {
+    color: #64748b !important;
+}
+
+/* Inactive Sidebar Item Styling */
+.fi-sidebar-item:not(.fi-active) > .fi-sidebar-item-btn:not([aria-current="page"]) {
+    border-radius: 0.625rem !important;
+    transition: background-color 0.15s ease, color 0.15s ease !important;
+}
+
+.fi-sidebar-item:not(.fi-active) > .fi-sidebar-item-btn:not([aria-current="page"]):hover {
+    background-color: #f8fafc !important;
+}
+
+.dark .fi-sidebar-item:not(.fi-active) > .fi-sidebar-item-btn:not([aria-current="page"]):hover {
+    background-color: rgba(30, 41, 59, 0.65) !important;
+}
+
+.fi-sidebar-item:not(.fi-active) > .fi-sidebar-item-btn:not([aria-current="page"]) .fi-sidebar-item-label {
+    color: #334155 !important;
+    font-weight: 500 !important;
+}
+
+.fi-sidebar-item:not(.fi-active) > .fi-sidebar-item-btn:not([aria-current="page"]) > .fi-icon,
+.fi-sidebar-item:not(.fi-active) > .fi-sidebar-item-btn:not([aria-current="page"]) svg {
+    color: #94a3b8 !important;
+}
+
+.fi-sidebar-item:not(.fi-active) > .fi-sidebar-item-btn:not([aria-current="page"]):hover .fi-sidebar-item-label {
+    color: #0f172a !important;
+}
+
+.fi-sidebar-item:not(.fi-active) > .fi-sidebar-item-btn:not([aria-current="page"]):hover > .fi-icon,
+.fi-sidebar-item:not(.fi-active) > .fi-sidebar-item-btn:not([aria-current="page"]):hover svg {
+    color: #64748b !important;
+}
+
+.dark .fi-sidebar-item:not(.fi-active) > .fi-sidebar-item-btn:not([aria-current="page"]) .fi-sidebar-item-label {
+    color: #cbd5e1 !important;
+}
+
+.dark .fi-sidebar-item:not(.fi-active) > .fi-sidebar-item-btn:not([aria-current="page"]):hover .fi-sidebar-item-label {
+    color: #f8fafc !important;
+}
+
+/* 4.1 Soft-Blue Clean Active Sidebar Navigation Item (Non-Solid, Harmonious with Tab & Table System) */
 .fi-sidebar-item.fi-active > .fi-sidebar-item-btn,
 .fi-sidebar-item-btn[aria-current="page"],
 .fi-sidebar-sub-group-items .fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
-    background-color: #2563eb !important; /* Solid Royal Blue */
-    color: #ffffff !important;
-    font-weight: 700 !important;
-    border-radius: 0.5rem !important;
-    box-shadow: 0 1px 3px 0 rgba(37, 99, 235, 0.3), 0 1px 2px -1px rgba(37, 99, 235, 0.15) !important;
-    transition: background-color 0.15s ease, transform 0.15s ease !important;
+    background-color: #eff6ff !important;
+    color: #1d4ed8 !important;
+    font-weight: 600 !important;
+    border-radius: 0.625rem !important;
+    box-shadow: inset 0 0 0 1px #bfdbfe !important;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease !important;
 }
 
 .fi-sidebar-item.fi-active > .fi-sidebar-item-btn:hover,
 .fi-sidebar-item-btn[aria-current="page"]:hover,
 .fi-sidebar-sub-group-items .fi-sidebar-item.fi-active > .fi-sidebar-item-btn:hover {
-    background-color: #1d4ed8 !important; /* Deeper Blue on hover */
-    color: #ffffff !important;
+    background-color: #e0eeff !important;
+    box-shadow: inset 0 0 0 1px #93c5fd !important;
+    color: #1d4ed8 !important;
 }
 
-/* Ensure active text label is crisp pure white */
+/* Ensure active text label is crisp royal blue */
 .fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-label,
 .fi-sidebar-item-btn[aria-current="page"] .fi-sidebar-item-label,
 .fi-sidebar-sub-group-items .fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-label {
-    color: #ffffff !important;
-    font-weight: 700 !important;
+    color: #1d4ed8 !important;
+    font-weight: 600 !important;
 }
 
-/* Ensure active icon is crisp pure white */
+/* Ensure active icon is crisp royal blue */
 .fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-icon,
 .fi-sidebar-item.fi-active > .fi-sidebar-item-btn svg,
 .fi-sidebar-item-btn[aria-current="page"] .fi-sidebar-item-icon,
 .fi-sidebar-item-btn[aria-current="page"] svg,
 .fi-sidebar-sub-group-items .fi-sidebar-item.fi-active > .fi-sidebar-item-btn svg {
-    color: #ffffff !important;
+    color: #2563eb !important;
     stroke: currentColor !important;
 }
 
-/* Active Badge contrast (if badge exists) */
+/* Active Badge contrast (matching Tab Counter Badge) */
 .fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-badge-ctn .fi-badge,
 .fi-sidebar-item-btn[aria-current="page"] .fi-sidebar-item-badge-ctn .fi-badge {
-    background-color: rgba(255, 255, 255, 0.25) !important;
+    background-color: #2563eb !important;
     color: #ffffff !important;
-    border: 1px solid rgba(255, 255, 255, 0.4) !important;
-    font-weight: 800 !important;
+    border: none !important;
+    border-radius: 9999px !important;
+    font-weight: 700 !important;
 }
 
-/* Dark Mode: Solid High-Contrast Blue */
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-badge-ctn .fi-badge *,
+.fi-sidebar-item-btn[aria-current="page"] .fi-sidebar-item-badge-ctn .fi-badge * {
+    color: #ffffff !important;
+}
+
+/* Dark Mode: Soft Blue Frosted Accent (Non-Solid) */
 .dark .fi-sidebar-item.fi-active > .fi-sidebar-item-btn,
 .dark .fi-sidebar-item-btn[aria-current="page"],
 .dark .fi-sidebar-sub-group-items .fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
-    background-color: #2563eb !important;
-    color: #ffffff !important;
-    box-shadow: 0 2px 10px -2px rgba(37, 99, 235, 0.6) !important;
+    background-color: rgba(37, 99, 235, 0.16) !important;
+    color: #60a5fa !important;
+    box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.35) !important;
 }
 
 .dark .fi-sidebar-item.fi-active > .fi-sidebar-item-btn:hover,
 .dark .fi-sidebar-item-btn[aria-current="page"]:hover {
-    background-color: #1d4ed8 !important;
-    color: #ffffff !important;
+    background-color: rgba(37, 99, 235, 0.24) !important;
+    box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.5) !important;
+    color: #93c5fd !important;
 }
 
 .dark .fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-label,
 .dark .fi-sidebar-item-btn[aria-current="page"] .fi-sidebar-item-label {
-    color: #ffffff !important;
+    color: #60a5fa !important;
 }
 
 .dark .fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-icon,
 .dark .fi-sidebar-item.fi-active > .fi-sidebar-item-btn svg,
 .dark .fi-sidebar-item-btn[aria-current="page"] .fi-sidebar-item-icon,
 .dark .fi-sidebar-item-btn[aria-current="page"] svg {
-    color: #ffffff !important;
+    color: #60a5fa !important;
     stroke: currentColor !important;
 }
 
 /* Sub-navigation items (tabs / sub-nav) */
 .fi-sub-nav-item.fi-active > .fi-sub-nav-item-btn,
 .fi-sub-nav-item-btn[aria-current="page"] {
-    background-color: #2563eb !important;
-    color: #ffffff !important;
-    font-weight: 700 !important;
-    border-radius: 0.5rem !important;
+    background-color: #eff6ff !important;
+    color: #1d4ed8 !important;
+    font-weight: 600 !important;
+    border-radius: 0.625rem !important;
+    box-shadow: inset 0 0 0 1px #bfdbfe !important;
 }
 
 .fi-sub-nav-item.fi-active > .fi-sub-nav-item-btn .fi-sub-nav-item-label,
 .fi-sub-nav-item-btn[aria-current="page"] .fi-sub-nav-item-label,
 .fi-sub-nav-item.fi-active > .fi-sub-nav-item-btn svg,
 .fi-sub-nav-item-btn[aria-current="page"] svg {
-    color: #ffffff !important;
+    color: #1d4ed8 !important;
+}
+
+.dark .fi-sub-nav-item.fi-active > .fi-sub-nav-item-btn,
+.dark .fi-sub-nav-item-btn[aria-current="page"] {
+    background-color: rgba(37, 99, 235, 0.16) !important;
+    color: #60a5fa !important;
+    box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.35) !important;
+}
+
+.dark .fi-sub-nav-item.fi-active > .fi-sub-nav-item-btn .fi-sub-nav-item-label,
+.dark .fi-sub-nav-item-btn[aria-current="page"] .fi-sub-nav-item-label,
+.dark .fi-sub-nav-item.fi-active > .fi-sub-nav-item-btn svg,
+.dark .fi-sub-nav-item-btn[aria-current="page"] svg {
+    color: #60a5fa !important;
 }
 
 /* ==========================================================================

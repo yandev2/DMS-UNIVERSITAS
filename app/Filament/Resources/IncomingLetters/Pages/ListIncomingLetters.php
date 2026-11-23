@@ -22,6 +22,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Support\Enums\Width;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 
 class ListIncomingLetters extends ListRecords
@@ -43,8 +44,9 @@ class ListIncomingLetters extends ListRecords
     {
         return Action::make('exportExcel')
             ->label('Ekspor Excel')
-            ->icon('heroicon-o-arrow-down-tray')
-            ->color('success')
+            ->icon(new HtmlString('<svg class="fi-icon fi-size-md" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h2"/><path d="M14 13h2"/><path d="M8 17h2"/><path d="M14 17h2"/></svg>'))
+            ->color('gray')
+            ->extraAttributes(['class' => 'ui-header-action-export'])
             ->modalHeading('Ekspor Data Surat Masuk ke Excel (.xlsx)')
             ->modalDescription('Tentukan rentang tanggal diterima (wajib) dan filter opsional di bawah ini. Proses penyusunan Excel dijalankan di latar belakang dan tautan unduhan akan dikirim ke notifikasi lonceng Anda.')
             ->modalSubmitActionLabel('Ekspor di Latar Belakang')
@@ -164,15 +166,19 @@ class ListIncomingLetters extends ListRecords
         $user = auth()->user();
 
         return [
-            'all' => Tab::make('Semua Surat Masuk'),
+            'all' => Tab::make('Semua')
+                ->icon('heroicon-o-square-3-stack-3d'),
 
-            'my_turn' => Tab::make('Menunggu Dibaca Saya')
+            'my_turn' => Tab::make('Giliran Saya')
+                ->icon('heroicon-o-clock')
                 ->modifyQueryUsing(fn (Builder $query): Builder => $query->pendingTurnForUser($user)),
 
-            'in_progress' => Tab::make('Dalam Distribusi Baca')
+            'in_progress' => Tab::make('Distribusi')
+                ->icon('heroicon-o-paper-airplane')
                 ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('status', IncomingLetterStatus::InProgress)),
 
-            'completed' => Tab::make('Selesai Dibaca')
+            'completed' => Tab::make('Selesai')
+                ->icon('heroicon-o-check-badge')
                 ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('status', IncomingLetterStatus::Completed)),
         ];
     }

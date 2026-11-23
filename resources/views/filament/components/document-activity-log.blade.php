@@ -15,9 +15,9 @@
 
 <div style="display: flex; flex-direction: column; gap: 1rem;">
     {{-- Summary Bar --}}
-    <div class="doc-card" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; padding: 1rem 1.25rem; background-color: var(--doc-surface); border: 1px solid var(--doc-border); border-radius: 0.5rem; box-shadow: var(--doc-shadow-sm); margin-bottom: 0; color: var(--doc-text-primary);">
+    <div class="doc-card" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; padding: 1rem 1.25rem; margin-bottom: 0; color: var(--doc-text-primary);">
         <div style="display: flex; align-items: center; gap: 0.75rem;">
-            <span style="display: flex; width: 2.25rem; height: 2.25rem; align-items: center; justify-content: center; border-radius: 0.375rem; background-color: var(--doc-badge-info-bg); color: var(--doc-badge-info-solid); border: 1px solid var(--doc-badge-info-border); font-weight: 700; flex-shrink: 0;">
+            <span class="doc-card-title-icon">
                 <x-heroicon-o-shield-check class="doc-icon-md" style="width: 1.25rem; height: 1.25rem;" />
             </span>
             <div>
@@ -48,7 +48,7 @@
             </p>
         </div>
     @else
-        <div class="doc-card" style="border-radius: 0.5rem; border: 1px solid var(--doc-border); background-color: var(--doc-surface); box-shadow: var(--doc-shadow-sm); overflow: hidden; padding: 0; margin-bottom: 0;">
+        <div class="doc-card" style="overflow: hidden; padding: 0; margin-bottom: 0;">
             <div class="doc-table-wrapper" style="overflow-x: auto; width: 100%; border: 0; border-radius: 0;">
                 <table class="doc-table" style="width: 100%; text-align: left; font-size: 0.75rem; border-collapse: collapse;">
                     <thead style="background-color: var(--doc-surface-muted); color: var(--doc-text-muted); font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--doc-border);">

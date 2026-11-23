@@ -1,0 +1,1938 @@
+/* ==========================================================================
+   UNIVBI E-Arsip: Reusable Liquid Glass Modal Design System (Light & Dark Native)
+   Single Source of Truth untuk seluruh Modal Filament, Filter Tabel & Modal Kustom (.ui-modal-*)
+   Disesuaikan presisi dengan Mockup Liquid Glass:
+   - Frosted backdrop overlay
+   - Header layered translucent wave circles (::before & ::after) + tipografi tegas
+   - Body-to-footer seamless luminous ice-blue glass tanpa garis pemisah kaku
+   - Capsule pill inputs dengan soft floating elevation & focus ring biru tegas
+   - Frosted specular pill buttons (Reset, Tutup, Terapkan Filter)
+   ========================================================================== */
+
+:root {
+    --ui-modal-radius: 1.25rem;
+    --ui-modal-field-radius: 0.625rem;
+    --ui-modal-btn-radius: 0.625rem;
+    --ui-modal-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+    /* Surface Liquid Glass (Light Mode - Luminous Ice-Blue Tint, bukan abu-abu kusam) */
+    --ui-modal-surface:
+        radial-gradient(70% 60% at 92% 96%, rgba(147, 197, 253, 0.22) 0%, rgba(191, 219, 254, 0) 70%),
+        radial-gradient(60% 50% at 8% 100%, rgba(219, 234, 254, 0.24) 0%, rgba(255, 255, 255, 0) 70%),
+        linear-gradient(160deg, rgba(248, 251, 255, 0.94) 0%, rgba(240, 246, 255, 0.91) 52%, rgba(233, 242, 255, 0.94) 100%);
+    --ui-modal-surface-solid: #f4f8ff;
+
+    /* Header Gradient + Layered Wave Accents */
+    --ui-modal-header-bg:
+        radial-gradient(65% 140% at 88% -10%, rgba(96, 165, 250, 0.28) 0%, rgba(147, 197, 253, 0.16) 48%, rgba(255, 255, 255, 0) 80%),
+        linear-gradient(90deg, rgba(238, 245, 255, 0.78) 0%, rgba(248, 251, 255, 0.62) 45%, rgba(219, 234, 254, 0.55) 100%);
+    --ui-modal-header-wave-1: linear-gradient(135deg, rgba(147, 197, 253, 0.42) 0%, rgba(255, 255, 255, 0.75) 100%);
+    --ui-modal-header-wave-2: linear-gradient(145deg, rgba(96, 165, 250, 0.32) 0%, rgba(219, 234, 254, 0.15) 100%);
+    --ui-modal-header-divider: rgba(255, 255, 255, 0.92);
+    --ui-modal-header-divider-Subtle: rgba(191, 219, 254, 0.55);
+    --ui-modal-divider: rgba(226, 232, 240, 0.85);
+
+    --ui-modal-border: rgba(255, 255, 255, 0.92);
+    --ui-modal-shadow:
+        0 30px 70px -15px rgba(15, 23, 42, 0.22),
+        0 12px 28px -8px rgba(37, 99, 235, 0.12),
+        inset 0 1.5px 0 0 rgba(255, 255, 255, 0.98),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.65);
+    --ui-modal-overlay: rgba(15, 23, 42, 0.28);
+
+    --ui-modal-title: #0f172a;
+    --ui-modal-subtitle: #475569;
+    --ui-modal-label: #1e293b;
+
+    /* Close Button Frosted Circle */
+    --ui-modal-close-bg: rgba(255, 255, 255, 0.58);
+    --ui-modal-close-bg-hover: rgba(255, 255, 255, 0.92);
+    --ui-modal-close-border: rgba(255, 255, 255, 0.92);
+    --ui-modal-close-color: #1e293b;
+    --ui-modal-close-shadow:
+        0 4px 12px -2px rgba(37, 99, 235, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.95);
+
+    /* Capsule Pill Fields */
+    --ui-modal-field-bg: linear-gradient(180deg, rgba(245, 249, 255, 0.88) 0%, rgba(255, 255, 255, 0.96) 100%);
+    --ui-modal-field-bg-focus: #ffffff;
+    --ui-modal-field-border: rgba(203, 213, 225, 0.72);
+    --ui-modal-field-hover-border: rgba(96, 165, 250, 0.75);
+    --ui-modal-field-shadow:
+        0 3px 10px -2px rgba(30, 64, 175, 0.06),
+        0 1px 2px rgba(15, 23, 42, 0.03),
+        inset 0 1px 0 rgba(255, 255, 255, 0.98);
+    --ui-modal-field-focus: #3b82f6;
+    --ui-modal-field-ring:
+        0 0 0 1.5px #3b82f6,
+        0 0 0 4px rgba(59, 130, 246, 0.16),
+        0 6px 14px -3px rgba(37, 99, 235, 0.12);
+
+    --ui-modal-panel-bg: rgba(255, 255, 255, 0.96);
+    --ui-modal-panel-border: rgba(148, 163, 184, 0.35);
+
+    /* Secondary Frosted Glass Pills (Reset & Tutup) */
+    --ui-modal-btn-neutral-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.82) 0%, rgba(241, 246, 255, 0.72) 100%);
+    --ui-modal-btn-neutral-bg-hover: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 251, 255, 0.9) 100%);
+    --ui-modal-btn-neutral-border: rgba(255, 255, 255, 0.95);
+    --ui-modal-btn-neutral-text: #1e293b;
+    --ui-modal-btn-neutral-shadow:
+        0 4px 12px -2px rgba(30, 64, 175, 0.08),
+        0 0 0 1px rgba(203, 213, 225, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.98);
+
+    /* Primary Button (Clean Solid Blue, Tanpa Efek 3D Glossy/Bevel) */
+    --ui-modal-btn-primary-bg: #2563eb;
+    --ui-modal-btn-primary-bg-hover: #1d4ed8;
+    --ui-modal-btn-primary-border: #1d4ed8;
+    --ui-modal-btn-primary-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.08);
+}
+
+.dark,
+html.dark {
+    --ui-modal-surface:
+        radial-gradient(70% 60% at 92% 96%, rgba(37, 99, 235, 0.18) 0%, rgba(15, 23, 42, 0) 70%),
+        linear-gradient(160deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.86) 55%, rgba(23, 37, 84, 0.88) 100%);
+    --ui-modal-surface-solid: #0f172a;
+
+    --ui-modal-header-bg:
+        radial-gradient(65% 140% at 88% -10%, rgba(59, 130, 246, 0.3) 0%, rgba(37, 99, 235, 0.14) 50%, rgba(15, 23, 42, 0) 80%),
+        linear-gradient(90deg, rgba(30, 41, 59, 0.65) 0%, rgba(15, 23, 42, 0.45) 50%, rgba(30, 58, 138, 0.35) 100%);
+    --ui-modal-header-wave-1: linear-gradient(135deg, rgba(59, 130, 246, 0.24) 0%, rgba(147, 197, 253, 0.08) 100%);
+    --ui-modal-header-wave-2: linear-gradient(145deg, rgba(37, 99, 235, 0.22) 0%, rgba(15, 23, 42, 0) 100%);
+    --ui-modal-header-divider: rgba(255, 255, 255, 0.12);
+    --ui-modal-header-divider-Subtle: rgba(59, 130, 246, 0.22);
+    --ui-modal-divider: rgba(148, 163, 184, 0.14);
+
+    --ui-modal-border: rgba(255, 255, 255, 0.16);
+    --ui-modal-shadow:
+        0 32px 68px -14px rgba(0, 0, 0, 0.72),
+        0 12px 28px -8px rgba(37, 99, 235, 0.18),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.18),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    --ui-modal-overlay: rgba(2, 6, 23, 0.56);
+
+    --ui-modal-title: #f8fafc;
+    --ui-modal-subtitle: #94a3b8;
+    --ui-modal-label: #e2e8f0;
+
+    --ui-modal-close-bg: rgba(30, 41, 59, 0.72);
+    --ui-modal-close-bg-hover: rgba(51, 65, 85, 0.95);
+    --ui-modal-close-border: rgba(255, 255, 255, 0.16);
+    --ui-modal-close-color: #e2e8f0;
+    --ui-modal-close-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+
+    --ui-modal-field-bg: linear-gradient(180deg, rgba(30, 41, 59, 0.75) 0%, rgba(15, 23, 42, 0.85) 100%);
+    --ui-modal-field-bg-focus: rgba(15, 23, 42, 0.96);
+    --ui-modal-field-border: rgba(148, 163, 184, 0.28);
+    --ui-modal-field-hover-border: rgba(96, 165, 250, 0.65);
+    --ui-modal-field-shadow:
+        0 2px 8px -1px rgba(0, 0, 0, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    --ui-modal-field-focus: #60a5fa;
+    --ui-modal-field-ring:
+        0 0 0 1.5px #60a5fa,
+        0 0 0 4px rgba(59, 130, 246, 0.24),
+        0 6px 14px -3px rgba(37, 99, 235, 0.22);
+
+    --ui-modal-panel-bg: rgba(15, 23, 42, 0.96);
+    --ui-modal-panel-border: rgba(148, 163, 184, 0.26);
+
+    --ui-modal-btn-neutral-bg: linear-gradient(180deg, rgba(30, 41, 59, 0.82) 0%, rgba(15, 23, 42, 0.78) 100%);
+    --ui-modal-btn-neutral-bg-hover: linear-gradient(180deg, rgba(51, 65, 85, 0.92) 0%, rgba(30, 41, 59, 0.9) 100%);
+    --ui-modal-btn-neutral-border: rgba(255, 255, 255, 0.16);
+    --ui-modal-btn-neutral-text: #e2e8f0;
+    --ui-modal-btn-neutral-shadow:
+        0 4px 12px -2px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(148, 163, 184, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.14);
+
+    --ui-modal-btn-primary-bg: #2563eb;
+    --ui-modal-btn-primary-bg-hover: #3b82f6;
+    --ui-modal-btn-primary-border: #3b82f6;
+    --ui-modal-btn-primary-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.25);
+}
+
+/* ==========================================================================
+   1. FILAMENT GLOBAL LIQUID GLASS MODAL (.fi-modal)
+   ========================================================================== */
+
+/* Frosted Overlay agar teks tabel di belakang modal memburam lembut seperti mockup */
+.fi-modal > .fi-modal-close-overlay {
+    background-color: var(--ui-modal-overlay);
+    -webkit-backdrop-filter: blur(7px);
+    backdrop-filter: blur(7px);
+    transition: opacity 0.24s var(--ui-modal-ease);
+}
+
+.fi-modal:not(.fi-modal-slide-over):not(.fi-width-screen) > .fi-modal-window-ctn {
+    overscroll-behavior: contain;
+}
+
+.fi-modal:not(.fi-modal-slide-over):not(.fi-width-screen) > .fi-modal-window-ctn > .fi-modal-window {
+    background: var(--ui-modal-surface);
+    -webkit-backdrop-filter: blur(24px) saturate(175%);
+    backdrop-filter: blur(24px) saturate(175%);
+    border: 1.5px solid var(--ui-modal-border);
+    border-radius: var(--ui-modal-radius);
+    box-shadow: var(--ui-modal-shadow);
+    transition: transform 0.26s var(--ui-modal-ease), opacity 0.22s ease;
+    /* Pertahankan overflow visible agar dropdown & DatePicker tidak terpotong */
+    overflow: visible;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .fi-modal:not(.fi-modal-slide-over):not(.fi-width-screen) > .fi-modal-window-ctn > .fi-modal-window {
+        background: var(--ui-modal-surface-solid);
+    }
+}
+
+/* Header dengan 2 Gelombang Lingkaran Translusen (::before & ::after) seperti Mockup Kiri */
+.fi-modal:not(.fi-modal-slide-over):not(.fi-width-screen) .fi-modal-header {
+    position: relative;
+    overflow: hidden;
+    background: var(--ui-modal-header-bg);
+    border-bottom: 1.5px solid var(--ui-modal-header-divider);
+    box-shadow: 0 1px 0 var(--ui-modal-header-divider-Subtle);
+    border-radius: var(--ui-modal-radius) var(--ui-modal-radius) 0 0;
+    padding: 1.375rem 4rem 1.25rem 1.75rem;
+    column-gap: 1rem;
+    align-items: center;
+}
+
+.fi-modal:not(.fi-modal-slide-over):not(.fi-width-screen) .fi-modal-header::before {
+    content: "";
+    position: absolute;
+    width: 14rem;
+    height: 14rem;
+    right: 6.5rem;
+    top: -8.25rem;
+    border-radius: 9999px;
+    background: var(--ui-modal-header-wave-1);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.fi-modal:not(.fi-modal-slide-over):not(.fi-width-screen) .fi-modal-header::after {
+    content: "";
+    position: absolute;
+    width: 12rem;
+    height: 12rem;
+    right: -2.5rem;
+    top: -5rem;
+    border-radius: 9999px;
+    background: var(--ui-modal-header-wave-2);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.fi-modal:not(.fi-modal-slide-over):not(.fi-width-screen) .fi-modal-header > :not(.fi-modal-close-btn) {
+    position: relative;
+    z-index: 1;
+}
+
+.fi-modal.fi-align-center:not(.fi-modal-slide-over):not(.fi-width-screen) .fi-modal-header {
+    padding: 1.5rem 2.75rem 1.25rem;
+}
+
+/* Tipografi Judul "Filter" Lebih Besar & Tegas Sesuai Mockup */
+.fi-modal .fi-modal-heading {
+    color: var(--ui-modal-title);
+    font-size: 1.45rem;
+    line-height: 1.2;
+    font-weight: 800;
+    letter-spacing: -0.022em;
+}
+
+.fi-modal .fi-modal-description {
+    color: var(--ui-modal-subtitle);
+    font-size: 0.84375rem;
+    line-height: 1.45;
+    margin-top: 0.2rem;
+    font-weight: 450;
+}
+
+/* Badge Ikon Modal Clean & Flat (Tanpa Efek 3D Bubble) */
+.fi-modal .fi-modal-icon-bg {
+    width: 2.625rem;
+    height: 2.625rem;
+    padding: 0;
+    border-radius: 0.625rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: none;
+}
+
+.fi-modal .fi-modal-icon-bg.fi-color-primary,
+.fi-modal .fi-modal-icon-bg.fi-color-info {
+    background: rgba(37, 99, 235, 0.1);
+    color: #2563eb;
+    border: 1px solid rgba(37, 99, 235, 0.2);
+}
+
+.dark .fi-modal .fi-modal-icon-bg.fi-color-primary,
+.dark .fi-modal .fi-modal-icon-bg.fi-color-info {
+    background: rgba(59, 130, 246, 0.16);
+    color: #60a5fa;
+    border: 1px solid rgba(96, 165, 250, 0.28);
+}
+
+.fi-modal .fi-modal-icon-bg.fi-color-danger {
+    background: rgba(225, 29, 72, 0.1);
+    color: #e11d48;
+    border: 1px solid rgba(225, 29, 72, 0.2);
+}
+
+.dark .fi-modal .fi-modal-icon-bg.fi-color-danger {
+    background: rgba(244, 63, 94, 0.16);
+    color: #fb7185;
+    border: 1px solid rgba(251, 113, 133, 0.28);
+}
+
+.fi-modal .fi-modal-icon-bg.fi-color-warning {
+    background: rgba(217, 119, 6, 0.1);
+    color: #d97706;
+    border: 1px solid rgba(217, 119, 6, 0.22);
+}
+
+.dark .fi-modal .fi-modal-icon-bg.fi-color-warning {
+    background: rgba(245, 158, 11, 0.16);
+    color: #fbbf24;
+    border: 1px solid rgba(251, 191, 36, 0.28);
+}
+
+.fi-modal .fi-modal-icon-bg.fi-color-success {
+    background: rgba(5, 150, 105, 0.1);
+    color: #059669;
+    border: 1px solid rgba(5, 150, 105, 0.2);
+}
+
+.dark .fi-modal .fi-modal-icon-bg.fi-color-success {
+    background: rgba(16, 185, 129, 0.16);
+    color: #34d399;
+    border: 1px solid rgba(52, 211, 153, 0.28);
+}
+
+.fi-modal .fi-modal-icon-bg.fi-color-primary svg,
+.fi-modal .fi-modal-icon-bg.fi-color-info svg,
+.fi-modal .fi-modal-icon-bg.fi-color-danger svg,
+.fi-modal .fi-modal-icon-bg.fi-color-warning svg,
+.fi-modal .fi-modal-icon-bg.fi-color-success svg {
+    color: currentColor;
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+/* Tombol Close Kaca Bulat (Selalu terkunci absolut di pojok kanan atas header) */
+.fi-modal .fi-modal-window .fi-modal-close-btn {
+    position: absolute !important;
+    top: 1.25rem !important;
+    right: 1.5rem !important;
+    inset-inline-end: 1.5rem !important;
+    inset-inline-start: auto !important;
+    left: auto !important;
+    z-index: 2;
+    width: 2.375rem;
+    height: 2.375rem;
+    margin: 0 !important;
+    border-radius: 9999px;
+    background-color: var(--ui-modal-close-bg);
+    color: var(--ui-modal-close-color);
+    border: 1.5px solid var(--ui-modal-close-border);
+    box-shadow: var(--ui-modal-close-shadow);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s var(--ui-modal-ease), color 0.2s ease, transform 0.2s var(--ui-modal-ease);
+}
+
+.fi-modal .fi-modal-window .fi-modal-close-btn:hover {
+    background-color: var(--ui-modal-close-bg-hover);
+    color: var(--ui-modal-title);
+    transform: scale(1.04);
+}
+
+/* Sejajarkan padding konten form dengan header */
+.fi-modal.fi-align-start > .fi-modal-window-ctn > .fi-modal-window-has-icon.fi-modal-window-has-content .fi-modal-content,
+.fi-modal.fi-align-start > .fi-modal-window-ctn > .fi-modal-window-has-icon.fi-modal-window-has-content .fi-modal-footer:not(.fi-align-center) {
+    padding-inline: 1.75rem;
+}
+
+.fi-modal:not(.fi-modal-slide-over):not(.fi-width-screen) .fi-modal-content {
+    padding-top: 1.5rem;
+    padding-bottom: 1.25rem;
+}
+
+/* Modal Pratinjau Dokumen / Surat: Rapatkan jarak vertikal agar kanvas PDF/Word langsung menyatu */
+.fi-modal:has(.doc-modal-container) .fi-modal-header {
+    padding: 1rem 4rem 0.9375rem 1.5rem !important;
+}
+
+.fi-modal:has(.doc-modal-container) .fi-modal-heading {
+    font-size: 1.1875rem !important;
+    line-height: 1.3 !important;
+}
+
+.fi-modal:has(.doc-modal-container) .fi-modal-close-btn {
+    top: 0.875rem !important;
+    right: 1.25rem !important;
+    inset-inline-end: 1.25rem !important;
+}
+
+.fi-modal:has(.doc-modal-container) .fi-modal-content {
+    padding: 0.875rem 1.5rem 1.125rem !important;
+    row-gap: 0 !important;
+}
+
+.fi-modal:has(.doc-modal-container) .fi-modal-footer {
+    padding: 0 1.5rem 1.125rem !important;
+}
+
+/* Field Input & Select Capsule Pill Seperti Mockup Kiri */
+.fi-modal-content .fi-fo-field-wrp-label {
+    font-size: 0.84375rem;
+    font-weight: 600;
+    color: var(--ui-modal-label);
+}
+
+.fi-modal-content .fi-input-wrp {
+    border-radius: var(--ui-modal-field-radius);
+    background: var(--ui-modal-field-bg);
+    --tw-ring-color: var(--ui-modal-field-border);
+    box-shadow: 0 0 0 1px var(--ui-modal-field-border), var(--ui-modal-field-shadow);
+    transition: box-shadow 0.2s var(--ui-modal-ease), background 0.2s ease;
+}
+
+.fi-modal-content .fi-input-wrp:has(textarea) {
+    border-radius: 0.75rem;
+}
+
+.fi-modal-content .fi-input-wrp:not(.fi-disabled):hover {
+    background: var(--ui-modal-field-bg-focus);
+    --tw-ring-color: var(--ui-modal-field-hover-border);
+    box-shadow: 0 0 0 1.25px var(--ui-modal-field-hover-border), var(--ui-modal-field-shadow);
+}
+
+.fi-modal-content .fi-input-wrp:not(.fi-disabled):focus-within,
+.fi-modal-content .fi-input-wrp:not(.fi-disabled):has([aria-expanded="true"]) {
+    background: var(--ui-modal-field-bg-focus);
+    --tw-ring-color: var(--ui-modal-field-focus);
+    box-shadow: var(--ui-modal-field-ring) !important;
+}
+
+.fi-modal-content .choices__list--dropdown,
+.fi-modal-content .fi-dropdown-panel {
+    border-radius: 1.125rem;
+    background-color: var(--ui-modal-panel-bg);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    backdrop-filter: blur(18px) saturate(160%);
+    border: 1px solid var(--ui-modal-panel-border);
+    box-shadow: 0 18px 36px -10px rgba(15, 23, 42, 0.22);
+    z-index: 60;
+}
+
+/* Footer Modal Menyatu Seamless Tanpa Garis Batas Kaku seperti Mockup Kiri */
+.fi-modal:not(.fi-modal-slide-over):not(.fi-width-screen) .fi-modal-footer {
+    background: transparent;
+    border-top: none;
+    padding: 0.5rem 1.75rem 1.5rem;
+    border-radius: 0 0 var(--ui-modal-radius) var(--ui-modal-radius);
+}
+
+/* ==========================================================================
+   2. SPESIALISASI MODAL FILTER TABEL (.fi-ta-filters-modal)
+   ========================================================================== */
+
+.fi-ta-filters-modal .fi-modal-footer-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.fi-ta-filters-modal [data-table-filter-action="reset"] {
+    margin-inline-end: auto;
+    border-radius: var(--ui-modal-btn-radius);
+    background: var(--ui-modal-btn-neutral-bg);
+    color: var(--ui-modal-btn-neutral-text);
+    border: 1.5px solid var(--ui-modal-btn-neutral-border);
+    box-shadow: var(--ui-modal-btn-neutral-shadow);
+    min-height: 2.5rem;
+    padding-inline: 1.125rem;
+    font-weight: 600;
+    transition: background 0.2s var(--ui-modal-ease), transform 0.2s var(--ui-modal-ease), box-shadow 0.2s ease;
+}
+
+.fi-ta-filters-modal [data-table-filter-action="reset"]:hover {
+    background: var(--ui-modal-btn-neutral-bg-hover);
+    transform: translateY(-1px);
+}
+
+.fi-ta-filters-modal .fi-modal-footer-actions .fi-btn:not([data-table-filter-action="apply"]):not([data-table-filter-action="reset"]) {
+    border-radius: var(--ui-modal-btn-radius);
+    background: var(--ui-modal-btn-neutral-bg);
+    color: var(--ui-modal-btn-neutral-text);
+    border: 1.5px solid var(--ui-modal-btn-neutral-border);
+    box-shadow: var(--ui-modal-btn-neutral-shadow);
+    min-height: 2.5rem;
+    padding-inline: 1.25rem;
+    font-weight: 600;
+    transition: background 0.2s var(--ui-modal-ease), transform 0.2s var(--ui-modal-ease), box-shadow 0.2s ease;
+}
+
+.fi-ta-filters-modal .fi-modal-footer-actions .fi-btn:not([data-table-filter-action="apply"]):not([data-table-filter-action="reset"]):hover {
+    background: var(--ui-modal-btn-neutral-bg-hover);
+    transform: translateY(-1px);
+}
+
+.fi-ta-filters-modal [data-table-filter-action="apply"] {
+    border-radius: var(--ui-modal-btn-radius);
+    background: var(--ui-modal-btn-primary-bg);
+    color: #ffffff;
+    border: 1px solid var(--ui-modal-btn-primary-border);
+    min-height: 2.5rem;
+    padding-inline: 1.25rem;
+    font-weight: 600;
+    box-shadow: var(--ui-modal-btn-primary-shadow);
+    transition: background 0.2s var(--ui-modal-ease), transform 0.2s var(--ui-modal-ease), box-shadow 0.2s var(--ui-modal-ease);
+}
+
+.fi-ta-filters-modal [data-table-filter-action="apply"]:hover {
+    background: var(--ui-modal-btn-primary-bg-hover);
+    transform: translateY(-1px);
+}
+
+@media (max-width: 639px) {
+    .fi-modal:not(.fi-modal-slide-over):not(.fi-width-screen) > .fi-modal-window-ctn {
+        padding: 0.75rem;
+    }
+
+    .fi-modal:not(.fi-modal-slide-over):not(.fi-width-screen) > .fi-modal-window-ctn > .fi-modal-window {
+        -webkit-backdrop-filter: blur(18px) saturate(160%);
+        backdrop-filter: blur(18px) saturate(160%);
+    }
+
+    .fi-modal:not(.fi-modal-slide-over):not(.fi-width-screen) .fi-modal-header {
+        padding: 1.125rem 3.25rem 1rem 1.125rem;
+    }
+
+    .fi-modal .fi-modal-window .fi-modal-close-btn {
+        top: 1.05rem !important;
+        right: 1.125rem !important;
+        inset-inline-end: 1.125rem !important;
+    }
+
+    .fi-modal .fi-modal-heading {
+        font-size: 1.25rem;
+    }
+
+    .fi-modal .fi-modal-icon-bg {
+        width: 2.75rem;
+        height: 2.75rem;
+    }
+
+    .fi-modal.fi-align-start > .fi-modal-window-ctn > .fi-modal-window-has-icon.fi-modal-window-has-content .fi-modal-content,
+    .fi-modal.fi-align-start > .fi-modal-window-ctn > .fi-modal-window-has-icon.fi-modal-window-has-content .fi-modal-footer:not(.fi-align-center),
+    .fi-modal:not(.fi-modal-slide-over):not(.fi-width-screen) .fi-modal-footer {
+        padding-inline: 1.125rem;
+    }
+
+    .fi-ta-filters-modal .fi-modal-footer-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
+    }
+
+    .fi-ta-filters-modal [data-table-filter-action="reset"] {
+        margin-inline-end: 0;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .fi-ta-filters-modal .fi-modal-footer-actions .fi-btn:not([data-table-filter-action="apply"]):not([data-table-filter-action="reset"]) {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .fi-ta-filters-modal [data-table-filter-action="apply"] {
+        grid-column: 1 / -1;
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fi-modal > .fi-modal-close-overlay,
+    .fi-modal:not(.fi-modal-slide-over):not(.fi-width-screen) > .fi-modal-window-ctn > .fi-modal-window,
+    .fi-modal:not(.fi-modal-slide-over) > .fi-modal-window-ctn > .fi-modal-window .fi-modal-close-btn,
+    .fi-modal-content .fi-input-wrp,
+    .fi-ta-filters-modal [data-table-filter-action="reset"],
+    .fi-ta-filters-modal [data-table-filter-action="apply"],
+    .fi-ta-filters-modal .fi-modal-footer-actions .fi-btn {
+        transition: none;
+    }
+}
+
+/* ==========================================================================
+   3. REUSABLE CUSTOM LIQUID GLASS MODAL CLASSES (.ui-modal-*)
+      Untuk Modal Blade / Alpine / Publik di luar Filament
+   ========================================================================== */
+
+.ui-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.ui-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: var(--ui-modal-overlay);
+    -webkit-backdrop-filter: blur(7px);
+    backdrop-filter: blur(7px);
+}
+
+.ui-modal-card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 32rem;
+    background: var(--ui-modal-surface);
+    -webkit-backdrop-filter: blur(24px) saturate(175%);
+    backdrop-filter: blur(24px) saturate(175%);
+    border: 1.5px solid var(--ui-modal-border);
+    border-radius: var(--ui-modal-radius);
+    box-shadow: var(--ui-modal-shadow);
+    color: var(--ui-modal-title);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .ui-modal-card {
+        background: var(--ui-modal-surface-solid);
+    }
+}
+
+.ui-modal-header {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.375rem 1.75rem 1.25rem;
+    background: var(--ui-modal-header-bg);
+    border-bottom: 1.5px solid var(--ui-modal-header-divider);
+    box-shadow: 0 1px 0 var(--ui-modal-header-divider-Subtle);
+    border-radius: var(--ui-modal-radius) var(--ui-modal-radius) 0 0;
+}
+
+.ui-modal-icon-badge {
+    width: 2.625rem;
+    height: 2.625rem;
+    border-radius: 0.625rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: rgba(37, 99, 235, 0.1);
+    color: #2563eb;
+    border: 1px solid rgba(37, 99, 235, 0.2);
+}
+
+.dark .ui-modal-icon-badge {
+    background: rgba(59, 130, 246, 0.16);
+    color: #60a5fa;
+    border: 1px solid rgba(96, 165, 250, 0.28);
+}
+
+.ui-modal-title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--ui-modal-title);
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+}
+
+.ui-modal-subtitle {
+    margin-top: 0.2rem;
+    font-size: 0.84375rem;
+    color: var(--ui-modal-subtitle);
+    line-height: 1.45;
+}
+
+.ui-modal-close-btn {
+    width: 2.375rem;
+    height: 2.375rem;
+    border-radius: 9999px;
+    background-color: var(--ui-modal-close-bg);
+    color: var(--ui-modal-close-color);
+    border: 1.5px solid var(--ui-modal-close-border);
+    box-shadow: var(--ui-modal-close-shadow);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background-color 0.2s var(--ui-modal-ease), color 0.2s ease, transform 0.2s var(--ui-modal-ease);
+}
+
+.ui-modal-close-btn:hover {
+    background-color: var(--ui-modal-close-bg-hover);
+    color: var(--ui-modal-title);
+    transform: scale(1.04);
+}
+
+.ui-modal-body {
+    padding: 1.5rem 1.75rem 1.25rem;
+}
+
+.ui-modal-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 0.5rem 1.75rem 1.5rem;
+    background: transparent;
+    border-top: none;
+    border-radius: 0 0 var(--ui-modal-radius) var(--ui-modal-radius);
+}
+
+.ui-modal-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    min-height: 2.5rem;
+    padding: 0.5rem 1.125rem;
+    border-radius: var(--ui-modal-btn-radius);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    background: var(--ui-modal-btn-neutral-bg);
+    color: var(--ui-modal-btn-neutral-text);
+    border: 1.5px solid var(--ui-modal-btn-neutral-border);
+    box-shadow: var(--ui-modal-btn-neutral-shadow);
+    cursor: pointer;
+    transition: background 0.2s var(--ui-modal-ease), transform 0.2s var(--ui-modal-ease);
+}
+
+.ui-modal-btn-secondary:hover {
+    background: var(--ui-modal-btn-neutral-bg-hover);
+    transform: translateY(-1px);
+}
+
+.ui-modal-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    min-height: 2.5rem;
+    padding: 0.5rem 1.25rem;
+    border-radius: var(--ui-modal-btn-radius);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    background: var(--ui-modal-btn-primary-bg);
+    color: #ffffff;
+    border: 1px solid var(--ui-modal-btn-primary-border);
+    box-shadow: var(--ui-modal-btn-primary-shadow);
+    cursor: pointer;
+    transition: background 0.2s var(--ui-modal-ease), transform 0.2s var(--ui-modal-ease);
+}
+
+.ui-modal-btn-primary:hover {
+    background: var(--ui-modal-btn-primary-bg-hover);
+    transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   4. LIQUID GLASS TABS & TABLE CARD SYSTEM (.fi-tabs & .fi-ta-ctn)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   4.1. Card Tab Table (.fi-tabs:not(.fi-contained))
+   Clean Solid Surface (Tanpa Gradien) + Soft Blue Active Tab & Pill Counter Badge
+   -------------------------------------------------------------------------- */
+.fi-sc-tabs {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.fi-tabs:not(.fi-contained) {
+    background-color: #ffffff;
+    background-image: none;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.875rem;
+    --tw-ring-shadow: 0 0 #0000;
+    box-shadow:
+        0 1px 3px 0 rgba(15, 23, 42, 0.04),
+        0 1px 2px -1px rgba(15, 23, 42, 0.03);
+    padding: 0.3125rem;
+    gap: 0.25rem;
+    width: fit-content;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+    .fi-tabs:not(.fi-contained) {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(148, 163, 184, 0.45) transparent;
+    }
+}
+
+.fi-tabs:not(.fi-contained)::-webkit-scrollbar {
+    height: 5px;
+    width: 5px;
+}
+
+.fi-tabs:not(.fi-contained)::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 9999px;
+    margin-inline: 0.625rem;
+}
+
+.fi-tabs:not(.fi-contained)::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.45);
+    border-radius: 9999px;
+}
+
+.fi-tabs:not(.fi-contained)::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.72);
+}
+
+.fi-tabs:not(.fi-contained)::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+.dark .fi-tabs:not(.fi-contained) {
+    background-color: #0f172a;
+    background-image: none;
+    border-color: rgba(148, 163, 184, 0.16);
+    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.35);
+}
+
+.fi-tabs:not(.fi-contained) .fi-tabs-item {
+    flex-shrink: 0;
+    border-radius: 0.625rem;
+    padding: 0.4375rem 0.875rem;
+    column-gap: 0.4375rem;
+    transition:
+        background-color 150ms ease,
+        color 150ms ease,
+        box-shadow 150ms ease;
+}
+
+.fi-tabs:not(.fi-contained) .fi-tabs-item:not(.fi-active) .fi-tabs-item-label {
+    color: #475569;
+    font-weight: 500;
+}
+
+.dark .fi-tabs:not(.fi-contained) .fi-tabs-item:not(.fi-active) .fi-tabs-item-label {
+    color: #94a3b8;
+}
+
+.fi-tabs:not(.fi-contained) .fi-tabs-item:not(.fi-active) > .fi-icon {
+    color: #64748b;
+}
+
+.dark .fi-tabs:not(.fi-contained) .fi-tabs-item:not(.fi-active) > .fi-icon {
+    color: #64748b;
+}
+
+.fi-tabs:not(.fi-contained) .fi-tabs-item:not(.fi-active):hover {
+    background-color: #f8fafc;
+}
+
+.fi-tabs:not(.fi-contained) .fi-tabs-item:not(.fi-active):hover .fi-tabs-item-label {
+    color: #0f172a;
+}
+
+.fi-tabs:not(.fi-contained) .fi-tabs-item:not(.fi-active):hover > .fi-icon {
+    color: #475569;
+}
+
+.dark .fi-tabs:not(.fi-contained) .fi-tabs-item:not(.fi-active):hover {
+    background-color: rgba(30, 41, 59, 0.7);
+}
+
+.dark .fi-tabs:not(.fi-contained) .fi-tabs-item:not(.fi-active):hover .fi-tabs-item-label {
+    color: #f1f5f9;
+}
+
+.dark .fi-tabs:not(.fi-contained) .fi-tabs-item:not(.fi-active):hover > .fi-icon {
+    color: #cbd5e1;
+}
+
+/* Active Tab: Clean Flat Soft Blue + Crisp 1px Blue Border (Tanpa Gradien) */
+.fi-tabs:not(.fi-contained) .fi-tabs-item.fi-active {
+    background-color: #eff6ff;
+    background-image: none;
+    box-shadow: inset 0 0 0 1px #bfdbfe;
+}
+
+.dark .fi-tabs:not(.fi-contained) .fi-tabs-item.fi-active {
+    background-color: rgba(37, 99, 235, 0.18);
+    background-image: none;
+    box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.35);
+}
+
+.fi-tabs:not(.fi-contained) .fi-tabs-item.fi-active .fi-tabs-item-label {
+    color: #1d4ed8;
+    font-weight: 600;
+}
+
+.dark .fi-tabs:not(.fi-contained) .fi-tabs-item.fi-active .fi-tabs-item-label {
+    color: #60a5fa;
+}
+
+.fi-tabs:not(.fi-contained) .fi-tabs-item.fi-active > .fi-icon {
+    color: #2563eb;
+}
+
+.dark .fi-tabs:not(.fi-contained) .fi-tabs-item.fi-active > .fi-icon {
+    color: #60a5fa;
+}
+
+/* Counter Badge inside Tab Items: Solid Blue Pill on Active, Soft Gray Pill on Inactive */
+.fi-tabs:not(.fi-contained) .fi-tabs-item .fi-badge {
+    border-radius: 9999px;
+    min-width: 1.375rem;
+    height: 1.25rem;
+    padding-inline: 0.4rem;
+    padding-block: 0;
+    font-size: 0.75rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    --tw-ring-shadow: 0 0 #0000 !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+.fi-tabs:not(.fi-contained) .fi-tabs-item .fi-badge .fi-badge-label-ctn,
+.fi-tabs:not(.fi-contained) .fi-tabs-item .fi-badge .fi-badge-label {
+    align-self: center !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1 !important;
+}
+
+.fi-tabs:not(.fi-contained) .fi-tabs-item.fi-active .fi-badge {
+    background-color: #2563eb !important;
+    color: #ffffff !important;
+    font-weight: 700;
+}
+
+.fi-tabs:not(.fi-contained) .fi-tabs-item.fi-active .fi-badge * {
+    color: #ffffff !important;
+}
+
+.fi-tabs:not(.fi-contained) .fi-tabs-item:not(.fi-active) .fi-badge {
+    background-color: #f1f5f9 !important;
+    color: #475569 !important;
+    font-weight: 600;
+}
+
+.fi-tabs:not(.fi-contained) .fi-tabs-item:not(.fi-active) .fi-badge * {
+    color: #475569 !important;
+}
+
+.dark .fi-tabs:not(.fi-contained) .fi-tabs-item:not(.fi-active) .fi-badge {
+    background-color: rgba(51, 65, 85, 0.75) !important;
+    color: #cbd5e1 !important;
+}
+
+.dark .fi-tabs:not(.fi-contained) .fi-tabs-item:not(.fi-active) .fi-badge * {
+    color: #cbd5e1 !important;
+}
+
+/* --------------------------------------------------------------------------
+   4.1.b. Contained Tabs Container (.fi-sc-tabs.fi-contained)
+          Digunakan di Halaman Detail Dokumen, Berita, & Pengaturan
+   -------------------------------------------------------------------------- */
+.fi-sc-tabs.fi-contained {
+    border-radius: 0.9375rem !important;
+    background-color: #ffffff !important;
+    border: 1.5px solid var(--ui-modal-border, #e2e8f0) !important;
+    --tw-ring-shadow: 0 0 #0000 !important;
+    box-shadow:
+        0 14px 34px -10px rgba(15, 23, 42, 0.08),
+        0 0 0 1px rgba(203, 213, 225, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.96) !important;
+    overflow: hidden;
+}
+
+.dark .fi-sc-tabs.fi-contained {
+    background-color: #0f172a !important;
+    border-color: rgba(148, 163, 184, 0.16) !important;
+    box-shadow:
+        0 16px 38px -10px rgba(0, 0, 0, 0.52),
+        0 0 0 1px rgba(148, 163, 184, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+.fi-tabs.fi-contained {
+    background-color: #ffffff;
+    border-bottom: 1px solid var(--ui-modal-divider, #e2e8f0);
+    padding: 0.5rem 0.75rem;
+    gap: 0.25rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+.dark .fi-tabs.fi-contained {
+    background-color: #0f172a;
+    border-bottom-color: rgba(148, 163, 184, 0.14);
+}
+
+.fi-tabs.fi-contained .fi-tabs-item {
+    flex-shrink: 0;
+    border-radius: 0.625rem;
+    padding: 0.4375rem 0.875rem;
+    column-gap: 0.4375rem;
+    transition: background-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+}
+
+.fi-tabs.fi-contained .fi-tabs-item:not(.fi-active) .fi-tabs-item-label {
+    color: #475569;
+    font-weight: 500;
+}
+
+.fi-tabs.fi-contained .fi-tabs-item:not(.fi-active) > .fi-icon {
+    color: #64748b;
+}
+
+.dark .fi-tabs.fi-contained .fi-tabs-item:not(.fi-active) .fi-tabs-item-label {
+    color: #94a3b8;
+}
+
+.fi-tabs.fi-contained .fi-tabs-item:not(.fi-active):hover {
+    background-color: #f8fafc;
+}
+
+.fi-tabs.fi-contained .fi-tabs-item:not(.fi-active):hover .fi-tabs-item-label {
+    color: #0f172a;
+}
+
+.dark .fi-tabs.fi-contained .fi-tabs-item:not(.fi-active):hover {
+    background-color: rgba(30, 41, 59, 0.7);
+}
+
+.dark .fi-tabs.fi-contained .fi-tabs-item:not(.fi-active):hover .fi-tabs-item-label {
+    color: #f1f5f9;
+}
+
+.fi-tabs.fi-contained .fi-tabs-item.fi-active {
+    background-color: #eff6ff !important;
+    background-image: none;
+    box-shadow: inset 0 0 0 1px #bfdbfe;
+}
+
+.dark .fi-tabs.fi-contained .fi-tabs-item.fi-active {
+    background-color: rgba(37, 99, 235, 0.18) !important;
+    box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.35);
+}
+
+.fi-tabs.fi-contained .fi-tabs-item.fi-active .fi-tabs-item-label {
+    color: #1d4ed8;
+    font-weight: 600;
+}
+
+.dark .fi-tabs.fi-contained .fi-tabs-item.fi-active .fi-tabs-item-label {
+    color: #60a5fa;
+}
+
+.fi-tabs.fi-contained .fi-tabs-item.fi-active > .fi-icon {
+    color: #2563eb;
+}
+
+.dark .fi-tabs.fi-contained .fi-tabs-item.fi-active > .fi-icon {
+    color: #60a5fa;
+}
+
+.fi-tabs.fi-contained .fi-tabs-item .fi-badge {
+    border-radius: 9999px;
+    min-width: 1.375rem;
+    height: 1.25rem;
+    padding-inline: 0.4rem;
+    padding-block: 0;
+    font-size: 0.75rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    --tw-ring-shadow: 0 0 #0000 !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+.fi-tabs.fi-contained .fi-tabs-item .fi-badge .fi-badge-label-ctn,
+.fi-tabs.fi-contained .fi-tabs-item .fi-badge .fi-badge-label {
+    align-self: center !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1 !important;
+}
+
+.fi-tabs.fi-contained .fi-tabs-item.fi-active .fi-badge {
+    background-color: #2563eb !important;
+    color: #ffffff !important;
+    font-weight: 700;
+}
+
+.fi-tabs.fi-contained .fi-tabs-item.fi-active .fi-badge * {
+    color: #ffffff !important;
+}
+
+.fi-tabs.fi-contained .fi-tabs-item:not(.fi-active) .fi-badge {
+    background-color: #f1f5f9 !important;
+    color: #475569 !important;
+    font-weight: 600;
+}
+
+.fi-tabs.fi-contained .fi-tabs-item:not(.fi-active) .fi-badge * {
+    color: #475569 !important;
+}
+
+.dark .fi-tabs.fi-contained .fi-tabs-item:not(.fi-active) .fi-badge {
+    background-color: rgba(51, 65, 85, 0.75) !important;
+    color: #cbd5e1 !important;
+}
+
+.dark .fi-tabs.fi-contained .fi-tabs-item:not(.fi-active) .fi-badge * {
+    color: #cbd5e1 !important;
+}
+
+.fi-sc-tabs.fi-contained .fi-sc-tabs-tab.fi-active {
+    padding: 1.25rem !important;
+}
+
+@media (max-width: 639px) {
+    .fi-sc-tabs.fi-contained .fi-sc-tabs-tab.fi-active {
+        padding: 0.875rem !important;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   4.2. Card Tabel Utama (.fi-ta-ctn)
+   -------------------------------------------------------------------------- */
+.fi-ta-ctn {
+    border-radius: 0.9375rem;
+    background-color: #ffffff;
+    border: 1.5px solid var(--ui-modal-border);
+    --tw-ring-shadow: 0 0 #0000;
+    box-shadow:
+        0 14px 34px -10px rgba(15, 23, 42, 0.08),
+        0 0 0 1px rgba(203, 213, 225, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.96);
+}
+
+.dark .fi-ta-ctn {
+    background-color: #0f172a;
+    box-shadow:
+        0 16px 38px -10px rgba(0, 0, 0, 0.52),
+        0 0 0 1px rgba(148, 163, 184, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+/* Header & Toolbar Area inside Table Card (Clean Solid Surface, Tanpa Gradien) */
+.fi-ta-ctn .fi-ta-header-ctn,
+.fi-ta-ctn > .fi-ta-main > .fi-ta-header-ctn {
+    border-top-left-radius: calc(0.9375rem - 1.5px);
+    border-top-right-radius: calc(0.9375rem - 1.5px);
+    background-color: #ffffff;
+    background-image: none;
+    border-bottom-color: var(--ui-modal-divider);
+}
+
+.dark .fi-ta-ctn .fi-ta-header-ctn,
+.dark .fi-ta-ctn > .fi-ta-main > .fi-ta-header-ctn {
+    background-color: #0f172a;
+    background-image: none;
+    border-bottom-color: var(--ui-modal-divider);
+}
+
+.fi-ta-ctn .fi-ta-header-toolbar {
+    background: transparent;
+    border-bottom-color: var(--ui-modal-divider);
+    padding-block: 0.875rem;
+    padding-inline: 1.25rem;
+}
+
+.fi-ta-ctn .fi-ta-header-toolbar > :nth-child(2) {
+    display: flex;
+    align-items: center;
+    column-gap: 0.625rem;
+}
+
+/* Search Input in Table Toolbar (Clean Flat Soft-Gray Box, 1px Border) */
+@media (min-width: 640px) {
+    .fi-ta-ctn .fi-ta-header-toolbar .fi-ta-search-field {
+        min-width: 17.5rem;
+    }
+}
+
+.fi-ta-ctn .fi-ta-header-toolbar .fi-ta-search-field .fi-input-wrp {
+    min-height: 2.375rem;
+    border-radius: 0.625rem;
+    background-color: #f8fafc;
+    background-image: none;
+    --tw-ring-color: #e2e8f0;
+    box-shadow: 0 0 0 1px #e2e8f0;
+    transition:
+        box-shadow 150ms ease,
+        background-color 150ms ease;
+}
+
+.dark .fi-ta-ctn .fi-ta-header-toolbar .fi-ta-search-field .fi-input-wrp {
+    background-color: rgba(30, 41, 59, 0.65);
+    --tw-ring-color: rgba(148, 163, 184, 0.22);
+    box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.22);
+}
+
+.fi-ta-ctn .fi-ta-header-toolbar .fi-ta-search-field .fi-input-wrp:hover:not(:focus-within) {
+    background-color: #ffffff;
+    --tw-ring-color: #cbd5e1;
+    box-shadow: 0 0 0 1px #cbd5e1;
+}
+
+.dark .fi-ta-ctn .fi-ta-header-toolbar .fi-ta-search-field .fi-input-wrp:hover:not(:focus-within) {
+    background-color: rgba(30, 41, 59, 0.9);
+    --tw-ring-color: rgba(148, 163, 184, 0.35);
+    box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.35);
+}
+
+.fi-ta-ctn .fi-ta-header-toolbar .fi-ta-search-field .fi-input-wrp:focus-within {
+    background-color: #ffffff;
+    --tw-ring-color: #3b82f6 !important;
+    box-shadow: 0 0 0 1.5px #3b82f6, 0 0 0 3.5px rgba(59, 130, 246, 0.14) !important;
+}
+
+.dark .fi-ta-ctn .fi-ta-header-toolbar .fi-ta-search-field .fi-input-wrp:focus-within {
+    background-color: rgba(15, 23, 42, 0.96);
+    --tw-ring-color: #60a5fa !important;
+    box-shadow: 0 0 0 1.5px #60a5fa, 0 0 0 3.5px rgba(59, 130, 246, 0.22) !important;
+}
+
+/* Toolbar Trigger Buttons (Filter Sliders & Column Toggle - Clean Flat White Box) */
+.fi-ta-ctn .fi-ta-header-toolbar .fi-icon-btn {
+    margin: 0 !important;
+    width: 2.375rem;
+    height: 2.375rem;
+    border-radius: 0.625rem;
+    background-color: #ffffff;
+    background-image: none;
+    border: 1px solid #e2e8f0;
+    box-shadow: none;
+    color: #334155;
+    transition:
+        background-color 150ms ease,
+        border-color 150ms ease,
+        color 150ms ease;
+}
+
+.dark .fi-ta-ctn .fi-ta-header-toolbar .fi-icon-btn {
+    background-color: rgba(30, 41, 59, 0.65);
+    border-color: rgba(148, 163, 184, 0.22);
+    color: #cbd5e1;
+}
+
+.fi-ta-ctn .fi-ta-header-toolbar .fi-icon-btn:hover {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+    color: #0f172a;
+    transform: none;
+}
+
+.dark .fi-ta-ctn .fi-ta-header-toolbar .fi-icon-btn:hover {
+    background-color: rgba(51, 65, 85, 0.7);
+    border-color: rgba(148, 163, 184, 0.35);
+    color: #f8fafc;
+}
+
+/* Filter Counter Badge on Toolbar Button (Clean Circular Slate Badge at Top-Right) */
+.fi-ta-ctn .fi-ta-header-toolbar .fi-icon-btn .fi-icon-btn-badge-ctn {
+    inset-inline-start: auto;
+    inset-inline-end: -0.375rem;
+    top: -0.375rem;
+    translate: none;
+    border-radius: 9999px;
+    background-color: transparent;
+}
+
+.fi-ta-ctn .fi-ta-header-toolbar .fi-icon-btn .fi-icon-btn-badge-ctn .fi-badge {
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding-inline: 0.3125rem;
+    padding-block: 0;
+    border-radius: 9999px;
+    background-color: #f1f5f9 !important;
+    color: #334155 !important;
+    border: 1px solid #e2e8f0 !important;
+    --tw-ring-shadow: 0 0 #0000 !important;
+    box-shadow: 0 0 0 1.5px #ffffff !important;
+    font-size: 0.7rem;
+    font-weight: 600;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dark .fi-ta-ctn .fi-ta-header-toolbar .fi-icon-btn .fi-icon-btn-badge-ctn .fi-badge {
+    background-color: #1e293b !important;
+    color: #e2e8f0 !important;
+    border: 1px solid rgba(148, 163, 184, 0.3) !important;
+    box-shadow: 0 0 0 1.5px #0f172a !important;
+}
+
+.fi-ta-ctn .fi-ta-header-toolbar .fi-icon-btn .fi-icon-btn-badge-ctn .fi-badge .fi-badge-label-ctn,
+.fi-ta-ctn .fi-ta-header-toolbar .fi-icon-btn .fi-icon-btn-badge-ctn .fi-badge .fi-badge-label {
+    align-self: center !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1 !important;
+    color: inherit !important;
+}
+
+/* Table Column Headers (thead) */
+.fi-ta-ctn .fi-ta-table > thead > tr {
+    background: linear-gradient(180deg, rgba(241, 246, 255, 0.78) 0%, rgba(248, 250, 252, 0.94) 100%);
+    border-bottom: 1px solid var(--ui-modal-divider);
+}
+
+.dark .fi-ta-ctn .fi-ta-table > thead > tr {
+    background: linear-gradient(180deg, rgba(30, 41, 59, 0.78) 0%, rgba(15, 23, 42, 0.92) 100%);
+    border-bottom: 1px solid var(--ui-modal-divider);
+}
+
+.fi-ta-ctn .fi-ta-table > thead th {
+    background-color: transparent;
+}
+
+/* Table Body Rows (Scoped strictly to data records to preserve loading skeletons) */
+.fi-ta-ctn .fi-ta-table > tbody.fi-ta-records > tr.fi-ta-row {
+    transition: background-color 140ms ease;
+}
+
+.fi-ta-ctn .fi-ta-table > tbody.fi-ta-records > tr.fi-ta-row:hover {
+    background-color: rgba(239, 246, 255, 0.62);
+}
+
+.dark .fi-ta-ctn .fi-ta-table > tbody.fi-ta-records > tr.fi-ta-row:hover {
+    background-color: rgba(30, 58, 138, 0.22);
+}
+
+/* Slim Pill Horizontal Scrollbar on Table Content */
+@supports not selector(::-webkit-scrollbar) {
+    .fi-ta-ctn .fi-ta-content-ctn,
+    .fi-ta-ctn .overflow-x-auto {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(148, 163, 184, 0.48) transparent;
+    }
+}
+
+.fi-ta-ctn .fi-ta-content-ctn::-webkit-scrollbar,
+.fi-ta-ctn .overflow-x-auto::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+}
+
+.fi-ta-ctn .fi-ta-content-ctn::-webkit-scrollbar-track,
+.fi-ta-ctn .overflow-x-auto::-webkit-scrollbar-track {
+    background: rgba(241, 245, 249, 0.6);
+    border-radius: 9999px;
+    margin-inline: 0.75rem;
+}
+
+.dark .fi-ta-ctn .fi-ta-content-ctn::-webkit-scrollbar-track,
+.dark .fi-ta-ctn .overflow-x-auto::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.55);
+}
+
+.fi-ta-ctn .fi-ta-content-ctn::-webkit-scrollbar-thumb,
+.fi-ta-ctn .overflow-x-auto::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.52);
+    border-radius: 9999px;
+}
+
+.fi-ta-ctn .fi-ta-content-ctn::-webkit-scrollbar-thumb:hover,
+.fi-ta-ctn .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.78);
+}
+
+.fi-ta-ctn .fi-ta-content-ctn::-webkit-scrollbar-button,
+.fi-ta-ctn .overflow-x-auto::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+/* Table Pagination Footer (.fi-pagination) */
+.fi-ta-ctn .fi-pagination {
+    border-top: 1px solid var(--ui-modal-divider);
+    border-bottom-left-radius: calc(0.9375rem - 1.5px);
+    border-bottom-right-radius: calc(0.9375rem - 1.5px);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(243, 248, 255, 0.78) 100%);
+}
+
+.dark .fi-ta-ctn .fi-pagination {
+    border-top: 1px solid var(--ui-modal-divider);
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.94) 0%, rgba(30, 41, 59, 0.68) 100%);
+}
+
+.fi-ta-ctn .fi-pagination .fi-pagination-records-per-page-select .fi-input-wrp,
+.fi-ta-ctn .fi-pagination .fi-pagination-items {
+    border-radius: 0.625rem;
+    background: var(--ui-modal-field-bg);
+    --tw-ring-color: var(--ui-modal-field-border);
+    box-shadow: 0 0 0 1px var(--ui-modal-field-border), var(--ui-modal-field-shadow);
+}
+
+/* ==========================================================================
+   5. PAGE HEADER ACTION BUTTONS (.fi-header-actions-ctn)
+   Trash (Ghost), Secondary (White Card + Colored Icon), Primary (Solid Blue),
+   Danger (Soft Rose)
+   ========================================================================== */
+
+.fi-header-actions-ctn,
+.fi-header-actions-ctn > .fi-ac {
+    gap: 0.625rem;
+    align-items: center;
+}
+
+/* 5.1. Tombol Trash (Clean Borderless Ghost Button) */
+.fi-btn.ui-header-action-trash {
+    background-color: transparent !important;
+    background-image: none !important;
+    border: 1px solid transparent !important;
+    --tw-ring-shadow: 0 0 #0000 !important;
+    box-shadow: none !important;
+    border-radius: 0.625rem !important;
+    min-height: 2.5rem;
+    padding-inline: 0.875rem;
+    color: #64748b !important;
+    font-weight: 500 !important;
+    transition:
+        background-color 150ms ease,
+        color 150ms ease;
+}
+
+.fi-btn.ui-header-action-trash .fi-btn-label,
+.fi-btn.ui-header-action-trash .fi-icon,
+.fi-btn.ui-header-action-trash svg {
+    color: inherit !important;
+}
+
+.fi-btn.ui-header-action-trash:hover {
+    background-color: rgba(241, 245, 249, 0.85) !important;
+    color: #334155 !important;
+}
+
+.dark .fi-btn.ui-header-action-trash {
+    color: #94a3b8 !important;
+}
+
+.dark .fi-btn.ui-header-action-trash:hover {
+    background-color: rgba(30, 41, 59, 0.7) !important;
+    color: #f1f5f9 !important;
+}
+
+/* 5.2. Tombol Ekspor Excel (Clean White Button + 1px Border + Emerald Spreadsheet Icon) */
+.fi-btn.ui-header-action-export {
+    background-color: #ffffff !important;
+    background-image: none !important;
+    border: 1px solid #e2e8f0 !important;
+    --tw-ring-shadow: 0 0 #0000 !important;
+    box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.04) !important;
+    border-radius: 0.625rem !important;
+    min-height: 2.5rem;
+    padding-inline: 1.0625rem;
+    color: #1e293b !important;
+    font-weight: 600 !important;
+    transition:
+        background-color 150ms ease,
+        border-color 150ms ease,
+        box-shadow 150ms ease;
+}
+
+.fi-btn.ui-header-action-export .fi-btn-label {
+    color: #1e293b !important;
+    font-weight: 600 !important;
+}
+
+.fi-btn.ui-header-action-export .fi-icon,
+.fi-btn.ui-header-action-export svg {
+    color: #059669 !important;
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
+.fi-btn.ui-header-action-export:hover {
+    background-color: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+}
+
+.dark .fi-btn.ui-header-action-export {
+    background-color: #0f172a !important;
+    border-color: rgba(148, 163, 184, 0.24) !important;
+    color: #f1f5f9 !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark .fi-btn.ui-header-action-export .fi-btn-label {
+    color: #f1f5f9 !important;
+}
+
+.dark .fi-btn.ui-header-action-export .fi-icon,
+.dark .fi-btn.ui-header-action-export svg {
+    color: #34d399 !important;
+}
+
+.dark .fi-btn.ui-header-action-export:hover {
+    background-color: rgba(30, 41, 59, 0.85) !important;
+    border-color: rgba(148, 163, 184, 0.38) !important;
+}
+
+/* 5.3. Tombol Primary (+ Buat Dokumen Arsip, Ubah, Ajukan Persetujuan, dll.) */
+.fi-btn.ui-header-action-create,
+.fi-header-actions-ctn .fi-btn.fi-color-primary {
+    background-color: #1d4ed8 !important;
+    background-image: none !important;
+    border: 1px solid #1d4ed8 !important;
+    --tw-ring-shadow: 0 0 #0000 !important;
+    box-shadow: 0 1px 2px 0 rgba(29, 78, 216, 0.2) !important;
+    border-radius: 0.625rem !important;
+    min-height: 2.5rem;
+    padding-inline: 1.125rem;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    transition:
+        background-color 150ms ease,
+        border-color 150ms ease,
+        box-shadow 150ms ease;
+}
+
+.fi-btn.ui-header-action-create .fi-btn-label,
+.fi-btn.ui-header-action-create .fi-icon,
+.fi-btn.ui-header-action-create svg,
+.fi-header-actions-ctn .fi-btn.fi-color-primary .fi-btn-label,
+.fi-header-actions-ctn .fi-btn.fi-color-primary .fi-icon,
+.fi-header-actions-ctn .fi-btn.fi-color-primary svg {
+    color: #ffffff !important;
+}
+
+.fi-btn.ui-header-action-create:hover,
+.fi-header-actions-ctn .fi-btn.fi-color-primary:hover {
+    background-color: #1e40af !important;
+    border-color: #1e40af !important;
+}
+
+.dark .fi-btn.ui-header-action-create,
+.dark .fi-header-actions-ctn .fi-btn.fi-color-primary {
+    background-color: #2563eb !important;
+    border-color: #3b82f6 !important;
+}
+
+.dark .fi-btn.ui-header-action-create:hover,
+.dark .fi-header-actions-ctn .fi-btn.fi-color-primary:hover {
+    background-color: #3b82f6 !important;
+    border-color: #60a5fa !important;
+}
+
+/* 5.4. Konsistensi Action Button Global di Header Halaman Detail & Resource */
+.fi-header-actions-ctn .fi-btn.fi-color-gray:not(.ui-header-action-trash):not(.ui-header-action-export),
+.fi-header-actions-ctn .fi-btn.fi-color-success:not(.ui-header-action-export),
+.fi-header-actions-ctn .fi-btn.fi-color-warning,
+.fi-header-actions-ctn .fi-btn.fi-color-info {
+    background-color: #ffffff !important;
+    background-image: none !important;
+    border: 1px solid #e2e8f0 !important;
+    --tw-ring-shadow: 0 0 #0000 !important;
+    box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.04) !important;
+    border-radius: 0.625rem !important;
+    min-height: 2.5rem;
+    padding-inline: 1.0625rem;
+    color: #1e293b !important;
+    font-weight: 600 !important;
+    transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.fi-header-actions-ctn .fi-btn.fi-color-gray:not(.ui-header-action-trash) .fi-btn-label,
+.fi-header-actions-ctn .fi-btn.fi-color-success .fi-btn-label,
+.fi-header-actions-ctn .fi-btn.fi-color-warning .fi-btn-label,
+.fi-header-actions-ctn .fi-btn.fi-color-info .fi-btn-label {
+    color: #1e293b !important;
+    font-weight: 600 !important;
+}
+
+.fi-header-actions-ctn .fi-btn.fi-color-gray:not(.ui-header-action-trash):hover,
+.fi-header-actions-ctn .fi-btn.fi-color-success:hover,
+.fi-header-actions-ctn .fi-btn.fi-color-warning:hover,
+.fi-header-actions-ctn .fi-btn.fi-color-info:hover {
+    background-color: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+}
+
+.fi-header-actions-ctn .fi-btn.fi-color-gray:not(.ui-header-action-trash) svg {
+    color: #475569 !important;
+}
+
+.fi-header-actions-ctn .fi-btn.fi-color-success svg {
+    color: #059669 !important;
+}
+
+.fi-header-actions-ctn .fi-btn.fi-color-warning svg {
+    color: #d97706 !important;
+}
+
+.fi-header-actions-ctn .fi-btn.fi-color-info svg {
+    color: #2563eb !important;
+}
+
+.dark .fi-header-actions-ctn .fi-btn.fi-color-gray:not(.ui-header-action-trash):not(.ui-header-action-export),
+.dark .fi-header-actions-ctn .fi-btn.fi-color-success:not(.ui-header-action-export),
+.dark .fi-header-actions-ctn .fi-btn.fi-color-warning,
+.dark .fi-header-actions-ctn .fi-btn.fi-color-info {
+    background-color: #0f172a !important;
+    border-color: rgba(148, 163, 184, 0.24) !important;
+    color: #f1f5f9 !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark .fi-header-actions-ctn .fi-btn.fi-color-gray:not(.ui-header-action-trash) .fi-btn-label,
+.dark .fi-header-actions-ctn .fi-btn.fi-color-success .fi-btn-label,
+.dark .fi-header-actions-ctn .fi-btn.fi-color-warning .fi-btn-label,
+.dark .fi-header-actions-ctn .fi-btn.fi-color-info .fi-btn-label {
+    color: #f1f5f9 !important;
+}
+
+.dark .fi-header-actions-ctn .fi-btn.fi-color-gray:not(.ui-header-action-trash):hover,
+.dark .fi-header-actions-ctn .fi-btn.fi-color-success:hover,
+.dark .fi-header-actions-ctn .fi-btn.fi-color-warning:hover,
+.dark .fi-header-actions-ctn .fi-btn.fi-color-info:hover {
+    background-color: rgba(30, 41, 59, 0.85) !important;
+    border-color: rgba(148, 163, 184, 0.38) !important;
+}
+
+.dark .fi-header-actions-ctn .fi-btn.fi-color-gray:not(.ui-header-action-trash) svg {
+    color: #cbd5e1 !important;
+}
+
+.dark .fi-header-actions-ctn .fi-btn.fi-color-success svg {
+    color: #34d399 !important;
+}
+
+.dark .fi-header-actions-ctn .fi-btn.fi-color-warning svg {
+    color: #fbbf24 !important;
+}
+
+.dark .fi-header-actions-ctn .fi-btn.fi-color-info svg {
+    color: #60a5fa !important;
+}
+
+/* Danger Header Button (Hapus, Tolak Dokumen - Soft Rose Clean Style) */
+.fi-header-actions-ctn .fi-btn.fi-color-danger {
+    background-color: #fef2f2 !important;
+    background-image: none !important;
+    border: 1px solid #fecaca !important;
+    --tw-ring-shadow: 0 0 #0000 !important;
+    box-shadow: none !important;
+    border-radius: 0.625rem !important;
+    min-height: 2.5rem;
+    padding-inline: 1.0625rem;
+    color: #b91c1c !important;
+    font-weight: 600 !important;
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.fi-header-actions-ctn .fi-btn.fi-color-danger .fi-btn-label,
+.fi-header-actions-ctn .fi-btn.fi-color-danger .fi-icon,
+.fi-header-actions-ctn .fi-btn.fi-color-danger svg {
+    color: #b91c1c !important;
+    font-weight: 600 !important;
+}
+
+.fi-header-actions-ctn .fi-btn.fi-color-danger:hover {
+    background-color: #fee2e2 !important;
+    border-color: #fca5a5 !important;
+    color: #991b1b !important;
+}
+
+.dark .fi-header-actions-ctn .fi-btn.fi-color-danger {
+    background-color: rgba(239, 68, 68, 0.16) !important;
+    border-color: rgba(248, 113, 113, 0.3) !important;
+    color: #fca5a5 !important;
+}
+
+.dark .fi-header-actions-ctn .fi-btn.fi-color-danger .fi-btn-label,
+.dark .fi-header-actions-ctn .fi-btn.fi-color-danger .fi-icon,
+.dark .fi-header-actions-ctn .fi-btn.fi-color-danger svg {
+    color: #fca5a5 !important;
+}
+
+.dark .fi-header-actions-ctn .fi-btn.fi-color-danger:hover {
+    background-color: rgba(239, 68, 68, 0.26) !important;
+    border-color: rgba(248, 113, 113, 0.45) !important;
+    color: #fecaca !important;
+}
+
+/* ==========================================================================
+   6. CLEAN FORM SECTION & WIZARD STEPPER (.fi-sc-wizard & .fi-section)
+   Seragam dengan Card Solid Clean & Soft Blue Accent System
+   ========================================================================== */
+
+.fi-sc-wizard.fi-contained {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.9375rem;
+    --tw-ring-shadow: 0 0 #0000;
+    box-shadow:
+        0 1px 3px 0 rgba(15, 23, 42, 0.04),
+        0 1px 2px -1px rgba(15, 23, 42, 0.03);
+    overflow: hidden;
+}
+
+.dark .fi-sc-wizard.fi-contained {
+    background-color: #0f172a;
+    border-color: rgba(148, 163, 184, 0.16);
+    box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.35);
+}
+
+.fi-sc-wizard.fi-contained .fi-sc-wizard-header {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    background-color: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0.3125rem;
+    gap: 0.25rem;
+    overflow-x: auto;
+}
+
+@media (min-width: 640px) {
+    .fi-sc-wizard.fi-contained .fi-sc-wizard-header {
+        grid-auto-columns: minmax(0, 1fr);
+        overflow-x: visible;
+    }
+}
+
+.dark .fi-sc-wizard.fi-contained .fi-sc-wizard-header {
+    background-color: #0f172a;
+    border-bottom-color: rgba(148, 163, 184, 0.16);
+}
+
+.fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step {
+    min-width: 0;
+}
+
+.fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step .fi-sc-wizard-header-step-separator {
+    display: none;
+}
+
+.fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step .fi-sc-wizard-header-step-btn {
+    width: 100%;
+    padding: 0.4375rem 0.875rem;
+    column-gap: 0.4375rem;
+    border-radius: 0.625rem;
+    justify-content: flex-start;
+    transition: background-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+}
+
+@media (min-width: 640px) {
+    .fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step .fi-sc-wizard-header-step-btn {
+        justify-content: center;
+    }
+}
+
+.fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step .fi-sc-wizard-header-step-btn .fi-sc-wizard-header-step-text {
+    width: auto !important;
+    min-width: 0;
+    max-width: 100% !important;
+}
+
+.fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step .fi-sc-wizard-header-step-btn .fi-sc-wizard-header-step-text .fi-sc-wizard-header-step-label {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step:not(.fi-active) .fi-sc-wizard-header-step-btn .fi-sc-wizard-header-step-text .fi-sc-wizard-header-step-label {
+    color: #475569;
+    font-weight: 500;
+}
+
+.dark .fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step:not(.fi-active) .fi-sc-wizard-header-step-btn .fi-sc-wizard-header-step-text .fi-sc-wizard-header-step-label {
+    color: #94a3b8;
+}
+
+.fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step:not(.fi-active) .fi-sc-wizard-header-step-btn .fi-sc-wizard-header-step-icon-ctn .fi-icon {
+    color: #64748b;
+}
+
+.dark .fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step:not(.fi-active) .fi-sc-wizard-header-step-btn .fi-sc-wizard-header-step-icon-ctn .fi-icon {
+    color: #64748b;
+}
+
+.fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step:not(.fi-active):hover .fi-sc-wizard-header-step-btn {
+    background-color: #f8fafc;
+}
+
+.fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step:not(.fi-active):hover .fi-sc-wizard-header-step-btn .fi-sc-wizard-header-step-text .fi-sc-wizard-header-step-label {
+    color: #0f172a;
+}
+
+.fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step:not(.fi-active):hover .fi-sc-wizard-header-step-btn .fi-sc-wizard-header-step-icon-ctn .fi-icon {
+    color: #475569;
+}
+
+.dark .fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step:not(.fi-active):hover .fi-sc-wizard-header-step-btn {
+    background-color: rgba(30, 41, 59, 0.7);
+}
+
+.dark .fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step:not(.fi-active):hover .fi-sc-wizard-header-step-btn .fi-sc-wizard-header-step-text .fi-sc-wizard-header-step-label {
+    color: #f1f5f9;
+}
+
+.dark .fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step:not(.fi-active):hover .fi-sc-wizard-header-step-btn .fi-sc-wizard-header-step-icon-ctn .fi-icon {
+    color: #cbd5e1;
+}
+
+.fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step.fi-active .fi-sc-wizard-header-step-btn {
+    background-color: #eff6ff;
+    background-image: none;
+    box-shadow: inset 0 0 0 1px #bfdbfe;
+}
+
+.dark .fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step.fi-active .fi-sc-wizard-header-step-btn {
+    background-color: rgba(37, 99, 235, 0.18);
+    background-image: none;
+    box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.35);
+}
+
+.fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step .fi-sc-wizard-header-step-btn .fi-sc-wizard-header-step-icon-ctn,
+.fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step.fi-completed .fi-sc-wizard-header-step-btn .fi-sc-wizard-header-step-icon-ctn,
+.fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step.fi-active .fi-sc-wizard-header-step-btn .fi-sc-wizard-header-step-icon-ctn {
+    width: auto !important;
+    height: auto !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background-color: transparent !important;
+}
+
+.fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step .fi-sc-wizard-header-step-btn .fi-sc-wizard-header-step-icon-ctn .fi-icon {
+    width: 1.1875rem;
+    height: 1.1875rem;
+}
+
+.fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step.fi-completed:not(.fi-active) .fi-sc-wizard-header-step-btn .fi-sc-wizard-header-step-icon-ctn .fi-icon {
+    color: #059669;
+}
+
+.dark .fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step.fi-completed:not(.fi-active) .fi-sc-wizard-header-step-btn .fi-sc-wizard-header-step-icon-ctn .fi-icon {
+    color: #34d399;
+}
+
+.fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step.fi-active .fi-sc-wizard-header-step-btn .fi-sc-wizard-header-step-icon-ctn .fi-icon,
+.fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step.fi-active .fi-sc-wizard-header-step-btn .fi-sc-wizard-header-step-text .fi-sc-wizard-header-step-label {
+    color: #1d4ed8;
+    font-weight: 600;
+}
+
+.dark .fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step.fi-active .fi-sc-wizard-header-step-btn .fi-sc-wizard-header-step-icon-ctn .fi-icon,
+.dark .fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step.fi-active .fi-sc-wizard-header-step-btn .fi-sc-wizard-header-step-text .fi-sc-wizard-header-step-label {
+    color: #93c5fd;
+}
+
+.fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step .fi-sc-wizard-header-step-btn .fi-sc-wizard-header-step-text .fi-sc-wizard-header-step-description {
+    font-size: 0.75rem;
+    color: #64748b;
+    line-height: 1.35;
+}
+
+.dark .fi-sc-wizard .fi-sc-wizard-header .fi-sc-wizard-header-step .fi-sc-wizard-header-step-btn .fi-sc-wizard-header-step-text .fi-sc-wizard-header-step-description {
+    color: #94a3b8;
+}
+
+.fi-sc-wizard.fi-contained .fi-sc-wizard-step.fi-active {
+    padding: 1.375rem 1.5rem 1.125rem;
+}
+
+.fi-sc-wizard.fi-contained .fi-sc-wizard-footer {
+    padding: 0.875rem 1.5rem 1.25rem;
+    border-top: 1px solid #f1f5f9;
+    background-color: #ffffff;
+}
+
+.dark .fi-sc-wizard.fi-contained .fi-sc-wizard-footer {
+    border-top-color: rgba(148, 163, 184, 0.12);
+    background-color: #0f172a;
+}
+
+.fi-sc-wizard .fi-sc-wizard-footer .fi-btn,
+.fi-form-actions .fi-btn {
+    border-radius: 0.625rem !important;
+    font-weight: 600;
+}
+
+.fi-sc-wizard .fi-sc-wizard-footer .fi-btn.fi-color-gray,
+.fi-form-actions .fi-btn.fi-color-gray {
+    background-color: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    --tw-ring-shadow: 0 0 #0000 !important;
+    color: #1e293b !important;
+    box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.04) !important;
+}
+
+.dark .fi-sc-wizard .fi-sc-wizard-footer .fi-btn.fi-color-gray,
+.dark .fi-form-actions .fi-btn.fi-color-gray {
+    background-color: #1e293b !important;
+    border-color: rgba(148, 163, 184, 0.24) !important;
+    color: #f1f5f9 !important;
+}
+
+.fi-sc-wizard .fi-sc-wizard-footer .fi-btn.fi-color-primary,
+.fi-form-actions .fi-btn.fi-color-primary {
+    background-color: #1d4ed8 !important;
+    border: 1px solid #1d4ed8 !important;
+    --tw-ring-shadow: 0 0 #0000 !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 2px 0 rgba(29, 78, 216, 0.2) !important;
+}
+
+/* Section Card Alignment di Halaman Form (Sidebar Penomoran & Rantai Dokumen) */
+.fi-section {
+    border-radius: 0.9375rem;
+    border: 1px solid #e2e8f0;
+    --tw-ring-shadow: 0 0 #0000;
+    box-shadow:
+        0 1px 3px 0 rgba(15, 23, 42, 0.04),
+        0 1px 2px -1px rgba(15, 23, 42, 0.03);
+}
+
+.dark .fi-section {
+    border-color: rgba(148, 163, 184, 0.16);
+}

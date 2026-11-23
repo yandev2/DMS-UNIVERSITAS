@@ -65,19 +65,21 @@
                         </span>
                     </div>
                     <p class="borang-banner-desc">
-                        Penyusunan berkas bukti pendukung instrumen akreditasi program studi & institusi. Dilengkapi
-                        tautan publik aman untuk asesor eksternal, ekspor matriks rekapitulasi Excel (.xlsx), dan bundel
-                        unduh berkas (.ZIP).
+                        Penyusunan berkas bukti pendukung instrumen akreditasi program studi & institusi.
                     </p>
                 </div>
             </div>
 
             <!-- Right Active Filters Info -->
             <div class="borang-banner-right">
-                @if ($stats['active_unit_name'] || $stats['active_year_name'] || $stats['selected_code'] || ($stats['active_instrument_name'] ?? false))
-                    <span style="font-size: 0.75rem; color: #64748b; font-weight: 600;">Filter / Instrumen:</span>
-                    @if (! empty($stats['active_instrument_name']))
-                        <span class="borang-filter-pill" style="border-color: rgba(99, 102, 241, 0.4); color: #4338ca;">
+                @if (
+                    $stats['active_unit_name'] ||
+                        $stats['active_year_name'] ||
+                        $stats['selected_code'] ||
+                        ($stats['active_instrument_name'] ?? false))
+                    <span class="borang-filter-caption">Filter / Instrumen:</span>
+                    @if (!empty($stats['active_instrument_name']))
+                        <span class="borang-filter-pill borang-filter-pill-instrument">
                             <x-filament::icon icon="heroicon-m-academic-cap" />
                             {{ $stats['active_instrument_name'] }}
                         </span>
@@ -100,7 +102,7 @@
                         </span>
                     @endif
                 @else
-                    <span style="font-size: 0.75rem; color: #64748b;">
+                    <span class="borang-filter-caption">
                         Menampilkan seluruh arsip borang yang disahkan
                     </span>
                 @endif
@@ -137,26 +139,26 @@
                                     </span>
                                     @if ($openUnit->assessor_passcode)
                                         <span class="borang-assessor-sep">&bull;</span>
-                                        <span class="borang-assessor-pin">PIN: {{ $openUnit->assessor_passcode }}</span>
+                                        <span class="borang-assessor-pin">PIN:
+                                            {{ $openUnit->assessor_passcode }}</span>
                                     @endif
                                 </div>
                             </div>
 
                             <div class="borang-assessor-item-actions">
-                                <button type="button" 
-                                    class="borang-assessor-btn-copy"
+                                <button type="button" class="borang-assessor-btn-copy"
                                     onclick="copyAssessorUnitLink('{{ $openUnit->getAssessorPortalUrl() }}', this)"
                                     title="Salin Tautan Portal Dossier Lengkap Asesor untuk {{ $openUnit->name }}">
-                                    <x-filament::icon icon="heroicon-m-link" style="width: 0.875rem; height: 0.875rem;" />
+                                    <x-filament::icon icon="heroicon-m-link"
+                                        style="width: 0.875rem; height: 0.875rem;" />
                                     <span>Salin Tautan Portal</span>
                                 </button>
 
-                                <a href="{{ $openUnit->getAssessorPortalUrl() }}" 
-                                   target="_blank"
-                                   rel="noopener"
-                                   class="borang-assessor-btn-preview"
-                                   title="Pratinjau Portal Dossier Lengkap di Tab Baru">
-                                    <x-filament::icon icon="heroicon-m-arrow-top-right-on-square" style="width: 0.875rem; height: 0.875rem;" />
+                                <a href="{{ $openUnit->getAssessorPortalUrl() }}" target="_blank" rel="noopener"
+                                    class="borang-assessor-btn-preview"
+                                    title="Pratinjau Portal Dossier Lengkap di Tab Baru">
+                                    <x-filament::icon icon="heroicon-m-arrow-top-right-on-square"
+                                        style="width: 0.875rem; height: 0.875rem;" />
                                     <span>Pratinjau</span>
                                 </a>
 
@@ -219,7 +221,7 @@
                     <div class="borang-readiness-track">
                         <div class="borang-readiness-fill" style="width: {{ $stats['readiness_percent'] }}%;"></div>
                     </div>
-                    <span style="font-size: 0.6875rem; color: #64748b;">
+                    <span class="borang-readiness-caption">
                         {{ $stats['filled_count'] }} dari {{ $stats['total_criteria'] }} Kriteria Terisi
                     </span>
                 </div>

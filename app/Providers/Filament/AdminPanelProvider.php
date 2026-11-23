@@ -61,7 +61,7 @@ class AdminPanelProvider extends PanelProvider
             ->sidebarCollapsibleOnDesktop()
             ->navigationGroups([
                 'E-Arsip & Dokumen',
-                'Surat Masuk & Surat Keluar',
+                'Persuratan',
                 'Borang Akreditasi',
                 'Publikasi & Informasi Publik',
                 'Master Data',
@@ -114,10 +114,12 @@ class AdminPanelProvider extends PanelProvider
                     $vTimeline = @filemtime(public_path('css/document-timeline.css')) ?: time();
                     $vBorang = @filemtime(public_path('css/borang-bank.css')) ?: time();
                     $vDashboard = @filemtime(public_path('css/dashboard-custom.css')) ?: time();
+                    $vModals = @filemtime(public_path('css/modals-custom.css')) ?: time();
 
                     $html = '<link rel="stylesheet" href="/css/document-timeline.css?v='.$vTimeline.'">'
                           .'<link rel="stylesheet" href="/css/borang-bank.css?v='.$vBorang.'">'
-                          .'<link rel="stylesheet" href="/css/dashboard-custom.css?v='.$vDashboard.'">';
+                          .'<link rel="stylesheet" href="/css/dashboard-custom.css?v='.$vDashboard.'">'
+                          .'<link rel="stylesheet" href="/css/modals-custom.css?v='.$vModals.'">';
 
                     if (request()->routeIs('filament.*.auth.login')) {
                         $html .= '<script src="https://cdn.tailwindcss.com"></script><script>tailwind.config = { darkMode: "class" };</script>';

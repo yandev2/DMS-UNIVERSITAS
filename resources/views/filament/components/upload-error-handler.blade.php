@@ -130,6 +130,89 @@
             notifyUploadError('Format Berkas Tidak Didukung', reason);
         }
     });
+
+    // Horizontal Mouse-Wheel & Auto-Center Scroll untuk Tab Tabel (.fi-tabs) yang panjangnya melebihi layar
+    document.addEventListener('wheel', (event) => {
+        const tabs = event.target instanceof Element ? event.target.closest('.fi-tabs:not(.fi-vertical)') : null;
+        if (!tabs || tabs.scrollWidth <= tabs.clientWidth) {
+            return;
+        }
+
+        if (Math.abs(event.deltaY) > Math.abs(event.deltaX) && event.deltaY !== 0) {
+            const atLeftEdge = tabs.scrollLeft <= 0 && event.deltaY < 0;
+            const atRightEdge = tabs.scrollLeft + tabs.clientWidth >= tabs.scrollWidth - 1 && event.deltaY > 0;
+
+            if (!atLeftEdge && !atRightEdge) {
+                event.preventDefault();
+                tabs.scrollLeft += event.deltaY;
+            }
+        }
+    }, { passive: false });
+
+    document.addEventListener('click', (event) => {
+        const tabItem = event.target instanceof Element ? event.target.closest('.fi-tabs:not(.fi-vertical) .fi-tabs-item') : null;
+        if (!tabItem) {
+            return;
+        }
+
+        const tabs = tabItem.closest('.fi-tabs');
+        if (tabs && tabs.scrollWidth > tabs.clientWidth) {
+            tabItem.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+    });
+
+    // Mouse Drag-to-Scroll (Grab & Swipe) pada Tab Tabel (.fi-tabs) di Desktop
+    let dragTabsEl = null;
+    let dragStartX = 0;
+    let dragStartScrollLeft = 0;
+    let hasDraggedTabs = false;
+
+    document.addEventListener('mousedown', (event) => {
+        if (event.button !== 0) {
+            return;
+        }
+        const tabs = event.target instanceof Element ? event.target.closest('.fi-tabs:not(.fi-vertical)') : null;
+        if (!tabs || tabs.scrollWidth <= tabs.clientWidth) {
+            return;
+        }
+        dragTabsEl = tabs;
+        dragStartX = event.pageX;
+        dragStartScrollLeft = tabs.scrollLeft;
+        hasDraggedTabs = false;
+    });
+
+    document.addEventListener('mousemove', (event) => {
+        if (!dragTabsEl) {
+            return;
+        }
+        const deltaX = event.pageX - dragStartX;
+        if (!hasDraggedTabs && Math.abs(deltaX) > 6) {
+            hasDraggedTabs = true;
+            dragTabsEl.style.cursor = 'grabbing';
+            dragTabsEl.style.userSelect = 'none';
+        }
+        if (hasDraggedTabs) {
+            event.preventDefault();
+            dragTabsEl.scrollLeft = dragStartScrollLeft - deltaX;
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (!dragTabsEl) {
+            return;
+        }
+        dragTabsEl.style.cursor = '';
+        dragTabsEl.style.userSelect = '';
+        dragTabsEl = null;
+    });
+
+    document.addEventListener('click', (event) => {
+        if (hasDraggedTabs) {
+            event.preventDefault();
+            event.stopPropagation();
+            hasDraggedTabs = false;
+        }
+    }, true);
 })();
 </script>
 

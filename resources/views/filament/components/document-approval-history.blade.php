@@ -40,11 +40,11 @@
                 $isAllApproved = $approvals->every(fn ($a) => $a->status === ApprovalStatus::Approved);
             @endphp
 
-            <div class="doc-card" style="border-radius: 0.5rem; border: 1px solid var(--doc-border); background-color: var(--doc-surface); box-shadow: var(--doc-shadow-sm); overflow: hidden; padding: 0; margin-bottom: 0;">
+            <div class="doc-card" style="overflow: hidden; padding: 0; margin-bottom: 0;">
                 {{-- Round Header --}}
                 <div class="doc-table-round-header" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; padding: 0.875rem 1.25rem; background-color: var(--doc-surface-muted); border-bottom: 1px solid var(--doc-border);">
                     <div style="display: flex; align-items: center; gap: 0.625rem;">
-                        <span style="display: flex; width: 1.75rem; height: 1.75rem; align-items: center; justify-content: center; border-radius: 0.375rem; background-color: var(--doc-badge-info-bg); color: var(--doc-badge-info-text); font-weight: 700; font-size: 0.75rem; border: 1px solid var(--doc-badge-info-border);">
+                        <span style="display: flex; width: 2rem; height: 2rem; align-items: center; justify-content: center; border-radius: 0.5rem; background-color: var(--doc-badge-info-bg); color: var(--doc-badge-info-text); font-weight: 700; font-size: 0.75rem; border: 1px solid var(--doc-badge-info-border);">
                             #{{ $round }}
                         </span>
                         <div>

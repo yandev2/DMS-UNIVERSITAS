@@ -45,11 +45,11 @@
 
 @include('filament.components.document-timeline-styles')
 
-<div class="doc-card" style="background-color: var(--doc-surface); border: 1px solid var(--doc-border); border-radius: 0.5rem; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; box-shadow: var(--doc-shadow-sm); color: var(--doc-text-primary);">
+<div class="doc-card" style="color: var(--doc-text-primary);">
     {{-- Header Status & Info Dokumen --}}
     <div class="doc-card-header" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; padding-bottom: 1rem; border-bottom: 1px solid var(--doc-border);">
         <div style="display: flex; align-items: center; gap: 0.75rem;">
-            <div class="doc-card-title-icon" style="width: 2.25rem; height: 2.25rem; border-radius: 0.375rem; background-color: var(--doc-badge-info-bg); color: var(--doc-badge-info-solid); border: 1px solid var(--doc-badge-info-border); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <div class="doc-card-title-icon">
                 <x-heroicon-o-paper-airplane class="doc-icon-md" style="width: 1.25rem; height: 1.25rem;" />
             </div>
             <div>
@@ -110,7 +110,7 @@
 
     {{-- Alert Banner jika Menunggu TTD Basah, Revisi, atau Ditolak --}}
     @if($isWaitingSignature)
-        <div class="doc-alert-waiting-signature" style="background-color: var(--doc-badge-info-bg); border: 1px solid var(--doc-badge-info-border); border-radius: 0.375rem; padding: 1rem; margin-top: 1rem; display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 0.875rem; color: var(--doc-badge-info-text);">
+        <div class="doc-alert-waiting-signature" style="background-color: var(--doc-badge-info-bg); border: 1px solid var(--doc-badge-info-border); border-radius: 0.75rem; padding: 1rem; margin-top: 1rem; display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 0.875rem; color: var(--doc-badge-info-text);">
             <div style="display: flex; align-items: flex-start; gap: 0.75rem; flex: 1; min-width: 240px;">
                 <div style="flex-shrink: 0; color: var(--doc-badge-info-solid); margin-top: 0.125rem;">
                     <x-heroicon-s-document-check class="doc-icon-md" style="width: 1.25rem; height: 1.25rem;" />
@@ -127,7 +127,7 @@
 
             @if($canDownloadForPrint)
                 <a href="{{ route('admin.documents.download', $document) }}"
-                    style="display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.5rem 0.9rem; border-radius: 0.375rem; font-size: 0.8125rem; font-weight: 600; background-color: #2563eb; color: #ffffff; text-decoration: none; white-space: nowrap; flex-shrink: 0;">
+                    class="doc-btn doc-btn-primary">
                     <x-heroicon-m-arrow-down-tray style="width: 1rem; height: 1rem;" />
                     <span>Unduh Berkas Bernomor untuk Dicetak</span>
                 </a>

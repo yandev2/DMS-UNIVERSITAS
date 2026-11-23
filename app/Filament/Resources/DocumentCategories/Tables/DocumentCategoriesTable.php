@@ -11,6 +11,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Support\Enums\FontWeight;
+use Filament\Support\Enums\Width;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
@@ -90,6 +91,11 @@ class DocumentCategoriesTable
                     ->boolean(),
             ])
             ->defaultSort('id')
+            ->filtersFormColumns([
+                'sm' => 2,
+                'lg' => 3,
+            ])
+            ->filtersFormWidth(Width::FourExtraLarge)
             ->filters([
                 TernaryFilter::make('requires_approval')
                     ->label('Wajib Approval')

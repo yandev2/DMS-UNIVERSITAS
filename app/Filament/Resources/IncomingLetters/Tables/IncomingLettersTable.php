@@ -22,6 +22,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Support\Enums\Width;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Enums\PaginationMode;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -91,6 +92,11 @@ class IncomingLettersTable
                     ->grow(false)
                     ->sortable(),
             ])
+            ->filtersFormColumns([
+                'sm' => 2,
+                'lg' => 3,
+            ])
+            ->filtersFormWidth(Width::FourExtraLarge)
             ->filters([
                 SelectFilter::make('unit_id')
                     ->label('Unit Tujuan')
@@ -105,7 +111,7 @@ class IncomingLettersTable
                 SelectFilter::make('priority')
                     ->label('Sifat Surat')
                     ->options(LetterPriority::class),
-            ])
+            ], layout: FiltersLayout::Modal)
             ->recordActions([
                 Action::make('markAsRead')
                     ->label('Tandai Dibaca')

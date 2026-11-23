@@ -9,6 +9,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Support\Enums\FontWeight;
+use Filament\Support\Enums\Width;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
@@ -61,6 +62,11 @@ class UsersTable
                     ->sortable(),
             ])
             ->defaultSort('id')
+            ->filtersFormColumns([
+                'sm' => 2,
+                'lg' => 2,
+            ])
+            ->filtersFormWidth(Width::ExtraLarge)
             ->filters([
                 SelectFilter::make('unit_id')
                     ->label('Unit Kerja / Prodi')

@@ -13,6 +13,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Support\Enums\FontWeight;
+use Filament\Support\Enums\Width;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
@@ -131,6 +132,11 @@ class UnitsTable
             ->defaultGroup('parent_id')
             ->defaultSort('name')
             ->defaultPaginationPageOption(25)
+            ->filtersFormColumns([
+                'sm' => 2,
+                'lg' => 3,
+            ])
+            ->filtersFormWidth(Width::FourExtraLarge)
             ->filters([
                 SelectFilter::make('parent_id')
                     ->label('Unit Induk')

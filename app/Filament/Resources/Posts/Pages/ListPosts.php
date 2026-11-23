@@ -16,9 +16,9 @@ use Filament\Actions\CreateAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Tabs\Tab;
-use Filament\Support\Icons\Heroicon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 
 class ListPosts extends ListRecords
@@ -29,9 +29,10 @@ class ListPosts extends ListRecords
     {
         return [
             Action::make('exportExcel')
-                ->label('Ekspor Rekapitulasi Berita (.xlsx)')
-                ->icon(Heroicon::OutlinedArrowDownTray)
-                ->color('success')
+                ->label('Ekspor Rekapitulasi')
+                ->icon(new HtmlString('<svg class="fi-icon fi-size-md" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h2"/><path d="M14 13h2"/><path d="M8 17h2"/><path d="M14 17h2"/></svg>'))
+                ->color('gray')
+                ->extraAttributes(['class' => 'ui-header-action-export'])
                 ->requiresConfirmation()
                 ->modalHeading('Proses Ekspor Rekapitulasi Berita di Latar Belakang?')
                 ->modalDescription('Ekspor dijalankan penuh di antrean latar belakang agar halaman tetap cepat walaupun data mencapai jutaan baris. Anda akan menerima notifikasi beserta tautan unduhan yang aktif selama 1 hari setelah berkas siap.')
@@ -125,8 +126,8 @@ class ListPosts extends ListRecords
         );
 
         return [
-            'all' => Tab::make('Semua Artikel')
-                ->icon('heroicon-o-newspaper'),
+            'all' => Tab::make('Semua')
+                ->icon('heroicon-o-square-3-stack-3d'),
 
             'daily' => Tab::make('Harian')
                 ->icon('heroicon-o-sun')
@@ -140,11 +141,11 @@ class ListPosts extends ListRecords
                 ->icon('heroicon-o-document-chart-bar')
                 ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('period', PostPeriod::Monthly)),
 
-            'published' => Tab::make('Tayang Publik')
+            'published' => Tab::make('Tayang')
                 ->icon('heroicon-o-check-badge')
                 ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('status', PostStatus::Published)),
 
-            'pending_review' => Tab::make('Menunggu Moderasi')
+            'pending_review' => Tab::make('Moderasi')
                 ->icon('heroicon-o-clock')
                 ->badge($pendingCount > 0 ? (string) $pendingCount : null)
                 ->badgeColor('warning')
