@@ -6,6 +6,7 @@ namespace App\Notifications;
 
 use App\Enums\ReminderInterval;
 use App\Models\Document;
+use App\Support\DocumentReminderMailPresenter;
 use Filament\Actions\Action as FilamentAction;
 use Filament\Notifications\Notification as FilamentNotification;
 use Illuminate\Bus\Queueable;
@@ -35,10 +36,6 @@ class DocumentExpiryReminderNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $docNumber = $this->document->document_number ?: 'Tanpa Nomor';
-        $docTitle = $this->document->title;
-        $unitName = $this->document->unit?->name ?: 'Unit Kampus';
-        $expiredDateStr = $this->document->expired_date ? $this->document->expired_date->format('d/m/Y') : '-';
-        $viewUrl = url('/admin/documents/'.$this->document->id);
 
         $urgencyPrefix = match ($this->interval) {
             ReminderInterval::H7 => '[KRITIS - Sisa 7 Hari]',
@@ -50,16 +47,15 @@ class DocumentExpiryReminderNotification extends Notification
 
         return (new MailMessage)
             ->subject($subject)
-            ->greeting("Yth. {$notifiable->name},")
-            ->line('Pemberitahuan resmi mengenai masa berlaku naskah dinas di lingkungan Universitas Bina Insan.')
-            ->line("**Nomor Naskah:** {$docNumber}")
-            ->line("**Judul Dokumen:** {$docTitle}")
-            ->line("**Unit Pengelola:** {$unitName}")
-            ->line("**Tanggal Kedaluwarsa:** {$expiredDateStr}")
-            ->line("**Sisa Waktu Aktif:** {$this->daysRemaining} Hari Kalender ({$this->interval->getLabel()})")
-            ->action('Buka Dokumen di Portal Archiver', $viewUrl)
-            ->line('Harap segera berkoordinasi dengan unit terkait untuk pembaruan, perpanjangan, atau penyusunan dokumen pengganti sebelum tanggal masa berlaku berakhir.')
-            ->salutation('Salam hormat,'.PHP_EOL.'Sistem e-Arsip & Borang UNIVBI (Archiver-Sistem)');
+            ->view(
+                'emails.document-reminder',
+                DocumentReminderMailPresenter::forExpiryReminder(
+                    notifiable: $notifiable,
+                    document: $this->document,
+                    interval: $this->interval,
+                    daysRemaining: $this->daysRemaining,
+                ),
+            );
     }
 
     public function toDatabase(object $notifiable): array

@@ -59,6 +59,8 @@ class AdminPanelProvider extends PanelProvider
                 return asset('favicon.ico');
             })
             ->sidebarCollapsibleOnDesktop()
+            ->collapsedSidebarWidth('4.25rem')
+            ->viteTheme('resources/css/filament/admin/theme.css')
             ->navigationGroups([
                 'E-Arsip & Dokumen',
                 'Persuratan',

@@ -64,21 +64,21 @@
         </div>
 
         {{-- Judul Naskah Dinas --}}
-        <div style="margin-bottom: 1.25rem;">
+        <div style="margin-bottom: 0.9375rem;">
             <span class="doc-spec-label">
                 Judul Dokumen / Nama Naskah Dinas
             </span>
-            <div style="font-size: 1.125rem; font-weight: 700; color: var(--doc-text-primary); line-height: 1.5rem; margin-top: 0.375rem;">
+            <div style="font-size: 0.9375rem; font-weight: 700; color: var(--doc-text-primary); line-height: 1.35rem; margin-top: 0.25rem;">
                 {{ $document->title }}
             </div>
         </div>
 
         {{-- Ringkasan / Abstrak Callout --}}
-        <div style="margin-bottom: 1.25rem;">
+        <div style="margin-bottom: 0.9375rem;">
             <span class="doc-spec-label">
                 Ringkasan / Abstrak Naskah Dinas
             </span>
-            <div class="doc-meta-box" style="margin-top: 0.375rem; font-size: 0.8125rem; color: var(--doc-text-secondary); line-height: 1.45rem;">
+            <div class="doc-meta-box" style="margin-top: 0.25rem; font-size: 0.75rem; color: var(--doc-text-secondary); line-height: 1.25rem;">
                 @if($document->description)
                     {{ $document->description }}
                 @else

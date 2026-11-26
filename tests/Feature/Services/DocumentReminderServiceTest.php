@@ -10,6 +10,7 @@ use App\Enums\VisibilityLevel;
 use App\Models\AcademicYear;
 use App\Models\Document;
 use App\Models\DocumentCategory;
+use App\Models\LandingPageSetting;
 use App\Models\ReminderLog;
 use App\Models\Unit;
 use App\Models\User;
@@ -21,6 +22,7 @@ use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Notifications\Events\NotificationSending;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Activitylog\Models\Activity;
 use Tests\TestCase;
 
@@ -484,5 +486,55 @@ class DocumentReminderServiceTest extends TestCase
 
         $this->assertStringContainsString('Tanpa Nomor', $reminderData['title']);
         $this->assertStringContainsString('Tanpa Nomor', $expiredData['title']);
+    }
+
+    public function test_email_notifications_render_custom_cms_branded_template_with_admin_links_and_logo_fallback(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('cms/logo-kampus.png', 'FAKE_PNG_BINARY');
+
+        $settings = LandingPageSetting::current();
+        $settings->update([
+            'university_name' => 'Universitas Bina Insan Lubuklinggau',
+            'university_acronym' => 'UNIVBI',
+            'system_name' => 'Archiver-Sistem Terpadu',
+            'campus_email' => 'arsip@univbi.ac.id',
+            'university_logo_path' => 'cms/logo-kampus.png',
+        ]);
+
+        $document = $this->createExpiringDocument([
+            'document_number' => '099/UNIVBI.FTI/SK/XI/2026',
+            'title' => 'SK Dekan Penetapan Jadwal Kuliah',
+            'expired_date' => '2026-12-12',
+        ]);
+
+        $reminderMail = (new DocumentExpiryReminderNotification($document, ReminderInterval::H7, 7))
+            ->toMail($this->recipient1);
+        $reminderHtml = (string) $reminderMail->render();
+
+        $this->assertStringContainsString('[KRITIS - Sisa 7 Hari]', (string) $reminderMail->subject);
+        $this->assertStringContainsString('Universitas Bina Insan Lubuklinggau', $reminderHtml);
+        $this->assertStringContainsString('cms/logo-kampus.png', $reminderHtml);
+        $this->assertStringContainsString('KRITIS · H-7', $reminderHtml);
+        $this->assertStringContainsString('099/UNIVBI.FTI/SK/XI/2026', $reminderHtml);
+        $this->assertStringContainsString('SK Dekan Penetapan Jadwal Kuliah', $reminderHtml);
+        $this->assertStringContainsString('arsip@univbi.ac.id', $reminderHtml);
+        $this->assertStringContainsString(url('/admin/documents/'.$document->id), $reminderHtml);
+        $this->assertStringContainsString(url('/admin'), $reminderHtml);
+        $this->assertStringContainsString('Masuk ke Portal Admin', $reminderHtml);
+
+        // Uji fallback badge akronim ketika logo CMS belum diunggah / tidak tersedia di storage
+        $settings->update(['university_logo_path' => null]);
+
+        $expiredMail = (new DocumentExpiredNotification($document, Carbon::parse('2026-12-13')))
+            ->toMail($this->recipient1);
+        $expiredHtml = (string) $expiredMail->render();
+
+        $this->assertStringContainsString('[KEDALUWARSA]', (string) $expiredMail->subject);
+        $this->assertStringContainsString('KEDALUWARSA', $expiredHtml);
+        $this->assertStringContainsString('telah berakhir!', $expiredHtml);
+        $this->assertStringContainsString('UNIVBI', $expiredHtml);
+        $this->assertStringNotContainsString('cms/logo-kampus.png', $expiredHtml);
+        $this->assertStringContainsString(url('/admin'), $expiredHtml);
     }
 }

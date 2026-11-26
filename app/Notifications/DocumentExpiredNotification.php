@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Notifications;
 
 use App\Models\Document;
+use App\Support\DocumentReminderMailPresenter;
 use Carbon\CarbonInterface;
 use Filament\Actions\Action as FilamentAction;
 use Filament\Notifications\Notification as FilamentNotification;
@@ -34,23 +35,16 @@ class DocumentExpiredNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $docNumber = $this->document->document_number ?: 'Tanpa Nomor';
-        $docTitle = $this->document->title;
-        $unitName = $this->document->unit?->name ?: 'Unit Kampus';
-        $expiredDateStr = $this->document->expired_date ? $this->document->expired_date->format('d/m/Y') : '-';
-        $viewUrl = url('/admin/documents/'.$this->document->id);
-        $recipientName = $notifiable->name ?? 'Bapak/Ibu';
 
         return (new MailMessage)
             ->subject("[KEDALUWARSA] Masa Berlaku Naskah Dinas Telah Berakhir: {$docNumber}")
-            ->greeting("Yth. {$recipientName},")
-            ->line('Pemberitahuan resmi bahwa masa berlaku naskah dinas berikut di lingkungan Universitas Bina Insan telah berakhir dan statusnya otomatis dialihkan menjadi **Kedaluwarsa (Expired)**.')
-            ->line("**Nomor Naskah:** {$docNumber}")
-            ->line("**Judul Dokumen:** {$docTitle}")
-            ->line("**Unit Pengelola:** {$unitName}")
-            ->line("**Tanggal Berakhir Masa Berlaku:** {$expiredDateStr}")
-            ->action('Buka Dokumen di Portal Archiver', $viewUrl)
-            ->line('Harap segera menindaklanjuti dengan penerbitan naskah pembaruan, perpanjangan, atau pengarsipan pasif sesuai prosedur tata naskah dinas.')
-            ->salutation('Salam hormat,'.PHP_EOL.'Sistem e-Arsip & Borang UNIVBI (Archiver-Sistem)');
+            ->view(
+                'emails.document-reminder',
+                DocumentReminderMailPresenter::forExpired(
+                    notifiable: $notifiable,
+                    document: $this->document,
+                ),
+            );
     }
 
     /**

@@ -1,4 +1,4 @@
-﻿@once
+@once
 <style>
 /* ==========================================================================
    E-Arsip UNIVBI: Enterprise Document Workflow & Detail Design System
@@ -175,13 +175,13 @@ html.dark,
 .doc-card {
     background-color: var(--doc-surface) !important;
     border: 1.5px solid var(--ui-modal-border, var(--doc-border)) !important;
-    border-radius: 0.9375rem !important;
-    padding: 1.25rem 1.5rem;
+    border-radius: 0.875rem !important;
+    padding: 1rem 1.125rem;
     box-shadow:
         0 14px 34px -10px rgba(15, 23, 42, 0.08),
         0 0 0 1px rgba(203, 213, 225, 0.45),
         inset 0 1px 0 rgba(255, 255, 255, 0.96);
-    margin-bottom: 1.25rem;
+    margin-bottom: 0.875rem;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -204,7 +204,7 @@ html.dark,
 
 @media (min-width: 640px) {
     .doc-card {
-        padding: 1.375rem 1.5rem;
+        padding: 1rem 1.125rem;
     }
 }
 
@@ -212,10 +212,10 @@ html.dark,
 .doc-card-header {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    padding-bottom: 1rem;
+    gap: 0.5625rem;
+    padding-bottom: 0.75rem;
     border-bottom: 1px solid var(--doc-border);
-    margin-bottom: 1.25rem;
+    margin-bottom: 0.9375rem;
 }
 
 @media (min-width: 640px) {
@@ -227,9 +227,9 @@ html.dark,
 }
 
 .doc-card-title-icon {
-    width: 2.5rem !important;
-    height: 2.5rem !important;
-    border-radius: 0.625rem !important;
+    width: 2rem !important;
+    height: 2rem !important;
+    border-radius: 0.5rem !important;
     background-color: var(--doc-badge-info-bg) !important;
     color: var(--doc-badge-info-solid) !important;
     border: 1px solid var(--doc-badge-info-border);
@@ -239,20 +239,25 @@ html.dark,
     flex-shrink: 0;
 }
 
+.doc-card-title-icon svg {
+    width: 1.0625rem !important;
+    height: 1.0625rem !important;
+}
+
 .doc-card-title {
-    font-size: 0.9375rem;
+    font-size: 0.84375rem !important;
     font-weight: 700;
     color: var(--doc-text-primary) !important;
     margin: 0;
-    line-height: 1.25rem;
+    line-height: 1.15rem !important;
     letter-spacing: -0.01em;
 }
 
 .doc-card-subtitle {
-    font-size: 0.75rem;
+    font-size: 0.6875rem !important;
     color: var(--doc-text-muted) !important;
-    margin: 0.25rem 0 0 0;
-    line-height: 1rem;
+    margin: 0.1875rem 0 0 0;
+    line-height: 1rem !important;
 }
 
 /* ==========================================================================
@@ -279,8 +284,8 @@ html.dark,
 }
 
 .doc-badge-pill {
-    border-radius: 9999px;
-    padding: 0.25rem 0.75rem;
+    border-radius: 0.375rem !important;
+    padding: 0.2rem 0.5625rem;
 }
 
 .doc-badge-mono {
@@ -787,12 +792,12 @@ html.dark,
     align-items: center;
     justify-content: center;
     gap: 0.375rem;
-    min-height: 2.25rem;
-    padding: 0.4375rem 0.9375rem;
-    border-radius: 0.625rem !important;
-    font-size: 0.78125rem;
+    min-height: 2.125rem;
+    padding: 0.375rem 0.875rem;
+    border-radius: 0.5625rem !important;
+    font-size: 0.75rem;
     font-weight: 600;
-    line-height: 1.25rem;
+    line-height: 1.125rem;
     text-decoration: none;
     cursor: pointer;
     transition: all 0.15s ease-in-out;

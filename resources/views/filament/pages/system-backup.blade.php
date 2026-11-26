@@ -24,26 +24,30 @@
                             <h2 class="sb-banner-title">
                                 Pusat Backup &amp; Pemulihan Sistem Terpadu (DB + Storage)
                             </h2>
-                            <x-filament::badge color="success" size="sm">
+                            <x-filament::badge color="success" size="xs">
                                 Khusus Super Admin
                             </x-filament::badge>
-                            <x-filament::badge :color="$schedule['enabled'] ? 'info' : 'gray'" size="sm">
+                            <x-filament::badge :color="$schedule['enabled'] ? 'info' : 'gray'" size="xs">
                                 Jadwal: {{ $this->formatScheduleHuman($schedule) }}
                             </x-filament::badge>
                         </div>
                         <p class="sb-banner-desc">
-                            Mendukung mode <strong>Database SQL Saja ({{ $driver }})</strong> untuk backup harian super cepat maupun paket lengkap
-                            <strong>Database + storage/</strong> (arsip <code>private</code> &amp; <code>public</code>) dalam arsip <code>.zip</code>.
-                            Untuk data dokumen bergiga-giga, pisahkan jadwal DB harian di sini dan sinkronkan folder <code>storage/</code> via <code>rclone</code> / <code>rsync</code>.
-                            Pemulihan berjalan di antrean latar belakang dengan pemindai <strong>Anti Zip-Slip &amp; Anti Skrip Berbahaya</strong> serta verifikasi password Super Admin.
+                            Mendukung mode <strong>Database SQL Saja ({{ $driver }})</strong> untuk backup harian
+                            super cepat maupun paket lengkap
+                            <strong>Database + storage/</strong> (arsip <code>private</code> &amp; <code>public</code>)
+                            dalam arsip <code>.zip</code>.
+                            Untuk data dokumen bergiga-giga, pisahkan jadwal DB harian di sini dan sinkronkan folder
+                            <code>storage/</code> via <code>rclone</code> / <code>rsync</code>.
                         </p>
                     </div>
                 </div>
 
-                @if (! empty($schedule['last_scheduled_run_at']))
+                @if (!empty($schedule['last_scheduled_run_at']))
                     <div class="sb-last-run-box">
                         <div class="sb-last-run-label">Eksekusi Terjadwal Terakhir</div>
-                        <div>{{ \Carbon\Carbon::parse($schedule['last_scheduled_run_at'])->timezone('Asia/Jakarta')->translatedFormat('d M Y, H:i') }} WIB</div>
+                        <div>
+                            {{ \Carbon\Carbon::parse($schedule['last_scheduled_run_at'])->timezone('Asia/Jakarta')->translatedFormat('d M Y, H:i') }}
+                            WIB</div>
                     </div>
                 @endif
             </div>
@@ -91,9 +95,10 @@
             <div class="sb-panel-header">
                 <div>
                     <h3 class="sb-panel-title">Daftar Paket Backup Tersimpan</h3>
-                    <p class="sb-panel-subtitle">Lokasi: <code>storage/app/backups/{{ config('backup.backup.name') }}</code></p>
+                    <p class="sb-panel-subtitle">Lokasi:
+                        <code>storage/app/backups/{{ config('backup.backup.name') }}</code></p>
                 </div>
-                <x-filament::badge color="gray" size="sm">
+                <x-filament::badge color="gray" size="xs">
                     {{ count($backups) }} paket
                 </x-filament::badge>
             </div>
@@ -103,7 +108,8 @@
                     <x-filament::icon icon="heroicon-o-archive-box" class="sb-empty-icon" />
                     <p class="sb-empty-title">Belum ada paket backup tersimpan.</p>
                     <p class="sb-empty-desc">
-                        Klik tombol <strong>Buat Backup Sekarang (DB + Storage)</strong> di kanan atas untuk membuat paket cadangan pertama.
+                        Klik tombol <strong>Buat Backup Sekarang (DB + Storage)</strong> di kanan atas untuk membuat
+                        paket cadangan pertama.
                     </p>
                 </div>
             @else
@@ -125,7 +131,8 @@
                                         <span class="sb-filename">{{ $backup['file_name'] }}</span>
                                     </td>
                                     <td>
-                                        <div class="sb-time-main">{{ $backup['created_at']->translatedFormat('d M Y, H:i:s') }} WIB</div>
+                                        <div class="sb-time-main">
+                                            {{ $backup['created_at']->translatedFormat('d M Y, H:i:s') }} WIB</div>
                                         <div class="sb-time-sub">{{ $backup['created_at']->diffForHumans() }}</div>
                                     </td>
                                     <td>
@@ -134,56 +141,50 @@
                                     <td>
                                         <div class="sb-badges">
                                             @if (($backup['scope'] ?? '') === \App\Services\SystemBackupService::SCOPE_DATABASE_ONLY)
-                                                <x-filament::badge color="primary" size="xs">DB SQL Saja</x-filament::badge>
+                                                <x-filament::badge color="primary" size="xs">DB SQL
+                                                    Saja</x-filament::badge>
                                             @elseif (($backup['scope'] ?? '') === \App\Services\SystemBackupService::SCOPE_FULL)
-                                                <x-filament::badge color="gray" size="xs">Lengkap (DB + Storage)</x-filament::badge>
+                                                <x-filament::badge color="gray" size="xs">Lengkap (DB +
+                                                    Storage)</x-filament::badge>
                                             @endif
                                             @if ($backup['has_database'])
-                                                <x-filament::badge color="info" size="xs">Database SQL</x-filament::badge>
+                                                <x-filament::badge color="info" size="xs">Database
+                                                    SQL</x-filament::badge>
                                             @endif
                                             @if ($backup['has_storage'])
                                                 <x-filament::badge color="success" size="xs">
                                                     Storage ({{ number_format($backup['storage_files_count']) }} file)
                                                 </x-filament::badge>
                                             @endif
-                                            @if (! $backup['is_safe'])
+                                            @if (!$backup['is_safe'])
                                                 <x-filament::badge color="danger" size="xs">
                                                     Diblokir Keamanan
                                                 </x-filament::badge>
                                             @endif
                                         </div>
-                                        @if (! $backup['is_safe'] && ! empty($backup['security_note']))
+                                        @if (!$backup['is_safe'] && !empty($backup['security_note']))
                                             <p class="sb-security-note">{{ $backup['security_note'] }}</p>
                                         @endif
                                     </td>
                                     <td>
                                         <div class="sb-actions">
-                                            <a
-                                                href="{{ route('admin.system-backups.download', ['filename' => $backup['file_name']]) }}"
-                                                class="sb-download-btn"
-                                            >
+                                            <a href="{{ route('admin.system-backups.download', ['filename' => $backup['file_name']]) }}"
+                                                class="sb-download-btn">
                                                 <x-filament::icon icon="heroicon-o-arrow-down-tray" />
                                                 Unduh
                                             </a>
 
                                             @if ($canRestore && $backup['is_safe'])
-                                                <x-filament::button
-                                                    size="xs"
-                                                    color="warning"
+                                                <x-filament::button size="xs" color="warning"
                                                     icon="heroicon-o-arrow-path"
-                                                    wire:click="mountAction('restoreBackup', {{ \Illuminate\Support\Js::from(['filename' => $backup['file_name']]) }})"
-                                                >
+                                                    wire:click="mountAction('restoreBackup', {{ \Illuminate\Support\Js::from(['filename' => $backup['file_name']]) }})">
                                                     Restore
                                                 </x-filament::button>
                                             @endif
 
-                                            <x-filament::button
-                                                size="xs"
-                                                color="danger"
-                                                outlined
+                                            <x-filament::button size="xs" color="danger" outlined
                                                 icon="heroicon-o-trash"
-                                                wire:click="mountAction('deleteBackup', {{ \Illuminate\Support\Js::from(['filename' => $backup['file_name']]) }})"
-                                            >
+                                                wire:click="mountAction('deleteBackup', {{ \Illuminate\Support\Js::from(['filename' => $backup['file_name']]) }})">
                                                 Hapus
                                             </x-filament::button>
                                         </div>
@@ -211,16 +212,13 @@
                     @foreach ($recentLogs as $log)
                         <div class="sb-log-item">
                             <div class="sb-log-main">
-                                <x-filament::badge
-                                    :color="match ($log->event) {
-                                        'backup_created' => 'success',
-                                        'backup_restored' => 'warning',
-                                        'backup_failed', 'restore_failed', 'restore_security_blocked' => 'danger',
-                                        'backup_deleted' => 'gray',
-                                        default => 'info',
-                                    }"
-                                    size="xs"
-                                >
+                                <x-filament::badge :color="match ($log->event) {
+                                    'backup_created' => 'success',
+                                    'backup_restored' => 'warning',
+                                    'backup_failed', 'restore_failed', 'restore_security_blocked' => 'danger',
+                                    'backup_deleted' => 'gray',
+                                    default => 'info',
+                                }" size="xs">
                                     {{ $log->event }}
                                 </x-filament::badge>
                                 <span class="sb-log-desc">{{ $log->description }}</span>

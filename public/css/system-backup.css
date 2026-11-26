@@ -11,30 +11,30 @@
 .sb-page {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1rem;
 }
 
 /* 1. Banner Keamanan & Status Jadwal */
 .sb-banner {
     background-color: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 1rem;
-    padding: 1.35rem 1.5rem;
-    box-shadow: 0 2px 4px -1px rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.03);
+    border-radius: 0.75rem;
+    padding: 1rem 1.125rem;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
     color: #0f172a;
 }
 
 .dark .sb-banner {
     background-color: #0f172a;
-    border-color: rgba(255, 255, 255, 0.09);
-    box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.45);
+    border-color: rgba(148, 163, 184, 0.14);
+    box-shadow: 0 2px 10px rgba(2, 6, 23, 0.35);
     color: #f8fafc;
 }
 
 .sb-banner-content {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 0.875rem;
 }
 
 @media (min-width: 1024px) {
@@ -42,49 +42,49 @@
         flex-direction: row;
         align-items: center;
         justify-content: space-between;
-        gap: 1.5rem;
+        gap: 1rem;
     }
 }
 
 .sb-banner-left {
     display: flex;
     align-items: flex-start;
-    gap: 1rem;
+    gap: 0.75rem;
     flex: 1;
     min-width: 0;
 }
 
 .sb-banner-icon {
-    width: 3rem;
-    height: 3rem;
-    border-radius: 0.875rem;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.5625rem;
     background-color: #2563eb;
     color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+    box-shadow: 0 1px 4px rgba(37, 99, 235, 0.25);
 }
 
 .sb-banner-icon svg {
-    width: 1.65rem;
-    height: 1.65rem;
+    width: 1.2rem;
+    height: 1.2rem;
 }
 
 .sb-banner-title-row {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.4rem;
+    gap: 0.4375rem;
+    margin-bottom: 0.3rem;
 }
 
 .sb-banner-title {
     margin: 0;
-    font-size: 1.0625rem;
+    font-size: 0.875rem;
     font-weight: 700;
-    line-height: 1.35;
+    line-height: 1.3;
     color: #0f172a;
 }
 
@@ -94,8 +94,8 @@
 
 .sb-banner-desc {
     margin: 0;
-    font-size: 0.875rem;
-    line-height: 1.55;
+    font-size: 0.75rem;
+    line-height: 1.48;
     color: #475569;
 }
 
@@ -104,9 +104,9 @@
 }
 
 .sb-banner-desc code {
-    padding: 0.1rem 0.35rem;
-    border-radius: 0.3rem;
-    font-size: 0.8em;
+    padding: 0.0625rem 0.3125rem;
+    border-radius: 0.25rem;
+    font-size: 0.6875rem;
     background-color: #f1f5f9;
     color: #1e293b;
     border: 1px solid #e2e8f0;
@@ -120,12 +120,12 @@
 
 .sb-last-run-box {
     flex-shrink: 0;
-    padding: 0.65rem 0.9rem;
-    border-radius: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5625rem;
     background-color: #f8fafc;
     border: 1px solid #e2e8f0;
-    font-size: 0.75rem;
-    line-height: 1.45;
+    font-size: 0.6875rem;
+    line-height: 1.35;
     color: #475569;
 }
 
@@ -138,7 +138,7 @@
 .sb-last-run-label {
     font-weight: 700;
     color: #0f172a;
-    margin-bottom: 0.15rem;
+    margin-bottom: 0.125rem;
 }
 
 .dark .sb-last-run-label {
@@ -167,24 +167,25 @@
 .sb-stat-card {
     background-color: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 0.875rem;
-    padding: 0.9rem 1rem;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    border-radius: 0.75rem;
+    padding: 0.75rem 0.9375rem;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    gap: 0.45rem;
+    gap: 0.375rem;
     min-width: 0;
 }
 
 .dark .sb-stat-card {
     background-color: #0f172a;
-    border-color: rgba(255, 255, 255, 0.09);
+    border-color: rgba(148, 163, 184, 0.14);
 }
 
 .sb-stat-label {
-    font-size: 0.675rem;
+    font-size: 0.625rem;
     font-weight: 700;
+    line-height: 0.9rem;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     color: #64748b;
@@ -206,9 +207,9 @@
 }
 
 .sb-stat-value {
-    font-size: 1.15rem;
-    font-weight: 800;
-    line-height: 1.2;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.25;
     white-space: nowrap;
     color: #0f172a;
 }
@@ -234,10 +235,10 @@
 }
 
 .sb-stat-meta {
-    font-size: 0.6875rem;
+    font-size: 0.65625rem;
     font-weight: 600;
     color: #64748b;
-    line-height: 1.25;
+    line-height: 1rem;
 }
 
 .dark .sb-stat-meta {
@@ -248,14 +249,14 @@
 .sb-panel {
     background-color: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 1rem;
+    border-radius: 0.75rem;
     overflow: hidden;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .dark .sb-panel {
     background-color: #0f172a;
-    border-color: rgba(255, 255, 255, 0.09);
+    border-color: rgba(148, 163, 184, 0.14);
 }
 
 .sb-panel-header {
@@ -263,21 +264,22 @@
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 0.75rem;
-    padding: 1rem 1.25rem;
+    gap: 0.625rem;
+    padding: 0.75rem 1rem;
     border-bottom: 1px solid #e2e8f0;
     background-color: #f8fafc;
 }
 
 .dark .sb-panel-header {
-    border-bottom-color: rgba(255, 255, 255, 0.08);
+    border-bottom-color: rgba(148, 163, 184, 0.14);
     background-color: rgba(30, 41, 59, 0.55);
 }
 
 .sb-panel-title {
     margin: 0;
-    font-size: 0.9375rem;
+    font-size: 0.84375rem;
     font-weight: 700;
+    line-height: 1.25;
     color: #0f172a;
 }
 
@@ -286,8 +288,9 @@
 }
 
 .sb-panel-subtitle {
-    margin: 0.2rem 0 0;
-    font-size: 0.75rem;
+    margin: 0.15rem 0 0;
+    font-size: 0.6875rem;
+    line-height: 1.05rem;
     color: #64748b;
 }
 
@@ -296,7 +299,7 @@
 }
 
 .sb-panel-subtitle code {
-    font-size: 0.95em;
+    font-size: 0.65625rem;
     color: #334155;
 }
 
@@ -306,20 +309,20 @@
 
 /* Empty State */
 .sb-empty {
-    padding: 3rem 1.5rem;
+    padding: 2rem 1.25rem;
     text-align: center;
 }
 
 .sb-empty-icon {
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 2rem;
+    height: 2rem;
     margin: 0 auto;
     color: #94a3b8;
 }
 
 .sb-empty-title {
-    margin: 0.75rem 0 0;
-    font-size: 0.9375rem;
+    margin: 0.625rem 0 0;
+    font-size: 0.8125rem;
     font-weight: 600;
     color: #334155;
 }
@@ -329,8 +332,8 @@
 }
 
 .sb-empty-desc {
-    margin: 0.35rem 0 0;
-    font-size: 0.8125rem;
+    margin: 0.25rem 0 0;
+    font-size: 0.75rem;
     color: #64748b;
 }
 
@@ -348,12 +351,12 @@
     width: 100%;
     border-collapse: collapse;
     text-align: left;
-    font-size: 0.875rem;
+    font-size: 0.75rem;
 }
 
 .sb-table thead th {
-    padding: 0.75rem 1.15rem;
-    font-size: 0.72rem;
+    padding: 0.5625rem 0.875rem;
+    font-size: 0.65625rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -366,7 +369,7 @@
 .dark .sb-table thead th {
     color: #cbd5e1;
     background-color: rgba(30, 41, 59, 0.8);
-    border-bottom-color: rgba(255, 255, 255, 0.08);
+    border-bottom-color: rgba(148, 163, 184, 0.14);
 }
 
 .sb-table tbody tr {
@@ -375,7 +378,7 @@
 }
 
 .dark .sb-table tbody tr {
-    border-bottom-color: rgba(255, 255, 255, 0.06);
+    border-bottom-color: rgba(148, 163, 184, 0.1);
 }
 
 .sb-table tbody tr:last-child {
@@ -391,13 +394,13 @@
 }
 
 .sb-table td {
-    padding: 0.9rem 1.15rem;
+    padding: 0.625rem 0.875rem;
     vertical-align: middle;
 }
 
 .sb-filename {
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
     font-weight: 700;
     color: #0f172a;
     white-space: nowrap;
@@ -408,7 +411,7 @@
 }
 
 .sb-time-main {
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
     font-weight: 500;
     color: #1e293b;
     white-space: nowrap;
@@ -419,9 +422,9 @@
 }
 
 .sb-time-sub {
-    font-size: 0.75rem;
+    font-size: 0.6875rem;
     color: #64748b;
-    margin-top: 0.15rem;
+    margin-top: 0.1rem;
 }
 
 .dark .sb-time-sub {
@@ -429,7 +432,7 @@
 }
 
 .sb-size {
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
     font-weight: 700;
     color: #0f172a;
     white-space: nowrap;
@@ -443,12 +446,12 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.35rem;
 }
 
 .sb-security-note {
-    margin: 0.35rem 0 0;
-    font-size: 0.75rem;
+    margin: 0.3rem 0 0;
+    font-size: 0.6875rem;
     color: #dc2626;
     font-weight: 500;
 }
@@ -462,22 +465,22 @@
     flex-wrap: nowrap;
     align-items: center;
     justify-content: flex-end;
-    gap: 0.45rem;
+    gap: 0.375rem;
     white-space: nowrap;
 }
 
 .sb-download-btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    padding: 0.32rem 0.65rem;
-    border-radius: 0.5rem;
+    gap: 0.3125rem;
+    padding: 0.25rem 0.5625rem;
+    border-radius: 0.4375rem;
     border: 1px solid #cbd5e1;
     background-color: #ffffff;
     color: #1e293b;
-    font-size: 0.75rem;
+    font-size: 0.6875rem;
     font-weight: 600;
-    line-height: 1.25rem;
+    line-height: 1.1rem;
     text-decoration: none;
     transition: background-color 0.15s ease, border-color 0.15s ease;
     white-space: nowrap;
@@ -499,14 +502,14 @@
 }
 
 .sb-download-btn svg {
-    width: 0.9rem;
-    height: 0.9rem;
+    width: 0.8125rem;
+    height: 0.8125rem;
 }
 
 /* 4. Riwayat Audit Aktivitas Backup */
 .sb-log-empty {
-    padding: 1.35rem 1.25rem;
-    font-size: 0.8125rem;
+    padding: 1rem;
+    font-size: 0.75rem;
     color: #64748b;
 }
 
@@ -522,14 +525,14 @@
 .sb-log-item {
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
-    padding: 0.85rem 1.25rem;
+    gap: 0.375rem;
+    padding: 0.6875rem 1rem;
     border-bottom: 1px solid #e2e8f0;
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
 }
 
 .dark .sb-log-item {
-    border-bottom-color: rgba(255, 255, 255, 0.06);
+    border-bottom-color: rgba(148, 163, 184, 0.1);
 }
 
 .sb-log-item:last-child {
@@ -541,7 +544,7 @@
         flex-direction: row;
         align-items: center;
         justify-content: space-between;
-        gap: 1rem;
+        gap: 0.875rem;
     }
 }
 
@@ -549,7 +552,7 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.55rem;
+    gap: 0.5rem;
 }
 
 .sb-log-desc {
@@ -562,7 +565,7 @@
 }
 
 .sb-log-meta {
-    font-size: 0.75rem;
+    font-size: 0.6875rem;
     color: #64748b;
     white-space: nowrap;
 }
